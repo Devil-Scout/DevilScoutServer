@@ -1,0 +1,11 @@
+{
+    "java.completion.importOrder": [
+        "#",
+        "org.victorrobotics",
+        "java",
+        "javax",
+        "",
+        "#org.junit.jupiter",
+        "org.junit.jupiter",
+    ]
+}
