@@ -11,7 +11,6 @@ import java.util.Random;
 import java.util.regex.Pattern;
 
 import io.javalin.http.Context;
-import io.javalin.http.HandlerType;
 
 public class SCRAM_LoginHandler extends RequestHandler {
   private static final String HASH_ALGORITHM = "SHA-256";
@@ -28,11 +27,6 @@ public class SCRAM_LoginHandler extends RequestHandler {
 
   @Override
   public void handle(Context ctx) throws Exception {
-    if (ctx.method() != HandlerType.POST) {
-      ctx.status(405);
-      return;
-    }
-
     InputStream requestStream = ctx.bodyInputStream();
     String requestBody = new String(requestStream.readNBytes(80));
     if (requestStream.read() != -1) {

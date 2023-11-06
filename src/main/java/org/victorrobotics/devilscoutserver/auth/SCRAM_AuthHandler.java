@@ -17,7 +17,6 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import io.javalin.http.Context;
-import io.javalin.http.HandlerType;
 
 public class SCRAM_AuthHandler extends RequestHandler {
   private static final String HASH_ALGORITHM = "SHA-256";
@@ -35,11 +34,6 @@ public class SCRAM_AuthHandler extends RequestHandler {
 
   @Override
   public void handle(Context ctx) throws Exception {
-    if (ctx.method() != HandlerType.POST) {
-      ctx.status(405);
-      return;
-    }
-
     InputStream requestStream = ctx.bodyInputStream();
     String requestBody = new String(requestStream.readNBytes(192));
     if (requestStream.read() != -1) {
