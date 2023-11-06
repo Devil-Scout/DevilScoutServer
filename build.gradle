@@ -2,6 +2,16 @@ plugins {
   id 'application'
 }
 
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(20)
+  }
+}
+
+application {
+  mainClass = 'org.victorrobotics.devilscoutserver.Main'
+}
+
 repositories {
   mavenCentral()
 }
@@ -15,16 +25,6 @@ dependencies {
 
 test {
   useJUnitPlatform()
-}
-
-java {
-  toolchain {
-    languageVersion = JavaLanguageVersion.of(20)
-  }
-}
-
-application {
-  mainClass = 'org.victorrobotics.devilscoutserver.Main'
 }
 
 jar {
@@ -43,16 +43,4 @@ tasks.withType(Tar) {
 
 tasks.withType(Zip) {
    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-tasks.withType(JavaCompile) {
-    options.compilerArgs += "--enable-preview"
-}
-
-tasks.withType(Test) {
-    jvmArgs += "--enable-preview"
-}
-
-tasks.withType(JavaExec) {
-    jvmArgs += '--enable-preview'
 }
