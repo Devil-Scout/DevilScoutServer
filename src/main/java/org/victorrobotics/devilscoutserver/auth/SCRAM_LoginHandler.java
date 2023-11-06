@@ -3,7 +3,6 @@ package org.victorrobotics.devilscoutserver.auth;
 import org.victorrobotics.devilscoutserver.RequestHandler;
 import org.victorrobotics.devilscoutserver.database.CredentialDB;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -11,45 +10,46 @@ import java.security.SecureRandom;
 import java.util.Random;
 import java.util.regex.Pattern;
 
-import com.sun.net.httpserver.HttpExchange;
+import io.javalin.http.Context;
+import io.javalin.http.HandlerType;
 
-public class SCRAM_InitHandler extends RequestHandler {
+public class SCRAM_LoginHandler extends RequestHandler {
   private static final String HASH_ALGORITHM = "SHA-256";
 
   private static final Pattern VALID_NAME = Pattern.compile("[A-Za-z0-9\\s]{1,32}");
 
   private final CredentialDB database;
-  private final Random random;
+  private final Random       random;
 
-  public SCRAM_InitHandler(CredentialDB database) {
+  public SCRAM_LoginHandler(CredentialDB database) {
     this.database = database;
     this.random = new SecureRandom();
   }
 
   @Override
-  public void handle(HttpExchange exchange) throws IOException {
-    if (!"POST".equals(exchange.getRequestMethod())) {
-      closeExchange(exchange, 405);
+  public void handle(Context ctx) throws Exception {
+    if (ctx.method() != HandlerType.POST) {
+      ctx.status(405);
       return;
     }
 
-    InputStream requestStream = exchange.getRequestBody();
+    InputStream requestStream = ctx.bodyInputStream();
     String requestBody = new String(requestStream.readNBytes(80));
     if (requestStream.read() != -1) {
-      closeExchange(exchange, 413);
+      ctx.status(413);
       return;
     }
     requestStream.close();
 
     InitRequest request = parse(requestBody);
     if (request == null) {
-      closeExchange(exchange, 400);
+      ctx.status(400);
       return;
     }
 
     byte[] salt = database.getSalt(request.team, request.name);
     if (salt == null) {
-      closeExchange(exchange, 404);
+      ctx.status(404);
       return;
     }
 
@@ -63,16 +63,15 @@ public class SCRAM_InitHandler extends RequestHandler {
     String user = request.team + request.name;
     byte[] userHash = hashFunction.digest(user.getBytes());
     byte[] nonce = new byte[16];
-    random.nextBytes(nonce);
+    // random.nextBytes(nonce); // TODO: uncomment this
     System.arraycopy(request.clientNonce, 0, nonce, 0, 8);
     database.putNonce(userHash, nonce);
 
     String saltHex = HEX_FORMAT.formatHex(salt);
     String nonceHex = HEX_FORMAT.formatHex(nonce);
 
-    String responseRaw = "s=" + saltHex + ",r=" + nonceHex;
-    String response = new String(BASE64_ENCODER.encode(responseRaw.getBytes()));
-    closeExchange(exchange, 200, response);
+    String response = "s=" + saltHex + ",r=" + nonceHex;
+    ctx.result(BASE64_ENCODER.encode(response.getBytes()));
   }
 
   private static InitRequest parse(String requestBody) {
@@ -111,4 +110,5 @@ public class SCRAM_InitHandler extends RequestHandler {
   private static record InitRequest(int team,
                                     String name,
                                     byte[] clientNonce) {}
+
 }

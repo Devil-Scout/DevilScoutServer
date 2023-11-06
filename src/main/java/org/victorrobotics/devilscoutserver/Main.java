@@ -1,18 +1,15 @@
 package org.victorrobotics.devilscoutserver;
 
 import org.victorrobotics.devilscoutserver.auth.SCRAM_AuthHandler;
-import org.victorrobotics.devilscoutserver.auth.SCRAM_InitHandler;
+import org.victorrobotics.devilscoutserver.auth.SCRAM_LoginHandler;
 import org.victorrobotics.devilscoutserver.database.SimCredentialDB;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.HexFormat;
-import java.util.concurrent.Executors;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
@@ -20,28 +17,18 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.sun.net.httpserver.HttpServer;
+import io.javalin.Javalin;
 
 public class Main {
   public static void main(String... args) {
-    // printCredentials()
-
+    // printCredentials();
     SimCredentialDB database = new SimCredentialDB();
 
-    HttpServer server;
-    try {
-      server = HttpServer.create(new InetSocketAddress(8000), 0);
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
-    }
-
-    server.createContext("/login", new SCRAM_InitHandler(database));
-    server.createContext("/auth", new SCRAM_AuthHandler(database));
-
-    server.setExecutor(Executors.newCachedThreadPool(Thread.ofVirtual()
-                                                           .factory()));
-    server.start();
-    System.out.println("Server started");
+    Javalin.create()
+           .get("/test", ctx -> ctx.result("Hello!"))
+           .post("/auth", new SCRAM_AuthHandler(database))
+           .post("/login", new SCRAM_LoginHandler(database))
+           .start(80);
   }
 
   private static void printCredentials() {

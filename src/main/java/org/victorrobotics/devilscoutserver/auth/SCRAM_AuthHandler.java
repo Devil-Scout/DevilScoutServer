@@ -5,7 +5,6 @@ import org.victorrobotics.devilscoutserver.database.CredentialDB;
 import org.victorrobotics.devilscoutserver.database.Credentials;
 import org.victorrobotics.devilscoutserver.database.Session;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -17,7 +16,8 @@ import java.util.regex.Pattern;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.sun.net.httpserver.HttpExchange;
+import io.javalin.http.Context;
+import io.javalin.http.HandlerType;
 
 public class SCRAM_AuthHandler extends RequestHandler {
   private static final String HASH_ALGORITHM = "SHA-256";
@@ -34,29 +34,29 @@ public class SCRAM_AuthHandler extends RequestHandler {
   }
 
   @Override
-  public void handle(HttpExchange exchange) throws IOException {
-    if (!"POST".equals(exchange.getRequestMethod())) {
-      closeExchange(exchange, 405);
+  public void handle(Context ctx) throws Exception {
+    if (ctx.method() != HandlerType.POST) {
+      ctx.status(405);
       return;
     }
 
-    InputStream requestStream = exchange.getRequestBody();
+    InputStream requestStream = ctx.bodyInputStream();
     String requestBody = new String(requestStream.readNBytes(192));
     if (requestStream.read() != -1) {
-      closeExchange(exchange, 413);
+      ctx.status(413);
       return;
     }
     requestStream.close();
 
     AuthRequest request = parse(requestBody);
     if (request == null) {
-      closeExchange(exchange, 400);
+      ctx.status(400);
       return;
     }
 
     Credentials credentials = database.get(request.team, request.name);
     if (credentials == null) {
-      closeExchange(exchange, 404);
+      ctx.status(404);
       return;
     }
 
@@ -74,7 +74,7 @@ public class SCRAM_AuthHandler extends RequestHandler {
     byte[] userHash = hashFunction.digest(user.getBytes());
     byte[] storedNonce = database.getNonce(userHash);
     if (!Arrays.equals(request.nonce, storedNonce)) {
-      closeExchange(exchange, 400);
+      ctx.status(400);
       return;
     }
 
@@ -83,7 +83,7 @@ public class SCRAM_AuthHandler extends RequestHandler {
     byte[] clientKey = xor(request.clientProof, clientSignature);
     byte[] storedKey = hashFunction.digest(clientKey);
     if (!Arrays.equals(storedKey, credentials.storedKey())) {
-      closeExchange(exchange, 401);
+      ctx.status(401);
       return;
     }
 
@@ -97,7 +97,7 @@ public class SCRAM_AuthHandler extends RequestHandler {
     Session session = generateSession(credentials);
     String response = "v=" + HEX_FORMAT.formatHex(serverSignature) + ",i="
         + HEX_FORMAT.toHexDigits(session.sessionID) + ",p=" + credentials.permissions();
-    closeExchange(exchange, 200, BASE64_ENCODER.encodeToString(response.getBytes()));
+    ctx.result(BASE64_ENCODER.encode(response.getBytes()));
   }
 
   private Session generateSession(Credentials credentials) {
@@ -165,4 +165,5 @@ public class SCRAM_AuthHandler extends RequestHandler {
                                     String name,
                                     byte[] nonce,
                                     byte[] clientProof) {}
+
 }
