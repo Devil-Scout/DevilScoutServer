@@ -57,21 +57,22 @@ public class SCRAM_LoginHandler extends RequestHandler {
     String user = request.team + request.name;
     byte[] userHash = hashFunction.digest(user.getBytes());
     byte[] nonce = new byte[16];
-    // random.nextBytes(nonce); // TODO: uncomment this
+    random.nextBytes(nonce);
     System.arraycopy(request.clientNonce, 0, nonce, 0, 8);
-    database.putNonce(userHash, nonce);
+    byte[] nonceHash = hashFunction.digest(nonce);
+    database.putNonce(userHash, nonceHash);
 
-    String saltHex = HEX_FORMAT.formatHex(salt);
-    String nonceHex = HEX_FORMAT.formatHex(nonce);
+    String saltHex = formatHex(salt);
+    String nonceHex = formatHex(nonce);
 
     String response = "s=" + saltHex + ",r=" + nonceHex;
-    ctx.result(BASE64_ENCODER.encode(response.getBytes()));
+    ctx.result(base64Encode(response));
   }
 
   private static InitRequest parse(String requestBody) {
     // request format: "t={team},n={name},r={client_nonce}"
     try {
-      String request = new String(BASE64_DECODER.decode(requestBody));
+      String request = base64Decode(requestBody);
       if (!request.startsWith("t=")) return null;
       int commaIndex = request.indexOf(',');
       if (commaIndex < 3 || commaIndex > 6) return null;
@@ -93,7 +94,7 @@ public class SCRAM_LoginHandler extends RequestHandler {
       request = request.substring(commaIndex + 1);
       if (!request.startsWith("r=") || request.length() != 18) return null;
 
-      byte[] clientNonce = HEX_FORMAT.parseHex(request.substring(2));
+      byte[] clientNonce = parseHex(request.substring(2));
 
       return new InitRequest(team, name, clientNonce);
     } catch (IllegalArgumentException e) {
@@ -104,5 +105,4 @@ public class SCRAM_LoginHandler extends RequestHandler {
   private static record InitRequest(int team,
                                     String name,
                                     byte[] clientNonce) {}
-
 }

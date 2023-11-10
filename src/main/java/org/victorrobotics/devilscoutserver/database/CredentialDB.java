@@ -1,14 +1,14 @@
 package org.victorrobotics.devilscoutserver.database;
 
 public interface CredentialDB {
-  Credentials get(int team, String name);
+  Credentials get(int team, String username);
 
-  default byte[] getSalt(int team, String name) {
-    Credentials entry = get(team, name);
+  default byte[] getSalt(int team, String username) {
+    Credentials entry = get(team, username);
     return entry == null ? null : entry.salt();
   }
 
-  void putNonce(byte[] userHash, byte[] nonce);
+  void putNonce(byte[] userHash, byte[] nonceHash);
 
-  byte[] getNonce(byte[] userHash);
+  boolean containsNonce(byte[] userHash, byte[] nonceHash);
 }

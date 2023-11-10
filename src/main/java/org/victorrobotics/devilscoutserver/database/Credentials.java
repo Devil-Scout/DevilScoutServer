@@ -1,7 +1,8 @@
 package org.victorrobotics.devilscoutserver.database;
 
 public record Credentials(long userID,
-                          String name,
+                          String username,
+                          String fullname,
                           int team,
                           Permission permissions,
                           byte[] salt,

@@ -11,7 +11,7 @@ public class Main {
     SimCredentialDB database = new SimCredentialDB();
 
     Javalin.create()
-           .get("/test", ctx -> ctx.result("Hello!"))
+           .get("/status", ctx -> ctx.result("{\"status\":\"okay\"}"))
            .post("/auth", new SCRAM_AuthHandler(database))
            .post("/login", new SCRAM_LoginHandler(database))
            .start(80);

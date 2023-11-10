@@ -3,20 +3,22 @@ package org.victorrobotics.devilscoutserver.database;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 public class SimCredentialDB implements CredentialDB {
-  private final Map<String, byte[]>    nonces;
+  private final Set<String>      nonces;
   private final Map<String, Credentials> data;
 
   public SimCredentialDB() {
-    nonces = new HashMap<>();
+    nonces = new HashSet<>();
     data = new HashMap<>();
     // t=1559,n=xander,r=1234567890abcdef
-    data.put("1559,xander", new Credentials(5, "xander", 1559, Permission.SUDO, "bad-salt".getBytes(),
-                                          HexFormat.of()
-                                                   .parseHex("8cc790682ce826cf353286c241f70c4aae16dbdf1a0274ac1795911917fb535b"),
-                                          HexFormat.of()
-                                                   .parseHex("86c11c32671aa7d5962eff976284ff81a981e9bfcfded80ea0e38881b8b6e96f")));
+    data.put("1559,xander",
+             new Credentials(5, "xander", "Xander Bhalla", 1559, Permission.SUDO,
+                             "bad-salt".getBytes(),
+                             parseHex("8cc790682ce826cf353286c241f70c4aae16dbdf1a0274ac1795911917fb535b"),
+                             parseHex("86c11c32671aa7d5962eff976284ff81a981e9bfcfded80ea0e38881b8b6e96f")));
   }
 
   @Override
@@ -25,12 +27,26 @@ public class SimCredentialDB implements CredentialDB {
   }
 
   @Override
-  public void putNonce(byte[] userHash, byte[] nonce) {
-    nonces.put(new String(userHash), nonce);
+  public void putNonce(byte[] userHash, byte[] nonceHash) {
+    nonces.add(new String(xor(userHash, nonceHash)));
   }
 
   @Override
-  public byte[] getNonce(byte[] userHash) {
-    return nonces.remove(new String(userHash));
+  public boolean containsNonce(byte[] userHash, byte[] nonceHash) {
+    return nonces.contains(new String(xor(userHash, nonceHash)));
+  }
+
+  private static byte[] parseHex(String hex) {
+    return HexFormat.of()
+                    .parseHex(hex);
+  }
+
+  private static byte[] xor(byte[] bytes1, byte[] bytes2) {
+    assert bytes1.length == bytes2.length;
+    byte[] bytes = new byte[bytes1.length];
+    for (int i = 0; i < bytes.length; i++) {
+      bytes[i] = (byte) (bytes1[i] ^ bytes2[i]);
+    }
+    return bytes;
   }
 }

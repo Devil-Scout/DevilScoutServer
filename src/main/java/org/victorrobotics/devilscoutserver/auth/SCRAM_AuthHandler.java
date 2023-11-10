@@ -66,13 +66,13 @@ public class SCRAM_AuthHandler extends RequestHandler {
 
     String user = request.team + request.name;
     byte[] userHash = hashFunction.digest(user.getBytes());
-    byte[] storedNonce = database.getNonce(userHash);
-    if (!Arrays.equals(request.nonce, storedNonce)) {
+    byte[] nonceHash = hashFunction.digest(request.nonce);
+    if (!database.containsNonce(userHash, nonceHash)) {
       ctx.status(400);
       return;
     }
 
-    byte[] userAndNonce = toStr(request.team + request.name, storedNonce);
+    byte[] userAndNonce = toStr(request.team + request.name, request.nonce);
     byte[] clientSignature = hmacFunction.doFinal(userAndNonce);
     byte[] clientKey = xor(request.clientProof, clientSignature);
     byte[] storedKey = hashFunction.digest(clientKey);
@@ -89,9 +89,12 @@ public class SCRAM_AuthHandler extends RequestHandler {
     byte[] serverSignature = hmacFunction.doFinal(userAndNonce);
 
     Session session = generateSession(credentials);
-    String response = "v=" + HEX_FORMAT.formatHex(serverSignature) + ",i="
-        + HEX_FORMAT.toHexDigits(session.sessionID) + ",p=" + credentials.permissions();
-    ctx.result(BASE64_ENCODER.encode(response.getBytes()));
+    String response = "v=" + formatHex(serverSignature) + ",i=" + formatHex(session.sessionID)
+        + ",p=" + credentials.permissions()
+                             .toString()
+                             .toLowerCase()
+        + ",n=Xander Bhalla";
+    ctx.result(base64Encode(response));
   }
 
   private Session generateSession(Credentials credentials) {
@@ -102,7 +105,7 @@ public class SCRAM_AuthHandler extends RequestHandler {
   private static AuthRequest parse(String requestBody) {
     // request format: "t={team},n={name},r={nonce},p={clientProof}"
     try {
-      String request = new String(BASE64_DECODER.decode(requestBody));
+      String request = base64Decode(requestBody);
       if (!request.startsWith("t=")) return null;
       int commaIndex = request.indexOf(',');
       if (commaIndex < 3 || commaIndex > 6) return null;
@@ -125,12 +128,12 @@ public class SCRAM_AuthHandler extends RequestHandler {
       commaIndex = request.indexOf(',');
       if (!request.startsWith("r=") || commaIndex != 34) return null;
 
-      byte[] nonce = HEX_FORMAT.parseHex(request.substring(2, 34));
+      byte[] nonce = parseHex(request.substring(2, 34));
 
       request = request.substring(35);
       if (!request.startsWith("p=") || request.length() != 66) return null;
 
-      byte[] clientProof = HEX_FORMAT.parseHex(request.substring(2));
+      byte[] clientProof = parseHex(request.substring(2));
 
       return new AuthRequest(team, name, nonce, clientProof);
     } catch (IllegalArgumentException e) {
@@ -159,5 +162,4 @@ public class SCRAM_AuthHandler extends RequestHandler {
                                     String name,
                                     byte[] nonce,
                                     byte[] clientProof) {}
-
 }
