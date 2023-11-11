@@ -1,10 +1,10 @@
 package org.victorrobotics.devilscoutserver.database;
 
-public interface CredentialDB {
-  Credentials get(int team, String username);
+public interface UserDB {
+  User get(int team, String username);
 
   default byte[] getSalt(int team, String username) {
-    Credentials entry = get(team, username);
+    User entry = get(team, username);
     return entry == null ? null : entry.salt();
   }
 
