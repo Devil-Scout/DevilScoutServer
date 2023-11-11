@@ -6,23 +6,23 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 
-public class SimCredentialDB implements CredentialDB {
+public class SimCredentialDB implements UserDB {
   private final Set<String>      nonces;
-  private final Map<String, Credentials> data;
+  private final Map<String, User> data;
 
   public SimCredentialDB() {
     nonces = new HashSet<>();
     data = new HashMap<>();
     // t=1559,n=xander,r=1234567890abcdef
     data.put("1559,xander",
-             new Credentials(5, "xander", "Xander Bhalla", 1559, Permission.SUDO,
+             new User(5, "xander", "Xander Bhalla", 1559, Permission.SUDO,
                              "bad-salt".getBytes(),
                              parseHex("8cc790682ce826cf353286c241f70c4aae16dbdf1a0274ac1795911917fb535b"),
                              parseHex("86c11c32671aa7d5962eff976284ff81a981e9bfcfded80ea0e38881b8b6e96f")));
   }
 
   @Override
-  public Credentials get(int team, String name) {
+  public User get(int team, String name) {
     return data.get(team + "," + name);
   }
 
