@@ -11,7 +11,20 @@ import java.util.Random;
 import java.util.regex.Pattern;
 
 import io.javalin.http.Context;
+import io.javalin.openapi.HttpMethod;
+import io.javalin.openapi.OpenApi;
+import io.javalin.openapi.OpenApiContent;
+import io.javalin.openapi.OpenApiExample;
+import io.javalin.openapi.OpenApiRequestBody;
+import io.javalin.openapi.OpenApiResponse;
 
+@OpenApi(path = "/login", methods = HttpMethod.POST, tags = "Login",
+         description = "Requests a login challenge. Must be called before `/auth`.",
+         requestBody = @OpenApiRequestBody(required = true,
+                                           content = @OpenApiContent(from = SCRAM_LoginHandler.InitRequest.class)),
+         responses = { @OpenApiResponse(status = "200", description = "Authentication successful"),
+                       @OpenApiResponse(status = "400", description = "Bad request"),
+                       @OpenApiResponse(status = "404", description = "Unknown user") })
 public class SCRAM_LoginHandler extends RequestHandler {
   private static final String HASH_ALGORITHM = "SHA-256";
 
@@ -102,7 +115,7 @@ public class SCRAM_LoginHandler extends RequestHandler {
     }
   }
 
-  private static record InitRequest(int team,
-                                    String name,
-                                    byte[] clientNonce) {}
+  static record InitRequest(@OpenApiExample(value = "1559")  int team,
+                            @OpenApiExample(value = "xander") String name,
+                            @OpenApiExample(value = "EjRWeJCrze8=") byte[] clientNonce) {}
 }
