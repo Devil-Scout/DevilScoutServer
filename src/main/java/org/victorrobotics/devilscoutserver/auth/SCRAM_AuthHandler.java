@@ -18,7 +18,21 @@ import javax.crypto.spec.SecretKeySpec;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.javalin.http.Context;
+import io.javalin.openapi.HttpMethod;
+import io.javalin.openapi.OpenApi;
+import io.javalin.openapi.OpenApiContent;
+import io.javalin.openapi.OpenApiExample;
+import io.javalin.openapi.OpenApiRequestBody;
+import io.javalin.openapi.OpenApiResponse;
 
+@OpenApi(path = "/auth", methods = HttpMethod.POST, tags = "Login",
+         description = "Authenticates a client. Must have already called `/login` to compute clientProof.",
+         requestBody = @OpenApiRequestBody(required = true,
+                                           content = @OpenApiContent(from = SCRAM_AuthHandler.AuthRequest.class)),
+         responses = { @OpenApiResponse(status = "200", description = "Authentication successful"),
+                       @OpenApiResponse(status = "400", description = "Bad request"),
+                       @OpenApiResponse(status = "401", description = "Invalid credentials"),
+                       @OpenApiResponse(status = "404", description = "Unknown user") })
 public class SCRAM_AuthHandler extends RequestHandler {
   private static final String HASH_ALGORITHM = "SHA-256";
   private static final String HMAC_ALGORITHM = "HmacSHA256";
@@ -59,7 +73,7 @@ public class SCRAM_AuthHandler extends RequestHandler {
     byte[] userHash = hashFunction.digest(userID.getBytes());
     byte[] nonceHash = hashFunction.digest(request.nonce);
     if (!users.containsNonce(userHash, nonceHash)) {
-      ctx.status(400);
+      ctx.status(401);
       return;
     }
 
@@ -107,10 +121,10 @@ public class SCRAM_AuthHandler extends RequestHandler {
     return bytes;
   }
 
-  private static record AuthRequest(int team,
-                                    String username,
-                                    byte[] nonce,
-                                    byte[] clientProof) {
+  static record AuthRequest(@OpenApiExample("1559") int team,
+                            @OpenApiExample("xander") String username,
+                            @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce,
+                            @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJCrze8=") byte[] clientProof) {
     @JsonCreator
     AuthRequest(@JsonProperty("team") int team, @JsonProperty("username") String username,
                 @JsonProperty("nonce") String nonce,
