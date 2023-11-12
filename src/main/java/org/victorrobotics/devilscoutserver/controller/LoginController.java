@@ -7,7 +7,6 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Arrays;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -36,7 +35,7 @@ public final class LoginController extends Controller {
            requestBody = @OpenApiRequestBody(required = true,
                                              content = @OpenApiContent(from = LoginController.LoginRequest.class)),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = LoginController.LoginResponse.class)),
+                                          content = @OpenApiContent(from = LoginController.LoginChallenge.class)),
                          @OpenApiResponse(status = "400"), @OpenApiResponse(status = "404") })
   public static void login(Context ctx) {
     LoginRequest request = jsonDecode(ctx, LoginRequest.class);
@@ -45,14 +44,11 @@ public final class LoginController extends Controller {
       throw new NotFoundResponse();
     }
 
-    byte[] nonce = new byte[16];
-    RANDOM.nextBytes(nonce);
-    System.arraycopy(request.clientNonce, 0, nonce, 0, 8);
-
+    byte[] nonce = generateNonce(request.clientNonce);
     String nonceID = request.team + "," + request.username + "," + base64Encode(nonce);
     userDB().putNonce(nonceID);
 
-    ctx.json(new LoginResponse(salt, nonce));
+    ctx.json(new LoginChallenge(salt, nonce));
   }
 
   @OpenApi(path = "/auth", methods = HttpMethod.POST, tags = "Login",
@@ -70,35 +66,36 @@ public final class LoginController extends Controller {
       throw new NotFoundResponse();
     }
 
-    MessageDigest hashFunction = MessageDigest.getInstance(HASH_ALGORITHM);
-    Mac hmacFunction = Mac.getInstance(HMAC_ALGORITHM);
-    hmacFunction.init(new SecretKeySpec(user.storedKey(), HMAC_ALGORITHM));
-
     String nonceID = request.team + "," + request.username + "," + base64Encode(request.nonce);
     if (!userDB().containsNonce(nonceID)) {
       throw new UnauthorizedResponse();
     }
 
-    byte[] userAndNonce = toStr(request.team + request.username, request.nonce);
+    MessageDigest hashFunction = MessageDigest.getInstance(HASH_ALGORITHM);
+    Mac hmacFunction = Mac.getInstance(HMAC_ALGORITHM);
+    hmacFunction.init(new SecretKeySpec(user.storedKey(), HMAC_ALGORITHM));
+
+    byte[] userAndNonce = combine(request.team + request.username, request.nonce);
     byte[] clientSignature = hmacFunction.doFinal(userAndNonce);
     byte[] clientKey = xor(request.clientProof, clientSignature);
     byte[] storedKey = hashFunction.digest(clientKey);
-    if (!Arrays.equals(storedKey, user.storedKey())) {
+    if (!MessageDigest.isEqual(user.storedKey(), storedKey)) {
       throw new UnauthorizedResponse();
     }
 
-    try {
-      hmacFunction.init(new SecretKeySpec(user.serverKey(), HMAC_ALGORITHM));
-    } catch (InvalidKeyException e) {
-      throw new IllegalStateException(e);
-    }
+    hmacFunction.init(new SecretKeySpec(user.serverKey(), HMAC_ALGORITHM));
     byte[] serverSignature = hmacFunction.doFinal(userAndNonce);
-
-    Session session =
-        new Session(RANDOM.nextLong(Long.MAX_VALUE), user.userID(), user.permissions());
     userDB().removeNonce(nonceID);
-    ctx.json(new AuthResponse(user.fullName(), user.permissions(), session.sessionID,
-                              serverSignature));
+
+    Session session = generateSession(user);
+    ctx.json(new AuthResponse(user, session, serverSignature));
+  }
+
+  private static byte[] generateNonce(byte[] clientNonce) {
+    byte[] nonce = new byte[16];
+    RANDOM.nextBytes(nonce);
+    System.arraycopy(clientNonce, 0, nonce, 0, 8);
+    return nonce;
   }
 
   private static byte[] xor(byte[] bytes1, byte[] bytes2) {
@@ -109,7 +106,7 @@ public final class LoginController extends Controller {
     return bytes;
   }
 
-  private static byte[] toStr(String username, byte[] nonce) {
+  private static byte[] combine(String username, byte[] nonce) {
     byte[] bytes = new byte[username.length() + nonce.length];
     byte[] userBytes = username.getBytes();
     System.arraycopy(userBytes, 0, bytes, 0, userBytes.length);
@@ -117,13 +114,19 @@ public final class LoginController extends Controller {
     return bytes;
   }
 
+  private static Session generateSession(User user) {
+    byte[] sessionID = new byte[8];
+    RANDOM.nextBytes(sessionID);
+    return new Session(sessionID, user.userID(), user.accessLevel());
+  }
+
   static record LoginRequest(@OpenApiRequired @OpenApiExample("1559") int team,
                              @OpenApiRequired @OpenApiExample("xander") String username,
                              @OpenApiRequired @OpenApiExample("EjRWeJCrze8=") byte[] clientNonce) {}
 
-  static record LoginResponse(@OpenApiRequired @OpenApiExample("mHZUMhCrze8=") byte[] salt,
-                              @OpenApiRequired
-                              @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce) {}
+  static record LoginChallenge(@OpenApiRequired @OpenApiExample("mHZUMhCrze8=") byte[] salt,
+                               @OpenApiRequired
+                               @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce) {}
 
   static record AuthRequest(@OpenApiRequired @OpenApiExample("1559") int team,
                             @OpenApiRequired @OpenApiExample("xander") String username,
@@ -134,7 +137,11 @@ public final class LoginController extends Controller {
 
   static record AuthResponse(@OpenApiRequired @OpenApiExample("Xander Bhalla") String fullName,
                              @OpenApiRequired @OpenApiExample("USER") User.AccessLevel accessLevel,
-                             @OpenApiRequired @OpenApiExample("3123658432553584166") long sessionID,
+                             @OpenApiRequired @OpenApiExample("K9UoTnrEY94=") byte[] sessionID,
                              @OpenApiRequired
-                             @OpenApiExample("m7squ/lkrdjWSAER1g84uxQm3yDAOYUtVfYEJeYR2Tw=") byte[] serverSignature) {}
+                             @OpenApiExample("m7squ/lkrdjWSAER1g84uxQm3yDAOYUtVfYEJeYR2Tw=") byte[] serverSignature) {
+    AuthResponse(User user, Session session, byte[] serverSignature) {
+      this(user.fullName(), user.accessLevel(), session.sessionID, serverSignature);
+    }
+  }
 }

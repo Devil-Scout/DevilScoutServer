@@ -4,7 +4,7 @@ public record User(long userID,
                    String username,
                    String fullName,
                    int team,
-                   AccessLevel permissions,
+                   AccessLevel accessLevel,
                    byte[] salt,
                    byte[] storedKey,
                    byte[] serverKey) {

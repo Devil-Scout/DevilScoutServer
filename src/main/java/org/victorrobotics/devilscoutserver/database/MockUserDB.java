@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 
-public final class MockUserDB implements UserDB {
+public class MockUserDB implements UserDB {
   private final Set<String>       nonces;
   private final Map<String, User> data;
 
