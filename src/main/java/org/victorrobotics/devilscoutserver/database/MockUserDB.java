@@ -10,7 +10,7 @@ public final class MockUserDB implements UserDB {
   private final Set<String>       nonces;
   private final Map<String, User> data;
 
-  MockUserDB() {
+  public MockUserDB() {
     nonces = new HashSet<>();
     data = new HashMap<>();
     data.put("1559,xander",
@@ -33,6 +33,11 @@ public final class MockUserDB implements UserDB {
   @Override
   public boolean containsNonce(String nonceID) {
     return nonces.contains(nonceID);
+  }
+
+  @Override
+  public void removeNonce(String nonceID) {
+    nonces.remove(nonceID);
   }
 
   private static byte[] parseHex(String hex) {

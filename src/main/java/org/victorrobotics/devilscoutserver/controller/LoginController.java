@@ -2,7 +2,6 @@ package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.database.Session;
 import org.victorrobotics.devilscoutserver.database.User;
-import org.victorrobotics.devilscoutserver.database.UserDB;
 
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -36,12 +35,12 @@ public final class LoginController extends Controller {
            description = "Requests a login challenge. Must be called before `/auth`.",
            requestBody = @OpenApiRequestBody(required = true,
                                              content = @OpenApiContent(from = LoginController.LoginRequest.class)),
-           responses = { @OpenApiResponse(status = "200", description = "Authentication successful",
+           responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = LoginController.LoginResponse.class)),
                          @OpenApiResponse(status = "400"), @OpenApiResponse(status = "404") })
   public static void login(Context ctx) {
     LoginRequest request = jsonDecode(ctx, LoginRequest.class);
-    byte[] salt = UserDB.INSTANCE.getSalt(request.team, request.username);
+    byte[] salt = userDB().getSalt(request.team, request.username);
     if (salt == null) {
       throw new NotFoundResponse();
     }
@@ -49,8 +48,9 @@ public final class LoginController extends Controller {
     byte[] nonce = new byte[16];
     RANDOM.nextBytes(nonce);
     System.arraycopy(request.clientNonce, 0, nonce, 0, 8);
+
     String nonceID = request.team + "," + request.username + "," + base64Encode(nonce);
-    UserDB.INSTANCE.putNonce(nonceID);
+    userDB().putNonce(nonceID);
 
     ctx.json(new LoginResponse(salt, nonce));
   }
@@ -59,13 +59,13 @@ public final class LoginController extends Controller {
            description = "Authenticates a client. Must have already called `/login` to compute clientProof.",
            requestBody = @OpenApiRequestBody(required = true,
                                              content = @OpenApiContent(from = LoginController.AuthRequest.class)),
-           responses = { @OpenApiResponse(status = "200", description = "Authentication successful",
+           responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = LoginController.AuthResponse.class)),
                          @OpenApiResponse(status = "400"), @OpenApiResponse(status = "401"),
                          @OpenApiResponse(status = "404") })
   public static void auth(Context ctx) throws NoSuchAlgorithmException, InvalidKeyException {
     AuthRequest request = jsonDecode(ctx, AuthRequest.class);
-    User user = UserDB.INSTANCE.getUser(request.team, request.username);
+    User user = userDB().getUser(request.team, request.username);
     if (user == null) {
       throw new NotFoundResponse();
     }
@@ -75,7 +75,7 @@ public final class LoginController extends Controller {
     hmacFunction.init(new SecretKeySpec(user.storedKey(), HMAC_ALGORITHM));
 
     String nonceID = request.team + "," + request.username + "," + base64Encode(request.nonce);
-    if (!UserDB.INSTANCE.containsNonce(nonceID)) {
+    if (!userDB().containsNonce(nonceID)) {
       throw new UnauthorizedResponse();
     }
 
@@ -96,6 +96,7 @@ public final class LoginController extends Controller {
 
     Session session =
         new Session(RANDOM.nextLong(Long.MAX_VALUE), user.userID(), user.permissions());
+    userDB().removeNonce(nonceID);
     ctx.json(new AuthResponse(user.fullName(), user.permissions(), session.sessionID,
                               serverSignature));
   }

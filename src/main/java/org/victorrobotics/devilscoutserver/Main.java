@@ -1,6 +1,8 @@
 package org.victorrobotics.devilscoutserver;
 
+import org.victorrobotics.devilscoutserver.controller.Controller;
 import org.victorrobotics.devilscoutserver.controller.LoginController;
+import org.victorrobotics.devilscoutserver.database.MockUserDB;
 
 import io.javalin.Javalin;
 import io.javalin.openapi.plugin.OpenApiPlugin;
@@ -11,6 +13,8 @@ import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
 public class Main {
   @SuppressWarnings("java:S2095") // close Javalin
   public static void main(String... args) {
+    Controller.setDatabases(new MockUserDB());
+
     Javalin.create(config -> {
       config.http.prefer405over404 = true;
 

@@ -1,8 +1,6 @@
 package org.victorrobotics.devilscoutserver.database;
 
 public interface UserDB {
-  UserDB INSTANCE = new MockUserDB();
-
   User getUser(int team, String username);
 
   default byte[] getSalt(int team, String username) {
@@ -13,4 +11,6 @@ public interface UserDB {
   void putNonce(String nonceID);
 
   boolean containsNonce(String nonceID);
+
+  void removeNonce(String nonceID);
 }
