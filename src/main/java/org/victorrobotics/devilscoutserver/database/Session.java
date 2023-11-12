@@ -6,14 +6,14 @@ public class Session {
   public final long sessionID;
   public final long userID;
 
-  public final Permission permission;
+  public final User.AccessLevel accessLevel;
 
   private long expireTime;
 
-  public Session(long sessionID, long userID, Permission permission) {
+  public Session(long sessionID, long userID, User.AccessLevel accessLevel) {
     this.sessionID = sessionID;
     this.userID = userID;
-    this.permission = permission;
+    this.accessLevel = accessLevel;
 
     expireTime = System.currentTimeMillis() + DURATION_MILLIS;
   }
@@ -26,7 +26,7 @@ public class Session {
     expireTime = System.currentTimeMillis() + DURATION_MILLIS;
   }
 
-  public boolean hasPermission(Permission permission) {
-    return permission != null && permission.ordinal() <= this.permission.ordinal();
+  public boolean hasAccess(User.AccessLevel accessLevel) {
+    return accessLevel != null && accessLevel.ordinal() <= this.accessLevel.ordinal();
   }
 }

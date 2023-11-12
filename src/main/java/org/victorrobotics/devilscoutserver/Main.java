@@ -1,8 +1,6 @@
 package org.victorrobotics.devilscoutserver;
 
-import org.victorrobotics.devilscoutserver.auth.SCRAM_AuthHandler;
-import org.victorrobotics.devilscoutserver.auth.SCRAM_LoginHandler;
-import org.victorrobotics.devilscoutserver.database.SimCredentialDB;
+import org.victorrobotics.devilscoutserver.controller.LoginController;
 
 import io.javalin.Javalin;
 import io.javalin.openapi.plugin.OpenApiPlugin;
@@ -11,11 +9,11 @@ import io.javalin.openapi.plugin.swagger.SwaggerConfiguration;
 import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
 
 public class Main {
-  @SuppressWarnings("java:S2095")
+  @SuppressWarnings("java:S2095") // close Javalin
   public static void main(String... args) {
-    SimCredentialDB database = new SimCredentialDB();
-
     Javalin.create(config -> {
+      config.http.prefer405over404 = true;
+
       // @format:off
       config.plugins.register(new OpenApiPlugin(
         new OpenApiPluginConfiguration()
@@ -41,8 +39,8 @@ public class Main {
       config.plugins.register(new SwaggerPlugin(uiConfig));
     })
            .get("/status", ctx -> ctx.result("{\"status\":\"okay\"}"))
-           .post("/auth", new SCRAM_AuthHandler(database))
-           .post("/login", new SCRAM_LoginHandler(database))
+           .post("/login", LoginController::login)
+           .post("/auth", LoginController::auth)
            .start(80);
   }
 }

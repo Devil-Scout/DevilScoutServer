@@ -1,10 +1,12 @@
 package org.victorrobotics.devilscoutserver.database;
 
 public interface UserDB {
-  User get(int team, String username);
+  UserDB INSTANCE = new MockUserDB();
+
+  User getUser(int team, String username);
 
   default byte[] getSalt(int team, String username) {
-    User entry = get(team, username);
+    User entry = getUser(team, username);
     return entry == null ? null : entry.salt();
   }
 

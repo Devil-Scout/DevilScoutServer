@@ -6,23 +6,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 
-public class SimCredentialDB implements UserDB {
-  private final Set<String>      nonces;
+public final class MockUserDB implements UserDB {
+  private final Set<String>       nonces;
   private final Map<String, User> data;
 
-  public SimCredentialDB() {
+  MockUserDB() {
     nonces = new HashSet<>();
     data = new HashMap<>();
-    // t=1559,n=xander,r=1234567890abcdef
     data.put("1559,xander",
-             new User(5, "xander", "Xander Bhalla", 1559, Permission.SUDO,
-                             "bad-salt".getBytes(),
-                             parseHex("8cc790682ce826cf353286c241f70c4aae16dbdf1a0274ac1795911917fb535b"),
-                             parseHex("86c11c32671aa7d5962eff976284ff81a981e9bfcfded80ea0e38881b8b6e96f")));
+             new User(5, "xander", "Xander Bhalla", 1559, User.AccessLevel.SUDO, "bad-salt".getBytes(),
+                      parseHex("8cc790682ce826cf353286c241f70c4aae16dbdf1a0274ac1795911917fb535b"),
+                      parseHex("86c11c32671aa7d5962eff976284ff81a981e9bfcfded80ea0e38881b8b6e96f")));
   }
 
   @Override
-  public User get(int team, String name) {
+  public User getUser(int team, String name) {
     return data.get(team + "," + name);
   }
 
