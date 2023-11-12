@@ -10,7 +10,7 @@ public interface UserDB {
     return entry == null ? null : entry.salt();
   }
 
-  void putNonce(byte[] userHash, byte[] nonceHash);
+  void putNonce(String nonceID);
 
-  boolean containsNonce(byte[] userHash, byte[] nonceHash);
+  boolean containsNonce(String nonceID);
 }

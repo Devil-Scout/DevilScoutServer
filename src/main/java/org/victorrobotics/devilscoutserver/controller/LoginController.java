@@ -39,21 +39,18 @@ public final class LoginController extends Controller {
            responses = { @OpenApiResponse(status = "200", description = "Authentication successful",
                                           content = @OpenApiContent(from = LoginController.LoginResponse.class)),
                          @OpenApiResponse(status = "400"), @OpenApiResponse(status = "404") })
-  public static void login(Context ctx) throws NoSuchAlgorithmException {
+  public static void login(Context ctx) {
     LoginRequest request = jsonDecode(ctx, LoginRequest.class);
     byte[] salt = UserDB.INSTANCE.getSalt(request.team, request.username);
     if (salt == null) {
       throw new NotFoundResponse();
     }
 
-    MessageDigest hashFunction = MessageDigest.getInstance(HASH_ALGORITHM);
-    String user = request.team + request.username;
-    byte[] userHash = hashFunction.digest(user.getBytes());
     byte[] nonce = new byte[16];
     RANDOM.nextBytes(nonce);
     System.arraycopy(request.clientNonce, 0, nonce, 0, 8);
-    byte[] nonceHash = hashFunction.digest(nonce);
-    UserDB.INSTANCE.putNonce(userHash, nonceHash);
+    String nonceID = request.team + "," + request.username + "," + base64Encode(nonce);
+    UserDB.INSTANCE.putNonce(nonceID);
 
     ctx.json(new LoginResponse(salt, nonce));
   }
@@ -77,10 +74,8 @@ public final class LoginController extends Controller {
     Mac hmacFunction = Mac.getInstance(HMAC_ALGORITHM);
     hmacFunction.init(new SecretKeySpec(user.storedKey(), HMAC_ALGORITHM));
 
-    String userID = request.team + request.username;
-    byte[] userHash = hashFunction.digest(userID.getBytes());
-    byte[] nonceHash = hashFunction.digest(request.nonce);
-    if (!UserDB.INSTANCE.containsNonce(userHash, nonceHash)) {
+    String nonceID = request.team + "," + request.username + "," + base64Encode(request.nonce);
+    if (!UserDB.INSTANCE.containsNonce(nonceID)) {
       throw new UnauthorizedResponse();
     }
 
