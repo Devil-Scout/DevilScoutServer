@@ -3,24 +3,15 @@
   "configurations": [
     {
       "type": "java",
-      "name": "SCRAM_InitHandler",
-      "request": "launch",
-      "mainClass": "org.victorrobotics.devilscoutserver.auth.SCRAM_InitHandler",
-      "projectName": "DevilScoutServer"
-    },
-    {
-      "type": "java",
       "name": "Current File",
       "request": "launch",
       "mainClass": "${file}",
-      "vmArgs": "--enable-preview"
     },
     {
       "type": "java",
       "name": "Main",
       "request": "launch",
       "mainClass": "org.victorrobotics.devilscoutserver.Main",
-      "vmArgs": "--enable-preview",
       "projectName": "DevilScoutServer"
     }
   ]

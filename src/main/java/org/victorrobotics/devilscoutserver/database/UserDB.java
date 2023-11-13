@@ -1,14 +1,16 @@
 package org.victorrobotics.devilscoutserver.database;
 
 public interface UserDB {
-  User get(int team, String username);
+  User getUser(int team, String username);
 
   default byte[] getSalt(int team, String username) {
-    User entry = get(team, username);
+    User entry = getUser(team, username);
     return entry == null ? null : entry.salt();
   }
 
-  void putNonce(byte[] userHash, byte[] nonceHash);
+  void putNonce(String nonceID);
 
-  boolean containsNonce(byte[] userHash, byte[] nonceHash);
+  boolean containsNonce(String nonceID);
+
+  void removeNonce(String nonceID);
 }

@@ -4,7 +4,13 @@ public record User(long userID,
                    String username,
                    String fullName,
                    int team,
-                   Permission permissions,
+                   AccessLevel accessLevel,
                    byte[] salt,
                    byte[] storedKey,
-                   byte[] serverKey) {}
+                   byte[] serverKey) {
+  public enum AccessLevel {
+    USER,
+    COACH,
+    SUDO;
+  }
+}
