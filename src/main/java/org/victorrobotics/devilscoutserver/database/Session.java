@@ -3,14 +3,14 @@ package org.victorrobotics.devilscoutserver.database;
 public class Session {
   private static final long DURATION_MILLIS = 8 * 60 * 60 * 1000;
 
-  public final byte[] sessionID;
+  public final String sessionID;
   public final long userID;
 
   public final User.AccessLevel accessLevel;
 
   private long expireTime;
 
-  public Session(byte[] sessionID, long userID, User.AccessLevel accessLevel) {
+  public Session(String sessionID, long userID, User.AccessLevel accessLevel) {
     this.sessionID = sessionID;
     this.userID = userID;
     this.accessLevel = accessLevel;
