@@ -10,7 +10,7 @@ public record User(long userID,
                    byte[] serverKey) {
   public enum AccessLevel {
     USER,
-    COACH,
+    ADMIN,
     SUDO;
   }
 }

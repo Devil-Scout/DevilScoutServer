@@ -7,5 +7,12 @@
         "",
         "#org.junit.jupiter",
         "org.junit.jupiter",
-    ]
+    ],
+    "java.completion.favoriteStaticMembers": [
+        "org.junit.jupiter.api.Assertions.*",
+        "io.javalin.apibuilder.ApiBuilder.*"
+    ],
+    "[java]": {
+        "editor.tabSize": 2
+    }
 }

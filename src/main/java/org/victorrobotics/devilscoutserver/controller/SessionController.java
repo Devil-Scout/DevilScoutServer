@@ -22,20 +22,28 @@ import io.javalin.openapi.OpenApiRequestBody;
 import io.javalin.openapi.OpenApiRequired;
 import io.javalin.openapi.OpenApiResponse;
 
-public final class LoginController extends Controller {
+public final class SessionController extends Controller {
   private static final String HASH_ALGORITHM = "SHA-256";
   private static final String HMAC_ALGORITHM = "HmacSHA256";
 
   private static final SecureRandom RANDOM = new SecureRandom();
 
-  private LoginController() {}
+  private SessionController() {}
 
-  @OpenApi(path = "/login", methods = HttpMethod.POST, tags = "Login",
+  @OpenApi(path = "/sessions", methods = HttpMethod.DELETE, tags = "Session",
+           description = "Invalidates a session, logging a client out.",
+           responses = { @OpenApiResponse(status = "200"), @OpenApiResponse(status = "401") })
+  public static void logout(Context ctx) {
+    Session session = getValidSession(ctx);
+    sessionDB().deleteSession(session);
+  }
+
+  @OpenApi(path = "/sessions/login", methods = HttpMethod.POST, tags = "Session",
            description = "Requests a login challenge. Must be called before `/auth`.",
            requestBody = @OpenApiRequestBody(required = true,
-                                             content = @OpenApiContent(from = LoginController.LoginRequest.class)),
+                                             content = @OpenApiContent(from = LoginRequest.class)),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = LoginController.LoginChallenge.class)),
+                                          content = @OpenApiContent(from = LoginChallenge.class)),
                          @OpenApiResponse(status = "400"), @OpenApiResponse(status = "404") })
   public static void login(Context ctx) {
     LoginRequest request = jsonDecode(ctx, LoginRequest.class);
@@ -51,12 +59,12 @@ public final class LoginController extends Controller {
     ctx.json(new LoginChallenge(salt, nonce));
   }
 
-  @OpenApi(path = "/auth", methods = HttpMethod.POST, tags = "Login",
+  @OpenApi(path = "/sessions/auth", methods = HttpMethod.POST, tags = "Session",
            description = "Authenticates a client. Must have already called `/login` to compute clientProof.",
            requestBody = @OpenApiRequestBody(required = true,
-                                             content = @OpenApiContent(from = LoginController.AuthRequest.class)),
-           responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = LoginController.AuthResponse.class)),
+                                             content = @OpenApiContent(from = AuthRequest.class)),
+           responses = { @OpenApiResponse(status = "201",
+                                          content = @OpenApiContent(from = AuthResponse.class)),
                          @OpenApiResponse(status = "400"), @OpenApiResponse(status = "401"),
                          @OpenApiResponse(status = "404") })
   public static void auth(Context ctx) throws NoSuchAlgorithmException, InvalidKeyException {
@@ -88,7 +96,8 @@ public final class LoginController extends Controller {
     userDB().removeNonce(nonceID);
 
     Session session = generateSession(user);
-    ctx.json(new AuthResponse(user, session, serverSignature));
+    ctx.status(201)
+       .json(new AuthResponse(user, session, serverSignature));
   }
 
   private static byte[] generateNonce(byte[] clientNonce) {
@@ -117,7 +126,9 @@ public final class LoginController extends Controller {
   private static Session generateSession(User user) {
     byte[] sessionID = new byte[8];
     RANDOM.nextBytes(sessionID);
-    return new Session(sessionID, user.userID(), user.accessLevel());
+    Session session = new Session(base64Encode(sessionID), user.userID(), user.accessLevel());
+    sessionDB().registerSession(session);
+    return session;
   }
 
   static record LoginRequest(@OpenApiRequired @OpenApiExample("1559") int team,
@@ -137,7 +148,7 @@ public final class LoginController extends Controller {
 
   static record AuthResponse(@OpenApiRequired @OpenApiExample("Xander Bhalla") String fullName,
                              @OpenApiRequired @OpenApiExample("USER") User.AccessLevel accessLevel,
-                             @OpenApiRequired @OpenApiExample("K9UoTnrEY94=") byte[] sessionID,
+                             @OpenApiRequired @OpenApiExample("K9UoTnrEY94=") String sessionID,
                              @OpenApiRequired
                              @OpenApiExample("m7squ/lkrdjWSAER1g84uxQm3yDAOYUtVfYEJeYR2Tw=") byte[] serverSignature) {
     AuthResponse(User user, Session session, byte[] serverSignature) {
