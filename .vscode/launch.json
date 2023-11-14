@@ -1,18 +1,18 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "type": "java",
-      "name": "Current File",
-      "request": "launch",
-      "mainClass": "${file}",
-    },
-    {
-      "type": "java",
-      "name": "Main",
-      "request": "launch",
-      "mainClass": "org.victorrobotics.devilscoutserver.Main",
-      "projectName": "DevilScoutServer"
-    }
-  ]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "Main",
+            "request": "launch",
+            "mainClass": "org.victorrobotics.devilscoutserver.Main",
+            "projectName": "DevilScoutServer"
+        }
+    ]
 }

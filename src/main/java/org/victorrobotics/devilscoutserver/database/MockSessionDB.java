@@ -12,7 +12,7 @@ public class MockSessionDB implements SessionDB {
 
   @Override
   public void registerSession(Session session) {
-    sessions.put(session.sessionID, session);
+    sessions.put(session.getSessionID(), session);
   }
 
   @Override
@@ -22,6 +22,6 @@ public class MockSessionDB implements SessionDB {
 
   @Override
   public void deleteSession(Session session) {
-    sessions.remove(session.sessionID);
+    sessions.remove(session.getSessionID());
   }
 }

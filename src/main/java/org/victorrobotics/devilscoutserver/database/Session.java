@@ -3,10 +3,10 @@ package org.victorrobotics.devilscoutserver.database;
 public class Session {
   private static final long DURATION_MILLIS = 8 * 60 * 60 * 1000;
 
-  public final String sessionID;
-  public final long userID;
+  private final String sessionID;
+  private final long   userID;
 
-  public final User.AccessLevel accessLevel;
+  private final User.AccessLevel accessLevel;
 
   private long expireTime;
 
@@ -28,5 +28,21 @@ public class Session {
 
   public boolean hasAccess(User.AccessLevel accessLevel) {
     return accessLevel != null && accessLevel.ordinal() <= this.accessLevel.ordinal();
+  }
+
+  public String getSessionID() {
+    return sessionID;
+  }
+
+  public long getUserID() {
+    return userID;
+  }
+
+  public User.AccessLevel getAccessLevel() {
+    return accessLevel;
+  }
+
+  public long getExpireTime() {
+    return expireTime;
   }
 }
