@@ -1,5 +1,7 @@
 package org.victorrobotics.devilscoutserver.controller;
 
+import static org.victorrobotics.devilscoutserver.Utils.base64Encode;
+
 import org.victorrobotics.devilscoutserver.database.Session;
 import org.victorrobotics.devilscoutserver.database.User;
 
@@ -7,8 +9,8 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Objects;
 import java.util.Arrays;
+import java.util.Objects;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -152,15 +154,15 @@ public final class SessionController extends Controller {
     @Override
     public String toString() {
       StringBuilder b = new StringBuilder();
-      return b.append("LoginRequest[")
-              .append("team=")
-              .append(team())
-              .append(",username=")
-              .append(username())
-              .append(",clientNonce=")
-              .append(base64Encode(clientNonce()))
-              .append("]")
-              .toString();
+      b.append("LoginRequest[")
+       .append("team=")
+       .append(team())
+       .append(",username=")
+       .append(username())
+       .append(",clientNonce=")
+       .append(base64Encode(clientNonce()))
+       .append("]");
+      return b.toString();
     }
   }
 
@@ -181,13 +183,13 @@ public final class SessionController extends Controller {
     @Override
     public String toString() {
       StringBuilder b = new StringBuilder();
-      return b.append("LoginChallenge[")
-              .append("salt=")
-              .append(base64Encode(salt()))
-              .append(",nonce=")
-              .append(base64Encode(nonce()))
-              .append("]")
-              .toString();
+      b.append("LoginChallenge[")
+       .append("salt=")
+       .append(base64Encode(salt()))
+       .append(",nonce=")
+       .append(base64Encode(nonce()))
+       .append("]");
+      return b.toString();
     }
   }
 
@@ -213,17 +215,17 @@ public final class SessionController extends Controller {
     @Override
     public String toString() {
       StringBuilder b = new StringBuilder();
-      return b.append("AuthRequest[")
-              .append("team=")
-              .append(team())
-              .append(",username=")
-              .append(username())
-              .append(",nonce=")
-              .append(base64Encode(nonce()))
-              .append(",clientProof=")
-              .append(base64Encode(clientProof()))
-              .append("]")
-              .toString();
+      b.append("AuthRequest[")
+       .append("team=")
+       .append(team())
+       .append(",username=")
+       .append(username())
+       .append(",nonce=")
+       .append(base64Encode(nonce()))
+       .append(",clientProof=")
+       .append(base64Encode(clientProof()))
+       .append("]");
+      return b.toString();
     }
   }
 
@@ -253,17 +255,17 @@ public final class SessionController extends Controller {
     @Override
     public String toString() {
       StringBuilder b = new StringBuilder();
-      return b.append("AuthResponse[")
-              .append("fullName=")
-              .append(fullName())
-              .append(",accessLevel=")
-              .append(accessLevel())
-              .append(",sessionID=")
-              .append(sessionID())
-              .append(",serverSignature=")
-              .append(base64Encode(serverSignature()))
-              .append("]")
-              .toString();
+      b.append("AuthResponse[")
+       .append("fullName=")
+       .append(fullName())
+       .append(",accessLevel=")
+       .append(accessLevel())
+       .append(",sessionID=")
+       .append(sessionID())
+       .append(",serverSignature=")
+       .append(base64Encode(serverSignature()))
+       .append("]");
+      return b.toString();
     }
   }
 }

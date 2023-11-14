@@ -1,12 +1,15 @@
 {
     "java.completion.importOrder": [
+        "#org.victorrobotics",
         "#",
         "org.victorrobotics",
         "java",
         "javax",
         "",
         "#org.junit.jupiter",
+        "#org.mockito",
         "org.junit.jupiter",
+        "org.mockito",
     ],
     "java.completion.favoriteStaticMembers": [
         "org.junit.jupiter.api.Assertions.*",
