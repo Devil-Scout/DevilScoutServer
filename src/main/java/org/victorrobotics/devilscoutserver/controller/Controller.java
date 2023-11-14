@@ -31,8 +31,11 @@ public class Controller {
     }
   }
 
-  public static void setDatabases(UserDB users, SessionDB sessions) {
+  public static void setUserDB(UserDB users) {
     USERS = users;
+  }
+
+  public static void setSessionDB(SessionDB sessions) {
     SESSIONS = sessions;
   }
 

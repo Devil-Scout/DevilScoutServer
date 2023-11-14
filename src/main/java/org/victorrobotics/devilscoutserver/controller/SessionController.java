@@ -7,6 +7,8 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Objects;
+import java.util.Arrays;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -30,14 +32,6 @@ public final class SessionController extends Controller {
 
   private SessionController() {}
 
-  @OpenApi(path = "/sessions", methods = HttpMethod.DELETE, tags = "Session",
-           description = "Invalidates a session, logging a client out.",
-           responses = { @OpenApiResponse(status = "200"), @OpenApiResponse(status = "401") })
-  public static void logout(Context ctx) {
-    Session session = getValidSession(ctx);
-    sessionDB().deleteSession(session);
-  }
-
   @OpenApi(path = "/sessions/login", methods = HttpMethod.POST, tags = "Session",
            description = "Requests a login challenge. Must be called before `/auth`.",
            requestBody = @OpenApiRequestBody(required = true,
@@ -47,13 +41,13 @@ public final class SessionController extends Controller {
                          @OpenApiResponse(status = "400"), @OpenApiResponse(status = "404") })
   public static void login(Context ctx) {
     LoginRequest request = jsonDecode(ctx, LoginRequest.class);
-    byte[] salt = userDB().getSalt(request.team, request.username);
+    byte[] salt = userDB().getSalt(request.team(), request.username());
     if (salt == null) {
       throw new NotFoundResponse();
     }
 
-    byte[] nonce = generateNonce(request.clientNonce);
-    String nonceID = request.team + "," + request.username + "," + base64Encode(nonce);
+    byte[] nonce = generateNonce(request.clientNonce());
+    String nonceID = request.team() + "," + request.username() + "," + base64Encode(nonce);
     userDB().putNonce(nonceID);
 
     ctx.json(new LoginChallenge(salt, nonce));
@@ -69,12 +63,13 @@ public final class SessionController extends Controller {
                          @OpenApiResponse(status = "404") })
   public static void auth(Context ctx) throws NoSuchAlgorithmException, InvalidKeyException {
     AuthRequest request = jsonDecode(ctx, AuthRequest.class);
-    User user = userDB().getUser(request.team, request.username);
+    User user = userDB().getUser(request.team(), request.username());
     if (user == null) {
       throw new NotFoundResponse();
     }
 
-    String nonceID = request.team + "," + request.username + "," + base64Encode(request.nonce);
+    String nonceID =
+        request.team() + "," + request.username() + "," + base64Encode(request.nonce());
     if (!userDB().containsNonce(nonceID)) {
       throw new UnauthorizedResponse();
     }
@@ -83,9 +78,9 @@ public final class SessionController extends Controller {
     Mac hmacFunction = Mac.getInstance(HMAC_ALGORITHM);
     hmacFunction.init(new SecretKeySpec(user.storedKey(), HMAC_ALGORITHM));
 
-    byte[] userAndNonce = combine(request.team + request.username, request.nonce);
+    byte[] userAndNonce = combine(request.team() + request.username(), request.nonce());
     byte[] clientSignature = hmacFunction.doFinal(userAndNonce);
-    byte[] clientKey = xor(request.clientProof, clientSignature);
+    byte[] clientKey = xor(request.clientProof(), clientSignature);
     byte[] storedKey = hashFunction.digest(clientKey);
     if (!MessageDigest.isEqual(user.storedKey(), storedKey)) {
       throw new UnauthorizedResponse();
@@ -96,8 +91,16 @@ public final class SessionController extends Controller {
     userDB().removeNonce(nonceID);
 
     Session session = generateSession(user);
-    ctx.status(201)
-       .json(new AuthResponse(user, session, serverSignature));
+    ctx.status(201);
+    ctx.json(new AuthResponse(user, session, serverSignature));
+  }
+
+  @OpenApi(path = "/sessions", methods = HttpMethod.DELETE, tags = "Session",
+           description = "Invalidates a session, logging a client out.",
+           responses = { @OpenApiResponse(status = "200"), @OpenApiResponse(status = "401") })
+  public static void logout(Context ctx) {
+    Session session = getValidSession(ctx);
+    sessionDB().deleteSession(session);
   }
 
   private static byte[] generateNonce(byte[] clientNonce) {
@@ -133,18 +136,96 @@ public final class SessionController extends Controller {
 
   static record LoginRequest(@OpenApiRequired @OpenApiExample("1559") int team,
                              @OpenApiRequired @OpenApiExample("xander") String username,
-                             @OpenApiRequired @OpenApiExample("EjRWeJCrze8=") byte[] clientNonce) {}
+                             @OpenApiRequired @OpenApiExample("EjRWeJCrze8=") byte[] clientNonce) {
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj || (obj instanceof LoginRequest other && team() == other.team()
+          && Objects.equals(username(), other.username())
+          && Arrays.equals(clientNonce(), other.clientNonce()));
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(team(), username(), Arrays.hashCode(clientNonce()));
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder b = new StringBuilder();
+      return b.append("LoginRequest[")
+              .append("team=")
+              .append(team())
+              .append(",username=")
+              .append(username())
+              .append(",clientNonce=")
+              .append(base64Encode(clientNonce()))
+              .append("]")
+              .toString();
+    }
+  }
 
   static record LoginChallenge(@OpenApiRequired @OpenApiExample("mHZUMhCrze8=") byte[] salt,
                                @OpenApiRequired
-                               @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce) {}
+                               @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce) {
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj || (obj instanceof LoginChallenge other
+          && Arrays.equals(salt(), other.salt()) && Arrays.equals(nonce(), other.nonce()));
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(Arrays.hashCode(salt()), Arrays.hashCode(nonce()));
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder b = new StringBuilder();
+      return b.append("LoginChallenge[")
+              .append("salt=")
+              .append(base64Encode(salt()))
+              .append(",nonce=")
+              .append(base64Encode(nonce()))
+              .append("]")
+              .toString();
+    }
+  }
 
   static record AuthRequest(@OpenApiRequired @OpenApiExample("1559") int team,
                             @OpenApiRequired @OpenApiExample("xander") String username,
                             @OpenApiRequired
                             @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce,
                             @OpenApiRequired
-                            @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJCrze8=") byte[] clientProof) {}
+                            @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJCrze8=") byte[] clientProof) {
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj || (obj instanceof AuthRequest other && team() == other.team()
+          && Objects.equals(username(), other.username()) && Arrays.equals(nonce(), other.nonce())
+          && Arrays.equals(clientProof(), other.clientProof()));
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(team(), username(), Arrays.hashCode(nonce()),
+                          Arrays.hashCode(clientProof()));
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder b = new StringBuilder();
+      return b.append("AuthRequest[")
+              .append("team=")
+              .append(team())
+              .append(",username=")
+              .append(username())
+              .append(",nonce=")
+              .append(base64Encode(nonce()))
+              .append(",clientProof=")
+              .append(base64Encode(clientProof()))
+              .append("]")
+              .toString();
+    }
+  }
 
   static record AuthResponse(@OpenApiRequired @OpenApiExample("Xander Bhalla") String fullName,
                              @OpenApiRequired @OpenApiExample("USER") User.AccessLevel accessLevel,
@@ -152,7 +233,37 @@ public final class SessionController extends Controller {
                              @OpenApiRequired
                              @OpenApiExample("m7squ/lkrdjWSAER1g84uxQm3yDAOYUtVfYEJeYR2Tw=") byte[] serverSignature) {
     AuthResponse(User user, Session session, byte[] serverSignature) {
-      this(user.fullName(), user.accessLevel(), session.sessionID, serverSignature);
+      this(user.fullName(), user.accessLevel(), session.getSessionID(), serverSignature);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj || (obj instanceof AuthResponse other
+          && Objects.equals(fullName(), other.fullName()) && accessLevel() == other.accessLevel()
+          && Objects.equals(sessionID(), other.sessionID())
+          && Arrays.equals(serverSignature(), other.serverSignature()));
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(fullName(), accessLevel(), sessionID(),
+                          Arrays.hashCode(serverSignature()));
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder b = new StringBuilder();
+      return b.append("AuthResponse[")
+              .append("fullName=")
+              .append(fullName())
+              .append(",accessLevel=")
+              .append(accessLevel())
+              .append(",sessionID=")
+              .append(sessionID())
+              .append(",serverSignature=")
+              .append(base64Encode(serverSignature()))
+              .append("]")
+              .toString();
     }
   }
 }

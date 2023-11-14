@@ -12,8 +12,10 @@ public class StatusController extends Controller {
   @OpenApi(path = "/status", methods = HttpMethod.GET, tags = "Status",
            description = "Gets the status of the server.",
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = Status.class)) })
+                                          content = @OpenApiContent(from = Status.class)),
+                         @OpenApiResponse(status = "410") })
   public static void status(Context ctx) {
+    getValidSession(ctx);
     ctx.json(new Status("okay"));
   }
 
