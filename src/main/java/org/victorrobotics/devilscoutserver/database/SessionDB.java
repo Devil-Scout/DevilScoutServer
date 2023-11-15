@@ -1,9 +1,26 @@
 package org.victorrobotics.devilscoutserver.database;
 
-public interface SessionDB {
-  void registerSession(Session session);
+import org.victorrobotics.devilscoutserver.data.Session;
 
-  Session getSession(String sessionID);
+import java.util.HashMap;
+import java.util.Map;
 
-  void deleteSession(Session session);
+public class SessionDB {
+  private final Map<String, Session> sessions;
+
+  public SessionDB() {
+    sessions = new HashMap<>();
+  }
+
+  public void registerSession(Session session) {
+    sessions.put(session.getSessionID(), session);
+  }
+
+  public Session getSession(String sessionID) {
+    return sessions.get(sessionID);
+  }
+
+  public void deleteSession(Session session) {
+    sessions.remove(session.getSessionID());
+  }
 }

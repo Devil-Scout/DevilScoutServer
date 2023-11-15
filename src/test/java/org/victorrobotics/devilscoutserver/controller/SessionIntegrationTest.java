@@ -1,11 +1,11 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.Main;
-import org.victorrobotics.devilscoutserver.controller.SessionController.AuthRequest;
-import org.victorrobotics.devilscoutserver.controller.SessionController.AuthResponse;
-import org.victorrobotics.devilscoutserver.controller.SessionController.LoginChallenge;
-import org.victorrobotics.devilscoutserver.controller.SessionController.LoginRequest;
-import org.victorrobotics.devilscoutserver.database.User;
+import org.victorrobotics.devilscoutserver.data.AuthRequest;
+import org.victorrobotics.devilscoutserver.data.AuthResponse;
+import org.victorrobotics.devilscoutserver.data.LoginChallenge;
+import org.victorrobotics.devilscoutserver.data.LoginRequest;
+import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 
 import java.io.IOException;
 import java.net.URI;
@@ -136,7 +136,7 @@ class SessionIntegrationTest {
 
     AuthResponse authResponse = json.readValue(responseBody, AuthResponse.class);
     assertNotNull(authResponse);
-    assertEquals(User.AccessLevel.SUDO, authResponse.accessLevel());
+    assertEquals(UserAccessLevel.SUDO, authResponse.accessLevel());
     assertEquals("Xander Bhalla", authResponse.fullName());
     String sessionID = authResponse.sessionID();
     assertNotNull(sessionID);

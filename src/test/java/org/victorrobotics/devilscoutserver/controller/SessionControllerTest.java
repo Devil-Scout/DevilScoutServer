@@ -3,13 +3,14 @@ package org.victorrobotics.devilscoutserver.controller;
 import static org.victorrobotics.devilscoutserver.Utils.base64Decode;
 import static org.victorrobotics.devilscoutserver.controller.Controller.SESSION_HEADER;
 
-import org.victorrobotics.devilscoutserver.controller.SessionController.AuthRequest;
-import org.victorrobotics.devilscoutserver.controller.SessionController.AuthResponse;
-import org.victorrobotics.devilscoutserver.controller.SessionController.LoginChallenge;
-import org.victorrobotics.devilscoutserver.controller.SessionController.LoginRequest;
-import org.victorrobotics.devilscoutserver.database.Session;
+import org.victorrobotics.devilscoutserver.data.AuthRequest;
+import org.victorrobotics.devilscoutserver.data.AuthResponse;
+import org.victorrobotics.devilscoutserver.data.LoginChallenge;
+import org.victorrobotics.devilscoutserver.data.LoginRequest;
+import org.victorrobotics.devilscoutserver.data.Session;
+import org.victorrobotics.devilscoutserver.data.User;
+import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
-import org.victorrobotics.devilscoutserver.database.User;
 import org.victorrobotics.devilscoutserver.database.UserDB;
 
 import java.security.InvalidKeyException;
@@ -107,7 +108,7 @@ class SessionControllerTest {
 
   static Stream<Supplier<UserTestCase>> userTestCases() {
     return Stream.<Supplier<UserTestCase>>builder()
-                 .add(mockUser(5, 1559, "xander", "Xander Bhalla", User.AccessLevel.SUDO,
+                 .add(mockUser(5, 1559, "xander", "Xander Bhalla", UserAccessLevel.SUDO,
                                "YmFkLXNhbHQ=", "EjRWeJCrze8AAAAAAAAAAA==",
                                "jMeQaCzoJs81MobCQfcMSq4W298aAnSsF5WRGRf7U1s=",
                                "hsEcMmcap9WWLv+XYoT/gamB6b/P3tgOoOOIgbi26W8=",
@@ -123,7 +124,7 @@ class SessionControllerTest {
   }
 
   static Supplier<UserTestCase> mockUser(long userID, int team, String username, String fullName,
-                                         User.AccessLevel accessLevel, String salt, String nonce,
+                                         UserAccessLevel accessLevel, String salt, String nonce,
                                          String storedKey, String serverKey, String clientProof,
                                          String serverSignature) {
     return () -> {

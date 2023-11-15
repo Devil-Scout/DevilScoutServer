@@ -1,7 +1,9 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.database.Session;
+import org.victorrobotics.devilscoutserver.cache.MatchScheduleCache;
+import org.victorrobotics.devilscoutserver.data.Session;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
+import org.victorrobotics.devilscoutserver.database.TeamConfigDB;
 import org.victorrobotics.devilscoutserver.database.UserDB;
 
 import io.javalin.http.BadRequestResponse;
@@ -11,8 +13,11 @@ import io.javalin.http.UnauthorizedResponse;
 public class Controller {
   public static final String SESSION_HEADER = "X-DS-SESSION-KEY";
 
-  private static UserDB    USERS;
-  private static SessionDB SESSIONS;
+  private static UserDB       USERS;
+  private static SessionDB    SESSIONS;
+  private static TeamConfigDB TEAMS;
+
+  private static MatchScheduleCache MATCH_SCHEDULES;
 
   protected Controller() {}
 
@@ -33,12 +38,28 @@ public class Controller {
     SESSIONS = sessions;
   }
 
+  public static void setTeamDB(TeamConfigDB teams) {
+    TEAMS = teams;
+  }
+
+  public static void setMatchSchedules(MatchScheduleCache schedules) {
+    MATCH_SCHEDULES = schedules;
+  }
+
   protected static UserDB userDB() {
     return USERS;
   }
 
   protected static SessionDB sessionDB() {
     return SESSIONS;
+  }
+
+  protected static TeamConfigDB teamDB() {
+    return TEAMS;
+  }
+
+  protected static MatchScheduleCache matchSchedules() {
+    return MATCH_SCHEDULES;
   }
 
   protected static Session getValidSession(Context ctx) {
