@@ -1,6 +1,6 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.cache.MatchScheduleCache;
+import org.victorrobotics.devilscoutserver.cache.EventInfoCache;
 import org.victorrobotics.devilscoutserver.data.Session;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
 import org.victorrobotics.devilscoutserver.database.TeamConfigDB;
@@ -17,7 +17,7 @@ public class Controller {
   private static SessionDB    SESSIONS;
   private static TeamConfigDB TEAMS;
 
-  private static MatchScheduleCache MATCH_SCHEDULES;
+  private static EventInfoCache EVENT_INFO_CACHE;
 
   protected Controller() {}
 
@@ -42,8 +42,8 @@ public class Controller {
     TEAMS = teams;
   }
 
-  public static void setMatchSchedules(MatchScheduleCache schedules) {
-    MATCH_SCHEDULES = schedules;
+  public static void setEventInfoCache(EventInfoCache cache) {
+    EVENT_INFO_CACHE = cache;
   }
 
   protected static UserDB userDB() {
@@ -58,8 +58,8 @@ public class Controller {
     return TEAMS;
   }
 
-  protected static MatchScheduleCache matchSchedules() {
-    return MATCH_SCHEDULES;
+  protected static EventInfoCache eventInfoCache() {
+    return EVENT_INFO_CACHE;
   }
 
   protected static Session getValidSession(Context ctx) {

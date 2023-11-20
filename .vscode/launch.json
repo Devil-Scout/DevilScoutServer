@@ -9,9 +9,9 @@
         },
         {
             "type": "java",
-            "name": "Main",
+            "name": "Start Server",
             "request": "launch",
-            "mainClass": "org.victorrobotics.devilscoutserver.Main",
+            "mainClass": "org.victorrobotics.devilscoutserver.Server",
             "projectName": "DevilScoutServer"
         }
     ]

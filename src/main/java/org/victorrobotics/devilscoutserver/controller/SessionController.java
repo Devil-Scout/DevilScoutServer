@@ -34,7 +34,7 @@ public final class SessionController extends Controller {
 
   private SessionController() {}
 
-  @OpenApi(path = "/sessions/login", methods = HttpMethod.POST, tags = "Session",
+  @OpenApi(path = "/login", methods = HttpMethod.POST, tags = "Authentication",
            description = "Requests a login challenge. Must be called before `/auth`.",
            requestBody = @OpenApiRequestBody(required = true,
                                              content = @OpenApiContent(from = LoginRequest.class)),
@@ -55,11 +55,11 @@ public final class SessionController extends Controller {
     ctx.json(new LoginChallenge(salt, nonce));
   }
 
-  @OpenApi(path = "/sessions/auth", methods = HttpMethod.POST, tags = "Session",
+  @OpenApi(path = "/auth", methods = HttpMethod.POST, tags = "Authentication",
            description = "Authenticates a client. Must have already called `/login` to compute clientProof.",
            requestBody = @OpenApiRequestBody(required = true,
                                              content = @OpenApiContent(from = AuthRequest.class)),
-           responses = { @OpenApiResponse(status = "201",
+           responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = AuthResponse.class)),
                          @OpenApiResponse(status = "400"), @OpenApiResponse(status = "401"),
                          @OpenApiResponse(status = "404") })
@@ -93,16 +93,16 @@ public final class SessionController extends Controller {
     userDB().removeNonce(nonceID);
 
     Session session = generateSession(user);
-    ctx.status(201);
     ctx.json(new AuthResponse(user, session, serverSignature));
   }
 
-  @OpenApi(path = "/sessions", methods = HttpMethod.DELETE, tags = "Session",
+  @OpenApi(path = "/logout", methods = HttpMethod.DELETE, tags = "Authentication",
            description = "Invalidates a session, logging a client out.",
-           responses = { @OpenApiResponse(status = "200"), @OpenApiResponse(status = "401") })
+           responses = { @OpenApiResponse(status = "204"), @OpenApiResponse(status = "401") })
   public static void logout(Context ctx) {
     Session session = getValidSession(ctx);
     sessionDB().deleteSession(session);
+    ctx.status(204);
   }
 
   private static byte[] generateNonce(byte[] clientNonce) {
