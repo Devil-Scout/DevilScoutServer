@@ -79,7 +79,8 @@ public class Controller {
 
   protected static Session getValidSession(Context ctx, UserAccessLevel accessLevel) {
     Session session = getValidSession(ctx);
-    if (session.getAccessLevel().ordinal() < accessLevel.ordinal()) {
+    if (accessLevel.ordinal() > session.getAccessLevel()
+                                       .ordinal()) {
       throw new ForbiddenResponse();
     }
     return session;

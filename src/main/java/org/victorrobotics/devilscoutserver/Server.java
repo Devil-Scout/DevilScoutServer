@@ -15,8 +15,6 @@ import org.victorrobotics.devilscoutserver.database.SessionDB;
 import org.victorrobotics.devilscoutserver.database.TeamConfigDB;
 import org.victorrobotics.devilscoutserver.database.UserDB;
 
-import java.io.InputStream;
-
 import io.javalin.Javalin;
 import io.javalin.http.Handler;
 import io.javalin.openapi.ApiKeyAuth;

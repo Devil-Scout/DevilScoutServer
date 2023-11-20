@@ -7,4 +7,4 @@ import io.javalin.openapi.OpenApiRequired;
 
 public record Question(@OpenApiRequired @OpenApiExample("Drivetrain Type") String prompt,
                        @OpenApiRequired QuestionType type,
-                      @OpenApiExample("{}")  Map<String, Object> config) {}
+                       @OpenApiExample("{}") Map<String, Object> config) {}

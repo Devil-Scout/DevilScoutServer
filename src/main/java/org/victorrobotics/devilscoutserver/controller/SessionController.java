@@ -151,7 +151,7 @@ public final class SessionController extends Controller {
                                    @OpenApiRequired
                                    @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce,
                                    @OpenApiRequired
-                                   @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJCrze8=") byte[] clientProof) {}
+                                   @OpenApiExample("m7squ/lkrdjWSAER1g84uxQm3yDAOYUtVfYEJeYR2Tw=") byte[] clientProof) {}
 
   public static record AuthResponse(@OpenApiRequired
   @OpenApiExample("Xander Bhalla") String fullName,
