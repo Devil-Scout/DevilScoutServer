@@ -2,12 +2,9 @@ package org.victorrobotics.devilscoutserver.controller;
 
 import static org.victorrobotics.devilscoutserver.Utils.base64Encode;
 
-import org.victorrobotics.devilscoutserver.data.AuthRequest;
-import org.victorrobotics.devilscoutserver.data.AuthResponse;
-import org.victorrobotics.devilscoutserver.data.LoginChallenge;
-import org.victorrobotics.devilscoutserver.data.LoginRequest;
 import org.victorrobotics.devilscoutserver.data.Session;
 import org.victorrobotics.devilscoutserver.data.User;
+import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -23,7 +20,9 @@ import io.javalin.http.UnauthorizedResponse;
 import io.javalin.openapi.HttpMethod;
 import io.javalin.openapi.OpenApi;
 import io.javalin.openapi.OpenApiContent;
+import io.javalin.openapi.OpenApiExample;
 import io.javalin.openapi.OpenApiRequestBody;
+import io.javalin.openapi.OpenApiRequired;
 import io.javalin.openapi.OpenApiResponse;
 
 public final class SessionController extends Controller {
@@ -135,5 +134,34 @@ public final class SessionController extends Controller {
         new Session(base64Encode(sessionID), user.userID(), user.team(), user.accessLevel());
     sessionDB().registerSession(session);
     return session;
+  }
+
+  @SuppressWarnings("java:S6218")
+  static record LoginRequest(@OpenApiRequired @OpenApiExample("1559") int team,
+                             @OpenApiRequired @OpenApiExample("xander") String username,
+                             @OpenApiRequired @OpenApiExample("EjRWeJCrze8=") byte[] clientNonce) {}
+
+  @SuppressWarnings("java:S6218")
+  static record LoginChallenge(@OpenApiRequired @OpenApiExample("mHZUMhCrze8=") byte[] salt,
+                               @OpenApiRequired
+                               @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce) {}
+
+  @SuppressWarnings("java:S6218")
+  static record AuthRequest(@OpenApiRequired @OpenApiExample("1559") int team,
+                            @OpenApiRequired @OpenApiExample("xander") String username,
+                            @OpenApiRequired
+                            @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce,
+                            @OpenApiRequired
+                            @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJCrze8=") byte[] clientProof) {}
+
+  @SuppressWarnings("java:S6218")
+  static record AuthResponse(@OpenApiRequired @OpenApiExample("Xander Bhalla") String fullName,
+                             @OpenApiRequired @OpenApiExample("USER") UserAccessLevel accessLevel,
+                             @OpenApiRequired @OpenApiExample("K9UoTnrEY94=") String sessionID,
+                             @OpenApiRequired
+                             @OpenApiExample("m7squ/lkrdjWSAER1g84uxQm3yDAOYUtVfYEJeYR2Tw=") byte[] serverSignature) {
+    public AuthResponse(User user, Session session, byte[] serverSignature) {
+      this(user.fullName(), user.accessLevel(), session.getSessionID(), serverSignature);
+    }
   }
 }
