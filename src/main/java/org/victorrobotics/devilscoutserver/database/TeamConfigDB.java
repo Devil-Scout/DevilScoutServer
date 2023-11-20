@@ -10,19 +10,13 @@ public class TeamConfigDB {
 
   public TeamConfigDB() {
     teams = new HashMap<>();
-    teams.put(1559, new TeamConfig(1559, "Devil Tech"));
-    teams.get(1559).setEventKey("2023nyrr");
   }
 
   public TeamConfig get(int team) {
     return teams.get(team);
   }
 
-  public TeamConfig getOrCreate(int team, String name) {
-    return teams.computeIfAbsent(team, x -> new TeamConfig(team, name));
-  }
-
-  public void destroy(int team) {
+  public void remove(int team) {
     teams.remove(team);
   }
 }

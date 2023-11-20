@@ -1,8 +1,9 @@
-package org.victorrobotics.devilscoutserver.controller;
+package org.victorrobotics.devilscoutserver.integration;
 
 import static org.victorrobotics.devilscoutserver.Utils.base64Decode;
 
 import org.victorrobotics.devilscoutserver.Server;
+import org.victorrobotics.devilscoutserver.controller.Controller;
 import org.victorrobotics.devilscoutserver.data.AuthRequest;
 import org.victorrobotics.devilscoutserver.data.AuthResponse;
 import org.victorrobotics.devilscoutserver.data.LoginChallenge;
@@ -40,7 +41,6 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;

@@ -2,21 +2,15 @@ package org.victorrobotics.devilscoutserver.data;
 
 public class TeamConfig {
   private final int team;
-  private final String name;
 
   private String eventKey;
 
-  public TeamConfig(int team, String name) {
+  public TeamConfig(int team) {
     this.team = team;
-    this.name = name;
   }
 
   public int getTeam() {
     return team;
-  }
-
-  public String getName() {
-    return name;
   }
 
   public String getEventKey() {
