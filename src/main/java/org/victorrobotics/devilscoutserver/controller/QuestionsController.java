@@ -1,18 +1,20 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.data.DriveTeamQuestions;
-import org.victorrobotics.devilscoutserver.data.MatchQuestions;
-import org.victorrobotics.devilscoutserver.data.PitQuestions;
+import org.victorrobotics.devilscoutserver.data.QuestionType;
 import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.javalin.http.Context;
 import io.javalin.openapi.HttpMethod;
 import io.javalin.openapi.OpenApi;
 import io.javalin.openapi.OpenApiContent;
+import io.javalin.openapi.OpenApiExample;
+import io.javalin.openapi.OpenApiRequired;
 import io.javalin.openapi.OpenApiResponse;
 
 public final class QuestionsController extends Controller {
@@ -75,4 +77,24 @@ public final class QuestionsController extends Controller {
     getValidSession(ctx, UserAccessLevel.ADMIN);
     ctx.json(DRIVE_TEAM_QUESTIONS_JSON);
   }
+
+  public static record Question(@OpenApiRequired @OpenApiExample("Drivetrain Type") String prompt,
+                                @OpenApiRequired QuestionType type,
+                                @OpenApiExample("{}") Map<String, Object> config) {}
+
+  public static record MatchQuestions(@OpenApiRequired List<Question> auto,
+                                      @OpenApiRequired @OpenApiExample("[]") List<Question> teleop,
+                                      @OpenApiRequired @OpenApiExample("[]") List<Question> endgame,
+                                      @OpenApiRequired @OpenApiExample("[]") List<Question> general,
+                                      @OpenApiRequired
+                                      @OpenApiExample("[]") List<Question> human) {}
+
+  public static record PitQuestions(@OpenApiRequired List<Question> specs,
+                                    @OpenApiRequired @OpenApiExample("[]") List<Question> auto,
+                                    @OpenApiRequired @OpenApiExample("[]") List<Question> teleop,
+                                    @OpenApiRequired @OpenApiExample("[]") List<Question> endgame,
+                                    @OpenApiRequired
+                                    @OpenApiExample("[]") List<Question> general) {}
+
+  public static record DriveTeamQuestions(@OpenApiRequired List<Question> questions) {}
 }

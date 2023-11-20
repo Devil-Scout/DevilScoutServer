@@ -1,8 +1,8 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.data.DriveTeamQuestions;
-import org.victorrobotics.devilscoutserver.data.MatchQuestions;
-import org.victorrobotics.devilscoutserver.data.PitQuestions;
+import org.victorrobotics.devilscoutserver.controller.QuestionsController.DriveTeamQuestions;
+import org.victorrobotics.devilscoutserver.controller.QuestionsController.MatchQuestions;
+import org.victorrobotics.devilscoutserver.controller.QuestionsController.PitQuestions;
 import org.victorrobotics.devilscoutserver.data.Session;
 import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
