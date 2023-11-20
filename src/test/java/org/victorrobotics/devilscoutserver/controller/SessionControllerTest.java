@@ -1,21 +1,22 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import static org.victorrobotics.devilscoutserver.Utils.base64Decode;
+import static org.victorrobotics.devilscoutserver.Utils.base64Encode;
 import static org.victorrobotics.devilscoutserver.controller.Controller.SESSION_HEADER;
 
 import org.victorrobotics.devilscoutserver.controller.SessionController.AuthRequest;
 import org.victorrobotics.devilscoutserver.controller.SessionController.AuthResponse;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginChallenge;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginRequest;
-import org.victorrobotics.devilscoutserver.database.Session;
+import org.victorrobotics.devilscoutserver.data.Session;
+import org.victorrobotics.devilscoutserver.data.User;
+import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
-import org.victorrobotics.devilscoutserver.database.User;
 import org.victorrobotics.devilscoutserver.database.UserDB;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import io.javalin.http.Context;
@@ -27,14 +28,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 class SessionControllerTest {
   @ParameterizedTest
-  @MethodSource("userTestCases")
-  void testLogin(Supplier<UserTestCase> testCaseSupplier) {
-    UserTestCase testCase = testCaseSupplier.get();
+  @MethodSource("testCases")
+  void testLogin(TestCase testCase) {
+    testCase.inject();
     LoginRequest request = mock(LoginRequest.class);
     when(request.team()).thenReturn(testCase.user.team());
     when(request.username()).thenReturn(testCase.user.username());
@@ -54,13 +56,12 @@ class SessionControllerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("userTestCases")
-  void testAuth(Supplier<UserTestCase> testCaseSupplier)
-      throws InvalidKeyException, NoSuchAlgorithmException {
+  @MethodSource("testCases")
+  void testAuth(TestCase testCase) throws InvalidKeyException, NoSuchAlgorithmException {
     SessionDB sessions = mock(SessionDB.class);
     Controller.setSessionDB(sessions);
+    testCase.inject();
 
-    UserTestCase testCase = testCaseSupplier.get();
     AuthRequest request = mock(AuthRequest.class);
     when(request.team()).thenReturn(testCase.user.team());
     when(request.username()).thenReturn(testCase.user.username());
@@ -85,9 +86,9 @@ class SessionControllerTest {
         && base64Decode(r.sessionID()).length == 8));
   }
 
-  @ParameterizedTest
-  @MethodSource("sessionTestCases")
-  void testLogout(String sessionID) {
+  @Test
+  void testLogout() {
+    String sessionID = "vcOVI8k869c=";
     Session session = mock(Session.class);
     when(session.getSessionID()).thenReturn(sessionID);
 
@@ -105,48 +106,32 @@ class SessionControllerTest {
     verify(sessions).deleteSession(session);
   }
 
-  static Stream<Supplier<UserTestCase>> userTestCases() {
-    return Stream.<Supplier<UserTestCase>>builder()
-                 .add(mockUser(5, 1559, "xander", "Xander Bhalla", User.AccessLevel.SUDO,
-                               "YmFkLXNhbHQ=", "EjRWeJCrze8AAAAAAAAAAA==",
-                               "jMeQaCzoJs81MobCQfcMSq4W298aAnSsF5WRGRf7U1s=",
-                               "hsEcMmcap9WWLv+XYoT/gamB6b/P3tgOoOOIgbi26W8=",
-                               "UFXKbLn2qYTfZ8clOs0g4DQARrl+M505nIPADfX7zwI=",
-                               "HLgptJ2+owkHw73MIA9bmeLG0hxGEwsEhgUwl85HeNQ="))
+  static Stream<TestCase> testCases() {
+    return Stream.<TestCase>builder()
+                 .add(new TestCase(new User((long) 5, "xander", "Xander Bhalla", 1559,
+                                            UserAccessLevel.SUDO, base64Decode("YmFkLXNhbHQ="),
+                                            base64Decode("jMeQaCzoJs81MobCQfcMSq4W298aAnSsF5WRGRf7U1s="),
+                                            base64Decode("hsEcMmcap9WWLv+XYoT/gamB6b/P3tgOoOOIgbi26W8=")),
+                                   base64Decode("EjRWeJCrze8AAAAAAAAAAA=="),
+                                   base64Decode("UFXKbLn2qYTfZ8clOs0g4DQARrl+M505nIPADfX7zwI="),
+                                   base64Decode("HLgptJ2+owkHw73MIA9bmeLG0hxGEwsEhgUwl85HeNQ=")))
                  .build();
   }
 
-  static Stream<String> sessionTestCases() {
-    return Stream.<String>builder()
-                 .add("vcOVI8k869c=")
-                 .build();
-  }
-
-  static Supplier<UserTestCase> mockUser(long userID, int team, String username, String fullName,
-                                         User.AccessLevel accessLevel, String salt, String nonce,
-                                         String storedKey, String serverKey, String clientProof,
-                                         String serverSignature) {
-    return () -> {
-      User user = new User(userID, username, fullName, team, accessLevel, base64Decode(salt),
-                           base64Decode(storedKey), base64Decode(serverKey));
-      UserDB users = mock(UserDB.class);
-      when(users.getUser(team, username)).thenReturn(user);
-      when(users.getSalt(team, username)).thenReturn(user.salt());
-      when(users.containsNonce(team + "," + username + "," + nonce)).thenReturn(true);
-      Controller.setUserDB(users);
-
-      return new UserTestCase(user, base64Decode(nonce), base64Decode(clientProof),
-                              base64Decode(serverSignature));
-    };
-  }
-
-  record UserTestCase(User user,
-                      byte[] clientNonce,
-                      byte[] nonce,
-                      byte[] clientProof,
-                      byte[] serverSignature) {
-    UserTestCase(User user, byte[] nonce, byte[] clientProof, byte[] serverSignature) {
+  record TestCase(User user,
+                  byte[] clientNonce,
+                  byte[] nonce,
+                  byte[] clientProof,
+                  byte[] serverSignature) {
+    TestCase(User user, byte[] nonce, byte[] clientProof, byte[] serverSignature) {
       this(user, Arrays.copyOf(nonce, 8), nonce, clientProof, serverSignature);
+    }
+
+    void inject() {
+      UserDB users = new UserDB();
+      users.addUser(user);
+      users.putNonce(user.team() + "," + user.username() + "," + base64Encode(nonce));
+      Controller.setUserDB(users);
     }
   }
 }

@@ -1,4 +1,4 @@
-package org.victorrobotics.devilscoutserver.database;
+package org.victorrobotics.devilscoutserver.data;
 
 import static org.victorrobotics.devilscoutserver.Utils.base64Encode;
 
@@ -9,16 +9,10 @@ public record User(long userID,
                    String username,
                    String fullName,
                    int team,
-                   User.AccessLevel accessLevel,
+                   UserAccessLevel accessLevel,
                    byte[] salt,
                    byte[] storedKey,
                    byte[] serverKey) {
-  public enum AccessLevel {
-    USER,
-    ADMIN,
-    SUDO;
-  }
-
   @Override
   public boolean equals(Object obj) {
     return this == obj || (obj instanceof User other && userID() == other.userID()

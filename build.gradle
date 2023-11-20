@@ -9,7 +9,7 @@ java {
 }
 
 application {
-  mainClass = 'org.victorrobotics.devilscoutserver.Main'
+  mainClass = 'org.victorrobotics.devilscoutserver.Server'
 }
 
 repositories {
@@ -22,6 +22,7 @@ dependencies {
   implementation 'io.javalin.community.openapi:javalin-swagger-plugin:5.6.3'
   implementation 'org.slf4j:slf4j-simple:2.0.7'
   implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
+  implementation 'org.victorrobotics.bluealliance:blue-alliance-api:2023-beta'
 
   annotationProcessor 'io.javalin.community.openapi:openapi-annotation-processor:5.6.3'
 

@@ -2,15 +2,14 @@ package org.victorrobotics.devilscoutserver.controller;
 
 import static org.victorrobotics.devilscoutserver.Utils.base64Encode;
 
-import org.victorrobotics.devilscoutserver.database.Session;
-import org.victorrobotics.devilscoutserver.database.User;
+import org.victorrobotics.devilscoutserver.data.Session;
+import org.victorrobotics.devilscoutserver.data.User;
+import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.Objects;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -26,6 +25,7 @@ import io.javalin.openapi.OpenApiRequestBody;
 import io.javalin.openapi.OpenApiRequired;
 import io.javalin.openapi.OpenApiResponse;
 
+@SuppressWarnings("java:S6218") // override equals, hashCode, toString
 public final class SessionController extends Controller {
   private static final String HASH_ALGORITHM = "SHA-256";
   private static final String HMAC_ALGORITHM = "HmacSHA256";
@@ -34,7 +34,7 @@ public final class SessionController extends Controller {
 
   private SessionController() {}
 
-  @OpenApi(path = "/sessions/login", methods = HttpMethod.POST, tags = "Session",
+  @OpenApi(path = "/login", methods = HttpMethod.POST, tags = "Authentication",
            description = "Requests a login challenge. Must be called before `/auth`.",
            requestBody = @OpenApiRequestBody(required = true,
                                              content = @OpenApiContent(from = LoginRequest.class)),
@@ -45,7 +45,7 @@ public final class SessionController extends Controller {
     LoginRequest request = jsonDecode(ctx, LoginRequest.class);
     byte[] salt = userDB().getSalt(request.team(), request.username());
     if (salt == null) {
-      throw new NotFoundResponse();
+      throw new NotFoundResponse("Unknown User");
     }
 
     byte[] nonce = generateNonce(request.clientNonce());
@@ -55,11 +55,11 @@ public final class SessionController extends Controller {
     ctx.json(new LoginChallenge(salt, nonce));
   }
 
-  @OpenApi(path = "/sessions/auth", methods = HttpMethod.POST, tags = "Session",
+  @OpenApi(path = "/auth", methods = HttpMethod.POST, tags = "Authentication",
            description = "Authenticates a client. Must have already called `/login` to compute clientProof.",
            requestBody = @OpenApiRequestBody(required = true,
                                              content = @OpenApiContent(from = AuthRequest.class)),
-           responses = { @OpenApiResponse(status = "201",
+           responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = AuthResponse.class)),
                          @OpenApiResponse(status = "400"), @OpenApiResponse(status = "401"),
                          @OpenApiResponse(status = "404") })
@@ -67,13 +67,13 @@ public final class SessionController extends Controller {
     AuthRequest request = jsonDecode(ctx, AuthRequest.class);
     User user = userDB().getUser(request.team(), request.username());
     if (user == null) {
-      throw new NotFoundResponse();
+      throw new NotFoundResponse("Unknown User");
     }
 
     String nonceID =
         request.team() + "," + request.username() + "," + base64Encode(request.nonce());
     if (!userDB().containsNonce(nonceID)) {
-      throw new UnauthorizedResponse();
+      throw new UnauthorizedResponse("Invalid Nonce");
     }
 
     MessageDigest hashFunction = MessageDigest.getInstance(HASH_ALGORITHM);
@@ -85,7 +85,7 @@ public final class SessionController extends Controller {
     byte[] clientKey = xor(request.clientProof(), clientSignature);
     byte[] storedKey = hashFunction.digest(clientKey);
     if (!MessageDigest.isEqual(user.storedKey(), storedKey)) {
-      throw new UnauthorizedResponse();
+      throw new UnauthorizedResponse("Incorrect Proof");
     }
 
     hmacFunction.init(new SecretKeySpec(user.serverKey(), HMAC_ALGORITHM));
@@ -93,16 +93,16 @@ public final class SessionController extends Controller {
     userDB().removeNonce(nonceID);
 
     Session session = generateSession(user);
-    ctx.status(201);
     ctx.json(new AuthResponse(user, session, serverSignature));
   }
 
-  @OpenApi(path = "/sessions", methods = HttpMethod.DELETE, tags = "Session",
+  @OpenApi(path = "/logout", methods = HttpMethod.DELETE, tags = "Authentication",
            description = "Invalidates a session, logging a client out.",
-           responses = { @OpenApiResponse(status = "200"), @OpenApiResponse(status = "401") })
+           responses = { @OpenApiResponse(status = "204"), @OpenApiResponse(status = "401") })
   public static void logout(Context ctx) {
     Session session = getValidSession(ctx);
     sessionDB().deleteSession(session);
+    ctx.status(204);
   }
 
   private static byte[] generateNonce(byte[] clientNonce) {
@@ -131,141 +131,38 @@ public final class SessionController extends Controller {
   private static Session generateSession(User user) {
     byte[] sessionID = new byte[8];
     RANDOM.nextBytes(sessionID);
-    Session session = new Session(base64Encode(sessionID), user.userID(), user.accessLevel());
+    Session session =
+        new Session(base64Encode(sessionID), user.userID(), user.team(), user.accessLevel());
     sessionDB().registerSession(session);
     return session;
   }
 
-  static record LoginRequest(@OpenApiRequired @OpenApiExample("1559") int team,
-                             @OpenApiRequired @OpenApiExample("xander") String username,
-                             @OpenApiRequired @OpenApiExample("EjRWeJCrze8=") byte[] clientNonce) {
-    @Override
-    public boolean equals(Object obj) {
-      return this == obj || (obj instanceof LoginRequest other && team() == other.team()
-          && Objects.equals(username(), other.username())
-          && Arrays.equals(clientNonce(), other.clientNonce()));
-    }
+  public static record LoginRequest(@OpenApiRequired @OpenApiExample("1559") int team,
+                                    @OpenApiRequired @OpenApiExample("xander") String username,
+                                    @OpenApiRequired
+                                    @OpenApiExample("EjRWeJCrze8=") byte[] clientNonce) {}
 
-    @Override
-    public int hashCode() {
-      return Objects.hash(team(), username(), Arrays.hashCode(clientNonce()));
-    }
+  public static record LoginChallenge(@OpenApiRequired @OpenApiExample("mHZUMhCrze8=") byte[] salt,
+                                      @OpenApiRequired
+                                      @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce) {}
 
-    @Override
-    public String toString() {
-      StringBuilder b = new StringBuilder();
-      b.append("LoginRequest[")
-       .append("team=")
-       .append(team())
-       .append(",username=")
-       .append(username())
-       .append(",clientNonce=")
-       .append(base64Encode(clientNonce()))
-       .append("]");
-      return b.toString();
-    }
-  }
+  public static record AuthRequest(@OpenApiRequired @OpenApiExample("1559") int team,
+                                   @OpenApiRequired @OpenApiExample("xander") String username,
+                                   @OpenApiRequired
+                                   @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce,
+                                   @OpenApiRequired
+                                   @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJCrze8=") byte[] clientProof) {}
 
-  static record LoginChallenge(@OpenApiRequired @OpenApiExample("mHZUMhCrze8=") byte[] salt,
-                               @OpenApiRequired
-                               @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce) {
-    @Override
-    public boolean equals(Object obj) {
-      return this == obj || (obj instanceof LoginChallenge other
-          && Arrays.equals(salt(), other.salt()) && Arrays.equals(nonce(), other.nonce()));
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(Arrays.hashCode(salt()), Arrays.hashCode(nonce()));
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder b = new StringBuilder();
-      b.append("LoginChallenge[")
-       .append("salt=")
-       .append(base64Encode(salt()))
-       .append(",nonce=")
-       .append(base64Encode(nonce()))
-       .append("]");
-      return b.toString();
-    }
-  }
-
-  static record AuthRequest(@OpenApiRequired @OpenApiExample("1559") int team,
-                            @OpenApiRequired @OpenApiExample("xander") String username,
-                            @OpenApiRequired
-                            @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce,
-                            @OpenApiRequired
-                            @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJCrze8=") byte[] clientProof) {
-    @Override
-    public boolean equals(Object obj) {
-      return this == obj || (obj instanceof AuthRequest other && team() == other.team()
-          && Objects.equals(username(), other.username()) && Arrays.equals(nonce(), other.nonce())
-          && Arrays.equals(clientProof(), other.clientProof()));
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(team(), username(), Arrays.hashCode(nonce()),
-                          Arrays.hashCode(clientProof()));
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder b = new StringBuilder();
-      b.append("AuthRequest[")
-       .append("team=")
-       .append(team())
-       .append(",username=")
-       .append(username())
-       .append(",nonce=")
-       .append(base64Encode(nonce()))
-       .append(",clientProof=")
-       .append(base64Encode(clientProof()))
-       .append("]");
-      return b.toString();
-    }
-  }
-
-  static record AuthResponse(@OpenApiRequired @OpenApiExample("Xander Bhalla") String fullName,
-                             @OpenApiRequired @OpenApiExample("USER") User.AccessLevel accessLevel,
-                             @OpenApiRequired @OpenApiExample("K9UoTnrEY94=") String sessionID,
-                             @OpenApiRequired
-                             @OpenApiExample("m7squ/lkrdjWSAER1g84uxQm3yDAOYUtVfYEJeYR2Tw=") byte[] serverSignature) {
-    AuthResponse(User user, Session session, byte[] serverSignature) {
+  public static record AuthResponse(@OpenApiRequired
+  @OpenApiExample("Xander Bhalla") String fullName,
+                                    @OpenApiRequired
+                                    @OpenApiExample("USER") UserAccessLevel accessLevel,
+                                    @OpenApiRequired
+                                    @OpenApiExample("K9UoTnrEY94=") String sessionID,
+                                    @OpenApiRequired
+                                    @OpenApiExample("m7squ/lkrdjWSAER1g84uxQm3yDAOYUtVfYEJeYR2Tw=") byte[] serverSignature) {
+    public AuthResponse(User user, Session session, byte[] serverSignature) {
       this(user.fullName(), user.accessLevel(), session.getSessionID(), serverSignature);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return this == obj || (obj instanceof AuthResponse other
-          && Objects.equals(fullName(), other.fullName()) && accessLevel() == other.accessLevel()
-          && Objects.equals(sessionID(), other.sessionID())
-          && Arrays.equals(serverSignature(), other.serverSignature()));
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(fullName(), accessLevel(), sessionID(),
-                          Arrays.hashCode(serverSignature()));
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder b = new StringBuilder();
-      b.append("AuthResponse[")
-       .append("fullName=")
-       .append(fullName())
-       .append(",accessLevel=")
-       .append(accessLevel())
-       .append(",sessionID=")
-       .append(sessionID())
-       .append(",serverSignature=")
-       .append(base64Encode(serverSignature()))
-       .append("]");
-      return b.toString();
     }
   }
 }
