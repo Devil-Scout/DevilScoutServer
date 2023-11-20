@@ -25,6 +25,7 @@ import io.javalin.openapi.OpenApiRequestBody;
 import io.javalin.openapi.OpenApiRequired;
 import io.javalin.openapi.OpenApiResponse;
 
+@SuppressWarnings("java:S6218") // override equals, hashCode, toString
 public final class SessionController extends Controller {
   private static final String HASH_ALGORITHM = "SHA-256";
   private static final String HMAC_ALGORITHM = "HmacSHA256";
@@ -136,30 +137,30 @@ public final class SessionController extends Controller {
     return session;
   }
 
-  @SuppressWarnings("java:S6218")
-  static record LoginRequest(@OpenApiRequired @OpenApiExample("1559") int team,
-                             @OpenApiRequired @OpenApiExample("xander") String username,
-                             @OpenApiRequired @OpenApiExample("EjRWeJCrze8=") byte[] clientNonce) {}
+  public static record LoginRequest(@OpenApiRequired @OpenApiExample("1559") int team,
+                                    @OpenApiRequired @OpenApiExample("xander") String username,
+                                    @OpenApiRequired
+                                    @OpenApiExample("EjRWeJCrze8=") byte[] clientNonce) {}
 
-  @SuppressWarnings("java:S6218")
-  static record LoginChallenge(@OpenApiRequired @OpenApiExample("mHZUMhCrze8=") byte[] salt,
-                               @OpenApiRequired
-                               @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce) {}
+  public static record LoginChallenge(@OpenApiRequired @OpenApiExample("mHZUMhCrze8=") byte[] salt,
+                                      @OpenApiRequired
+                                      @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce) {}
 
-  @SuppressWarnings("java:S6218")
-  static record AuthRequest(@OpenApiRequired @OpenApiExample("1559") int team,
-                            @OpenApiRequired @OpenApiExample("xander") String username,
-                            @OpenApiRequired
-                            @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce,
-                            @OpenApiRequired
-                            @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJCrze8=") byte[] clientProof) {}
+  public static record AuthRequest(@OpenApiRequired @OpenApiExample("1559") int team,
+                                   @OpenApiRequired @OpenApiExample("xander") String username,
+                                   @OpenApiRequired
+                                   @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") byte[] nonce,
+                                   @OpenApiRequired
+                                   @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJCrze8=") byte[] clientProof) {}
 
-  @SuppressWarnings("java:S6218")
-  static record AuthResponse(@OpenApiRequired @OpenApiExample("Xander Bhalla") String fullName,
-                             @OpenApiRequired @OpenApiExample("USER") UserAccessLevel accessLevel,
-                             @OpenApiRequired @OpenApiExample("K9UoTnrEY94=") String sessionID,
-                             @OpenApiRequired
-                             @OpenApiExample("m7squ/lkrdjWSAER1g84uxQm3yDAOYUtVfYEJeYR2Tw=") byte[] serverSignature) {
+  public static record AuthResponse(@OpenApiRequired
+  @OpenApiExample("Xander Bhalla") String fullName,
+                                    @OpenApiRequired
+                                    @OpenApiExample("USER") UserAccessLevel accessLevel,
+                                    @OpenApiRequired
+                                    @OpenApiExample("K9UoTnrEY94=") String sessionID,
+                                    @OpenApiRequired
+                                    @OpenApiExample("m7squ/lkrdjWSAER1g84uxQm3yDAOYUtVfYEJeYR2Tw=") byte[] serverSignature) {
     public AuthResponse(User user, Session session, byte[] serverSignature) {
       this(user.fullName(), user.accessLevel(), session.getSessionID(), serverSignature);
     }

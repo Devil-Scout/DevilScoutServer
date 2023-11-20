@@ -4,10 +4,10 @@ import static org.victorrobotics.devilscoutserver.Utils.base64Decode;
 import static org.victorrobotics.devilscoutserver.Utils.base64Encode;
 import static org.victorrobotics.devilscoutserver.controller.Controller.SESSION_HEADER;
 
-import org.victorrobotics.devilscoutserver.data.AuthRequest;
-import org.victorrobotics.devilscoutserver.data.AuthResponse;
-import org.victorrobotics.devilscoutserver.data.LoginChallenge;
-import org.victorrobotics.devilscoutserver.data.LoginRequest;
+import org.victorrobotics.devilscoutserver.controller.SessionController.AuthRequest;
+import org.victorrobotics.devilscoutserver.controller.SessionController.AuthResponse;
+import org.victorrobotics.devilscoutserver.controller.SessionController.LoginChallenge;
+import org.victorrobotics.devilscoutserver.controller.SessionController.LoginRequest;
 import org.victorrobotics.devilscoutserver.data.Session;
 import org.victorrobotics.devilscoutserver.data.User;
 import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
