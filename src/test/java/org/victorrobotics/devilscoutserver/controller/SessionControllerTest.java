@@ -28,8 +28,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 class SessionControllerTest {
@@ -37,6 +37,7 @@ class SessionControllerTest {
   @MethodSource("testCases")
   void testLogin(TestCase testCase) {
     testCase.inject();
+
     LoginRequest request = mock(LoginRequest.class);
     when(request.team()).thenReturn(testCase.user.team());
     when(request.username()).thenReturn(testCase.user.username());
@@ -86,9 +87,9 @@ class SessionControllerTest {
         && base64Decode(r.sessionID()).length == 8));
   }
 
-  @Test
-  void testLogout() {
-    String sessionID = "vcOVI8k869c=";
+  @ParameterizedTest
+  @CsvSource("vcOVI8k869c=")
+  void testLogout(String sessionID) {
     Session session = mock(Session.class);
     when(session.getSessionID()).thenReturn(sessionID);
 

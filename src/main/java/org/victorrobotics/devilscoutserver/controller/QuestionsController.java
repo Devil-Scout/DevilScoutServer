@@ -1,13 +1,12 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 import org.victorrobotics.devilscoutserver.data.DriveTeamQuestions;
 import org.victorrobotics.devilscoutserver.data.MatchQuestions;
 import org.victorrobotics.devilscoutserver.data.PitQuestions;
-import org.victorrobotics.devilscoutserver.data.Session;
 import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.javalin.http.Context;
@@ -41,13 +40,14 @@ public final class QuestionsController extends Controller {
     }
   }
 
+  private QuestionsController() {}
+
   private static InputStream openResource(String name) {
     return QuestionsController.class.getResourceAsStream(name);
   }
 
-  private QuestionsController() {}
-
-  @OpenApi(path = "/questions/match", methods = HttpMethod.GET, tags = "Configuration", description = "",
+  @OpenApi(path = "/questions/match", methods = HttpMethod.GET, tags = "Configuration",
+           description = "Get the match scouting questions users should answer.",
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = MatchQuestions.class)),
                          @OpenApiResponse(status = "401") })
@@ -56,7 +56,8 @@ public final class QuestionsController extends Controller {
     ctx.json(MATCH_QUESTIONS_JSON);
   }
 
-  @OpenApi(path = "/questions/pit", methods = HttpMethod.GET, tags = "Configuration", description = "",
+  @OpenApi(path = "/questions/pit", methods = HttpMethod.GET, tags = "Configuration",
+           description = "Get the pit scouting questions users should answer.",
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = MatchQuestions.class)),
                          @OpenApiResponse(status = "401") })
@@ -66,7 +67,7 @@ public final class QuestionsController extends Controller {
   }
 
   @OpenApi(path = "/questions/drive_team", methods = HttpMethod.GET, tags = "Configuration",
-           description = "",
+           description = "Get the scouting questions drive teams should answer. Requires ADMIN access.",
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = MatchQuestions.class)),
                          @OpenApiResponse(status = "401"), @OpenApiResponse(status = "403") })

@@ -15,7 +15,7 @@ public final class EventInfoController extends Controller {
   private EventInfoController() {}
 
   @OpenApi(path = "/event_info", methods = HttpMethod.GET, tags = "Configuration",
-           description = "Get information about the current event",
+           description = "Get information about the current event.",
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = EventInfo.class)),
                          @OpenApiResponse(status = "401") })
