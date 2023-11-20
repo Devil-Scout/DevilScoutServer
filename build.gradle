@@ -1,5 +1,6 @@
 plugins {
   id 'application'
+  id 'jvm-test-suite'
 }
 
 java {
@@ -30,8 +31,12 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
 }
 
-test {
-  useJUnitPlatform()
+testing {
+  suites {
+    test {
+      useJUnitJupiter()
+    }
+  }
 }
 
 jar {
