@@ -45,7 +45,7 @@ public final class SessionController extends Controller {
     LoginRequest request = jsonDecode(ctx, LoginRequest.class);
     byte[] salt = userDB().getSalt(request.team(), request.username());
     if (salt == null) {
-      throw new NotFoundResponse();
+      throw new NotFoundResponse("Unknown User");
     }
 
     byte[] nonce = generateNonce(request.clientNonce());
@@ -67,13 +67,13 @@ public final class SessionController extends Controller {
     AuthRequest request = jsonDecode(ctx, AuthRequest.class);
     User user = userDB().getUser(request.team(), request.username());
     if (user == null) {
-      throw new NotFoundResponse();
+      throw new NotFoundResponse("Unknown User");
     }
 
     String nonceID =
         request.team() + "," + request.username() + "," + base64Encode(request.nonce());
     if (!userDB().containsNonce(nonceID)) {
-      throw new UnauthorizedResponse();
+      throw new UnauthorizedResponse("Invalid Nonce");
     }
 
     MessageDigest hashFunction = MessageDigest.getInstance(HASH_ALGORITHM);
@@ -85,7 +85,7 @@ public final class SessionController extends Controller {
     byte[] clientKey = xor(request.clientProof(), clientSignature);
     byte[] storedKey = hashFunction.digest(clientKey);
     if (!MessageDigest.isEqual(user.storedKey(), storedKey)) {
-      throw new UnauthorizedResponse();
+      throw new UnauthorizedResponse("Incorrect Proof");
     }
 
     hmacFunction.init(new SecretKeySpec(user.serverKey(), HMAC_ALGORITHM));

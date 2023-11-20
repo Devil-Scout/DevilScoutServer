@@ -65,12 +65,12 @@ public class Controller {
   protected static Session getValidSession(Context ctx) {
     String sessionID = ctx.header(SESSION_HEADER);
     if (sessionID == null) {
-      throw new UnauthorizedResponse();
+      throw new UnauthorizedResponse("Missing " + SESSION_HEADER + " Header");
     }
 
     Session session = SESSIONS.getSession(sessionID);
     if (session == null || session.isExpired()) {
-      throw new UnauthorizedResponse();
+      throw new UnauthorizedResponse("Invalid/Expired Session");
     }
 
     return session;
