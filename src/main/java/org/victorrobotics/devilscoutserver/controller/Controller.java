@@ -2,12 +2,14 @@ package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.cache.EventInfoCache;
 import org.victorrobotics.devilscoutserver.data.Session;
+import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
 import org.victorrobotics.devilscoutserver.database.TeamConfigDB;
 import org.victorrobotics.devilscoutserver.database.UserDB;
 
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
+import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.UnauthorizedResponse;
 
 public class Controller {
@@ -72,7 +74,14 @@ public class Controller {
     if (session == null || session.isExpired()) {
       throw new UnauthorizedResponse("Invalid/Expired Session");
     }
+    return session;
+  }
 
+  protected static Session getValidSession(Context ctx, UserAccessLevel accessLevel) {
+    Session session = getValidSession(ctx);
+    if (session.getAccessLevel().ordinal() < accessLevel.ordinal()) {
+      throw new ForbiddenResponse();
+    }
     return session;
   }
 }

@@ -276,7 +276,6 @@ public class EventInfo {
     }
 
     @OpenApiRequired
-    @OpenApiExample("QUAL")
     public MatchLevel getLevel() {
       return level;
     }

@@ -155,8 +155,7 @@ public final class SessionController extends Controller {
 
   public static record AuthResponse(@OpenApiRequired
   @OpenApiExample("Xander Bhalla") String fullName,
-                                    @OpenApiRequired
-                                    @OpenApiExample("USER") UserAccessLevel accessLevel,
+                                    @OpenApiRequired UserAccessLevel accessLevel,
                                     @OpenApiRequired
                                     @OpenApiExample("K9UoTnrEY94=") String sessionID,
                                     @OpenApiRequired

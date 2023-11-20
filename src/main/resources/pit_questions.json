@@ -1,0 +1,140 @@
+{
+  "specs": [
+    {
+      "prompt": "Chassis size (smallest)",
+      "type": "SCALE",
+      "config": {
+        "min": 20,
+        "max": 30,
+        "increment": 2
+      }
+    },
+    {
+      "prompt": "Weight (no battery/bumpers)",
+      "type": "SCALE",
+      "config": {
+        "min": 90,
+        "max": 130,
+        "increment": 10
+      }
+    },
+    {
+      "prompt": "Drivetrain",
+      "type": "SINGLE",
+      "config": {
+        "options": [
+          "Swerve",
+          "Tank",
+          "Mecanum",
+          "Other"
+        ]
+      }
+    }
+  ],
+  "auto": [
+    {
+      "prompt": "Start Locations",
+      "type": "MULTIPLE",
+      "config": {
+        "options": [
+          "Near substations",
+          "Center",
+          "Near conduit"
+        ]
+      }
+    },
+    {
+      "prompt": "Best Routine",
+      "type": "SEQUENCE",
+      "config": {
+        "options": [
+          "Score cone",
+          "Score cube",
+          "Pickup cone",
+          "Pickup cube",
+          "Leave community",
+          "Dock charge station",
+          "Engage charge station"
+        ]
+      }
+    }
+  ],
+  "teleop": [
+    {
+      "prompt": "Game Piece Types",
+      "type": "MULTIPLE",
+      "config": {
+        "options": [
+          "Cone",
+          "Cube"
+        ]
+      }
+    },
+    {
+      "prompt": "Score Locations",
+      "type": "MULTIPLE",
+      "config": {
+        "options": [
+          "High",
+          "Mid",
+          "Hybrid"
+        ]
+      }
+    },
+    {
+      "prompt": "Pickup Locations",
+      "type": "MULTIPLE",
+      "config": {
+        "options": [
+          "Floor",
+          "Single substation",
+          "Double substation"
+        ]
+      }
+    }
+  ],
+  "endgame": [
+    {
+      "prompt": "Triple Balance",
+      "type": "BOOLEAN"
+    },
+    {
+      "prompt": "Time to Balance",
+      "type": "SCALE",
+      "config": {
+        "min": 5,
+        "max": 30,
+        "increment": 5
+      }
+    }
+  ],
+  "general": [
+    {
+      "prompt": "Driver Skill",
+      "type": "SCALE",
+      "config": {
+        "min": 1,
+        "max": 5
+      }
+    },
+    {
+      "prompt": "Human Player Location",
+      "type": "SINGLE",
+      "config": {
+        "options": [
+          "Double",
+          "Single",
+          "None"
+        ]
+      }
+    },
+    {
+      "prompt": "Gracious Professionalism (do NOT ask)",
+      "type": "SCALE",
+      "config": {
+        "min": 1,
+        "max": 5
+      }
+    }
+  ]
+}
