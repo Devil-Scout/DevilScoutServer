@@ -5,7 +5,6 @@ import org.victorrobotics.devilscoutserver.data.Session;
 import org.victorrobotics.devilscoutserver.data.TeamConfig;
 
 import io.javalin.http.Context;
-import io.javalin.http.NotModifiedResponse;
 import io.javalin.openapi.HttpMethod;
 import io.javalin.openapi.OpenApi;
 import io.javalin.openapi.OpenApiContent;
@@ -24,17 +23,12 @@ public final class EventInfoController extends Controller {
     TeamConfig config = teamDB().get(session.getTeam());
     EventInfo eventInfo = eventInfoCache().get(config.getEventKey());
 
-    long timestamp = 0;
-    try {
-      timestamp = Long.parseLong(ctx.header("cache-control"));
-    } catch (NumberFormatException e) {}
-
     synchronized (eventInfo) {
-      if (timestamp >= eventInfo.getTimestamp()) {
-        throw new NotModifiedResponse();
-      }
+      String etag = Long.toString(eventInfo.getTimestamp());
+      checkIfNoneMatch(ctx, etag);
 
       ctx.json(eventInfo);
+      setResponseETag(ctx, etag);
     }
   }
 }

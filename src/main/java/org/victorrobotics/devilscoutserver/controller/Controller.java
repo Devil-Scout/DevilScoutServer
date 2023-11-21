@@ -10,6 +10,7 @@ import org.victorrobotics.devilscoutserver.database.UserDB;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.ForbiddenResponse;
+import io.javalin.http.NotModifiedResponse;
 import io.javalin.http.UnauthorizedResponse;
 
 public class Controller {
@@ -84,5 +85,16 @@ public class Controller {
       throw new ForbiddenResponse();
     }
     return session;
+  }
+
+  protected static void checkIfNoneMatch(Context ctx, String latest) {
+    String etag = ctx.header("If-None-Match");
+    if (("\"" + latest + "\"").equals(etag)) {
+      throw new NotModifiedResponse();
+    }
+  }
+
+  protected static void setResponseETag(Context ctx, String etag) {
+    ctx.header("ETag", "\"" + etag + "\"");
   }
 }
