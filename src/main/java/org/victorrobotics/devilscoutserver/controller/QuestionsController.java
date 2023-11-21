@@ -70,7 +70,7 @@ public final class QuestionsController extends Controller {
            description = "Get the match scouting questions users should answer.",
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = MatchQuestions.class)),
-                         @OpenApiResponse(status = "401") })
+                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401") })
   public static void matchQuestions(Context ctx) {
     getValidSession(ctx);
     checkIfNoneMatch(ctx, MATCH_QUESTIONS_HASH);
@@ -83,7 +83,7 @@ public final class QuestionsController extends Controller {
            description = "Get the pit scouting questions users should answer.",
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = MatchQuestions.class)),
-                         @OpenApiResponse(status = "401") })
+                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401") })
   public static void pitQuestions(Context ctx) {
     getValidSession(ctx);
     checkIfNoneMatch(ctx, PIT_QUESTIONS_HASH);
@@ -96,7 +96,8 @@ public final class QuestionsController extends Controller {
            description = "Get the scouting questions drive teams should answer. Requires ADMIN access.",
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = MatchQuestions.class)),
-                         @OpenApiResponse(status = "401"), @OpenApiResponse(status = "403") })
+                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401"),
+                         @OpenApiResponse(status = "403") })
   public static void driveTeamQuestions(Context ctx) {
     getValidSession(ctx, UserAccessLevel.ADMIN);
     checkIfNoneMatch(ctx, DRIVE_TEAM_QUESTIONS_HASH);
