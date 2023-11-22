@@ -1,45 +1,64 @@
 package org.victorrobotics.devilscoutserver.data;
 
+import org.victorrobotics.devilscoutserver.database.User;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.javalin.openapi.OpenApiExample;
+import io.javalin.openapi.OpenApiIgnore;
+
 public class Session {
   private static final long DURATION_MILLIS = 8 * 60 * 60 * 1000;
 
-  private final String sessionID;
-  private final long   userID;
-  private final int    team;
+  private final long id;
+  private final long userId;
+  private final int  team;
 
   private final UserAccessLevel accessLevel;
 
-  private long expireTime;
+  private long expiration;
 
-  public Session(String sessionID, long userID, int team, UserAccessLevel accessLevel) {
-    this.sessionID = sessionID;
-    this.userID = userID;
+  public Session(long id, User user) {
+    this.id = id;
+    this.userId = user.id();
+    this.team = user.info()
+                    .team();
+    this.accessLevel = user.info()
+                           .accessLevel();
+
+    expiration = System.currentTimeMillis() + DURATION_MILLIS;
+  }
+
+  @JsonCreator
+  public Session(@JsonProperty("id") long id, @JsonProperty("userID") long userId,
+                 @JsonProperty("team") int team,
+                 @JsonProperty("accessLevel") UserAccessLevel accessLevel) {
+    this.id = id;
+    this.userId = userId;
     this.team = team;
     this.accessLevel = accessLevel;
 
-    expireTime = System.currentTimeMillis() + DURATION_MILLIS;
+    expiration = System.currentTimeMillis() + DURATION_MILLIS;
   }
 
+  @JsonIgnore
+  @OpenApiIgnore
   public boolean isExpired() {
-    return System.currentTimeMillis() >= expireTime;
+    return System.currentTimeMillis() >= expiration;
   }
 
-  public void refresh() {
-    expireTime = System.currentTimeMillis() + DURATION_MILLIS;
+  @OpenApiExample("1572531932698856")
+  public long getId() {
+    return id;
   }
 
-  public boolean hasAccess(UserAccessLevel accessLevel) {
-    return accessLevel != null && accessLevel.ordinal() <= this.accessLevel.ordinal();
+  @OpenApiExample("6536270208735686")
+  public long getUserId() {
+    return userId;
   }
 
-  public String getSessionID() {
-    return sessionID;
-  }
-
-  public long getUserID() {
-    return userID;
-  }
-
+  @OpenApiExample("1559")
   public int getTeam() {
     return team;
   }
@@ -48,7 +67,16 @@ public class Session {
     return accessLevel;
   }
 
-  public long getExpireTime() {
-    return expireTime;
+  @OpenApiExample("1700675366947")
+  public long getExpiration() {
+    return expiration;
+  }
+
+  public void refresh() {
+    expiration = System.currentTimeMillis() + DURATION_MILLIS;
+  }
+
+  public boolean hasAccess(UserAccessLevel accessLevel) {
+    return accessLevel != null && accessLevel.ordinal() <= this.accessLevel.ordinal();
   }
 }

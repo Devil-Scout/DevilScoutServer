@@ -8,9 +8,9 @@ import org.victorrobotics.devilscoutserver.controller.SessionController.AuthRequ
 import org.victorrobotics.devilscoutserver.controller.SessionController.AuthResponse;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginChallenge;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginRequest;
-import org.victorrobotics.devilscoutserver.data.User;
 import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
+import org.victorrobotics.devilscoutserver.database.User;
 import org.victorrobotics.devilscoutserver.database.UserDB;
 
 import java.io.IOException;
@@ -39,8 +39,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -81,16 +81,15 @@ class SessionIntegrationTest {
                                .POST(BodyPublishers.ofString(json.writeValueAsString(loginRequest)))
                                .build(),
                     BodyHandlers.ofString());
-    assertNotNull(response);
     assertEquals(200, response.statusCode());
     String responseBody = response.body();
-    assertNotNull(responseBody);
-
     LoginChallenge challenge = json.readValue(responseBody, LoginChallenge.class);
+
     byte[] nonce = challenge.nonce();
     assertNotNull(nonce);
     assertEquals(16, nonce.length);
     assertArrayEquals(clientNonce, Arrays.copyOf(nonce, 8));
+
     byte[] salt = challenge.salt();
     assertNotNull(salt);
     assertEquals(8, salt.length);
@@ -107,9 +106,9 @@ class SessionIntegrationTest {
       throw new IllegalStateException(e);
     }
 
-    KeySpec keySpec = new PBEKeySpec(testCase.password.toCharArray(), salt, 4096, 256);
     try {
-      SecretKey saltedPassword = factory.generateSecret(keySpec);
+      KeySpec passwordSpec = new PBEKeySpec(testCase.password.toCharArray(), salt, 4096, 256);
+      SecretKey saltedPassword = factory.generateSecret(passwordSpec);
       hmacFunction.init(saltedPassword);
     } catch (InvalidKeySpecException | InvalidKeyException e) {
       throw new IllegalStateException(e);
@@ -120,12 +119,14 @@ class SessionIntegrationTest {
     byte[] storedKey = hashFunction.digest(clientKey);
 
     byte[] userAndNonce = toStr(testCase.user.team() + testCase.user.username(), nonce);
+
     try {
       hmacFunction.init(new SecretKeySpec(storedKey, "HmacSHA256"));
     } catch (InvalidKeyException e) {
       throw new IllegalStateException(e);
     }
     byte[] clientSignature = hmacFunction.doFinal(userAndNonce);
+
     byte[] clientProof = new byte[32];
     for (int i = 0; i < clientProof.length; i++) {
       clientProof[i] = (byte) (clientSignature[i] ^ clientKey[i]);
@@ -145,30 +146,29 @@ class SessionIntegrationTest {
                                       .POST(BodyPublishers.ofString(json.writeValueAsString(authRequest)))
                                       .build(),
                            BodyHandlers.ofString());
-    assertNotNull(response);
     assertEquals(200, response.statusCode());
     responseBody = response.body();
-    assertNotNull(responseBody);
-
     AuthResponse authResponse = json.readValue(responseBody, AuthResponse.class);
-    assertNotNull(authResponse);
-    assertEquals(UserAccessLevel.SUDO, authResponse.accessLevel());
-    assertEquals(testCase.user.fullName(), authResponse.fullName());
-    String sessionID = authResponse.sessionID();
-    assertNotNull(sessionID);
+
+    assertEquals(UserAccessLevel.SUDO, authResponse.user()
+                                                   .accessLevel());
+    assertEquals(testCase.user.fullName(), authResponse.user()
+                                                       .fullName());
     assertArrayEquals(serverSignature, authResponse.serverSignature());
 
     // Logout
+    long sessionId = authResponse.session()
+                                 .getId();
     response = client.send(HttpRequest.newBuilder(URI.create("http://localhost:8000/logout"))
                                       .DELETE()
-                                      .header(Controller.SESSION_HEADER, sessionID)
+                                      .header(Controller.SESSION_HEADER, Long.toString(sessionId))
                                       .build(),
                            BodyHandlers.ofString());
     assertEquals(204, response.statusCode());
 
     // Second logout should fail
     response = client.send(response.request(), BodyHandlers.ofString());
-    assertNotEquals(200, response.statusCode());
+    assertTrue(response.statusCode() >= 400 && response.statusCode() <= 499);
   }
 
   static byte[] toStr(String username, byte[] nonce) {
@@ -181,7 +181,7 @@ class SessionIntegrationTest {
 
   static Stream<TestCase> testCases() {
     return Stream.<TestCase>builder()
-                 .add(new TestCase(new User((long) 5, "xander", "Xander Bhalla", 1559,
+                 .add(new TestCase(new User(5, 1559, "xander", "Xander Bhalla",
                                             UserAccessLevel.SUDO, base64Decode("YmFkLXNhbHQ="),
                                             base64Decode("jMeQaCzoJs81MobCQfcMSq4W298aAnSsF5WRGRf7U1s="),
                                             base64Decode("hsEcMmcap9WWLv+XYoT/gamB6b/P3tgOoOOIgbi26W8=")),

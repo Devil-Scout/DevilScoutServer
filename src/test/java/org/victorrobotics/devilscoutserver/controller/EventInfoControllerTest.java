@@ -20,7 +20,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 class EventInfoControllerTest {
-  private static final String SESSION_ID = "vcOVI8k869c=";
+  private static final long SESSION_ID = 5;
   private static SessionDB    SESSIONS;
 
   @BeforeAll
@@ -33,7 +33,13 @@ class EventInfoControllerTest {
 
   @ParameterizedTest
   @CsvSource("2023nyrr")
-  void testLogin(String eventKey) {
+  void testEventInfo(String eventKey) {
+    long sessionId = 1;
+    Session session = new Session(sessionId, 5, 1559, UserAccessLevel.USER);
+    SessionDB sessions = mock(SessionDB.class);
+    when(sessions.getSession(sessionId)).thenReturn(session);
+    Controller.setSessionDB(sessions);
+
     TeamConfig config = new TeamConfig(1559);
     config.setEventKey(eventKey);
     TeamConfigDB teams = mock(TeamConfigDB.class);
@@ -43,7 +49,7 @@ class EventInfoControllerTest {
     Controller.setEventInfoCache(new EventInfoCache());
 
     Context ctx = mock(Context.class);
-    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(SESSION_ID);
+    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(Long.toString(sessionId));
     EventInfoController.eventInfo(ctx);
 
     verify(ctx).header(Controller.SESSION_HEADER);

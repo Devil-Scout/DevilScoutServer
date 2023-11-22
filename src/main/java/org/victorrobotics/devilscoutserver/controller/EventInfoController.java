@@ -9,19 +9,21 @@ import io.javalin.openapi.HttpMethod;
 import io.javalin.openapi.OpenApi;
 import io.javalin.openapi.OpenApiContent;
 import io.javalin.openapi.OpenApiResponse;
+import io.javalin.openapi.OpenApiSecurity;
 
 public final class EventInfoController extends Controller {
   private EventInfoController() {}
 
-  @OpenApi(path = "/event_info", methods = HttpMethod.GET, tags = "Configuration",
+  @OpenApi(path = "/event_info", methods = HttpMethod.GET, tags = "Teams", summary = "USER",
            description = "Get information about the current event.",
+           security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = EventInfo.class)),
                          @OpenApiResponse(status = "401") })
   public static void eventInfo(Context ctx) {
     Session session = getValidSession(ctx);
     TeamConfig config = teamDB().get(session.getTeam());
-    EventInfo eventInfo = eventInfoCache().get(config.getEventKey());
+    EventInfo eventInfo = eventInfoCache().get(config.eventKey());
 
     synchronized (eventInfo) {
       String etag = Long.toString(eventInfo.getTimestamp());

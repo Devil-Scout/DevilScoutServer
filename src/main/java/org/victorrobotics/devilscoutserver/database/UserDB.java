@@ -1,7 +1,6 @@
 package org.victorrobotics.devilscoutserver.database;
 
-import org.victorrobotics.devilscoutserver.data.User;
-
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,27 +9,45 @@ import java.util.Map;
 import java.util.Set;
 
 public class UserDB {
-  private final Set<String>       nonces;
-  private final Map<String, User> usersByName;
-  private final Map<Long, User>   usersByID;
+  private final Set<String> nonces;
+
+  private final Map<String, User> usersByKey;
+  private final Map<Long, User>   usersById;
+
+  private final Map<Integer, Collection<User>> usersByTeam;
 
   public UserDB() {
     nonces = new HashSet<>();
-    usersByName = new HashMap<>();
-    usersByID = new HashMap<>();
+    usersByKey = new HashMap<>();
+    usersById = new HashMap<>();
+    usersByTeam = new HashMap<>();
   }
 
   public void addUser(User user) {
-    usersByName.put(userKey(user.team(), user.username()), user);
-    usersByID.put(user.userID(), user);
+    usersByKey.put(userKey(user.team(), user.username()), user);
+    usersById.put(user.id(), user);
+    usersByTeam.computeIfAbsent(user.team(), x -> new ArrayList<>())
+               .add(user);
+  }
+
+  public void removeUser(User user) {
+    usersByKey.remove(userKey(user.team(), user.username()));
+    usersById.remove(user.id());
+    usersByTeam.get(user.team())
+               .remove(user);
+  }
+
+  public void editUser(User oldUser, User newUser) {
+    removeUser(oldUser);
+    addUser(newUser);
   }
 
   public User getUser(int team, String username) {
-    return usersByName.get(userKey(team, username));
+    return usersByKey.get(userKey(team, username));
   }
 
-  public User getUser(long userID) {
-    return usersByID.get(userID);
+  public User getUser(long id) {
+    return usersById.get(id);
   }
 
   public byte[] getSalt(int team, String username) {
@@ -39,19 +56,24 @@ public class UserDB {
   }
 
   public Collection<User> allUsers() {
-    return Collections.unmodifiableCollection(usersByName.values());
+    return Collections.unmodifiableCollection(usersByKey.values());
   }
 
-  public void putNonce(String nonceID) {
-    nonces.add(nonceID);
+  public Collection<User> usersByTeam(int team) {
+    Collection<User> users = usersByTeam.get(team);
+    return users == null ? null : Collections.unmodifiableCollection(users);
   }
 
-  public boolean containsNonce(String nonceID) {
-    return nonces.contains(nonceID);
+  public void putNonce(String nonceId) {
+    nonces.add(nonceId);
   }
 
-  public void removeNonce(String nonceID) {
-    nonces.remove(nonceID);
+  public boolean containsNonce(String nonceId) {
+    return nonces.contains(nonceId);
+  }
+
+  public void removeNonce(String nonceId) {
+    nonces.remove(nonceId);
   }
 
   private static String userKey(int team, String username) {

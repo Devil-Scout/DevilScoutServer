@@ -20,8 +20,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class QuestionsControllerTest {
-  private static final String SESSION_ID = "vcOVI8k869c=";
-  private static SessionDB    SESSIONS;
+  private static final long SESSION_ID = 5;
+  private static SessionDB  SESSIONS;
 
   @BeforeAll
   static void injectSession() {
@@ -34,7 +34,7 @@ class QuestionsControllerTest {
   @Test
   void testMatchQuestions() {
     Context ctx = mock(Context.class);
-    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(SESSION_ID);
+    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(Long.toString(SESSION_ID));
 
     QuestionsController.matchQuestions(ctx);
 
@@ -51,7 +51,7 @@ class QuestionsControllerTest {
   @Test
   void testPitQuestions() {
     Context ctx = mock(Context.class);
-    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(SESSION_ID);
+    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(Long.toString(SESSION_ID));
 
     QuestionsController.pitQuestions(ctx);
 
@@ -68,7 +68,7 @@ class QuestionsControllerTest {
   @Test
   void testDriveTeamQuestions() {
     Context ctx = mock(Context.class);
-    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(SESSION_ID);
+    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(Long.toString(SESSION_ID));
 
     QuestionsController.driveTeamQuestions(ctx);
 

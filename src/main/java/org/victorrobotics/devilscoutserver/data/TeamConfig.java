@@ -9,11 +9,11 @@ public class TeamConfig {
     this.team = team;
   }
 
-  public int getTeam() {
+  public int team() {
     return team;
   }
 
-  public String getEventKey() {
+  public String eventKey() {
     return eventKey;
   }
 

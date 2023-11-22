@@ -119,30 +119,8 @@ public class EventInfo {
   }
 
   static class TeamInfo {
-    enum MatchLevel {
-      QUAL,
-      QUARTER,
-      SEMI,
-      FINAL,
-
-      @JsonEnumDefaultValue
-      UNKNOWN;
-
-      private static final MatchLevel[] VALUES = values();
-
-      static MatchLevel of(Match.Level level) {
-        int ordinal = level.ordinal();
-        return ordinal >= VALUES.length ? VALUES[VALUES.length - 1] : VALUES[ordinal];
-      }
-    }
-
-    @JsonProperty
     private final int number;
-
-    @JsonProperty
     private final String name;
-
-    @JsonProperty
     private final String location;
 
     TeamInfo(Team.Simple team) {
@@ -210,7 +188,7 @@ public class EventInfo {
     private long time;
 
     @JsonProperty
-    private boolean complete;
+    private boolean completed;
 
     MatchInfo(Match.Simple match) {
       this.key = match.key;
@@ -221,8 +199,8 @@ public class EventInfo {
       this.blue = parseTeamKeys(match.blueAlliance.teamKeys);
       this.red = parseTeamKeys(match.redAlliance.teamKeys);
       // TODO undo hack once library is patched
-      this.complete = match.winner != null;
-      this.time = complete ? match.predictedTime.getTime() : match.actualTime.getTime();
+      this.completed = match.winner != null;
+      this.time = completed ? match.predictedTime.getTime() : match.actualTime.getTime();
     }
 
     public boolean update(Match.Simple match) {
@@ -241,8 +219,8 @@ public class EventInfo {
       }
 
       boolean matchIsComplete = match.winner != null;
-      if (complete != matchIsComplete) {
-        complete = matchIsComplete;
+      if (completed != matchIsComplete) {
+        completed = matchIsComplete;
         change = true;
       }
 
@@ -293,30 +271,30 @@ public class EventInfo {
     }
 
     @OpenApiRequired
-    @SuppressWarnings("java:S2384")
     @OpenApiExample("[2228,1585,578]")
+    @SuppressWarnings("java:S2384")
     public int[] getBlue() {
       return blue;
     }
 
     @OpenApiRequired
-    @SuppressWarnings("java:S2384")
     @OpenApiExample("[1559,9996,5740]")
+    @SuppressWarnings("java:S2384")
     public int[] getRed() {
       return red;
     }
 
-    @SuppressWarnings("java:S2384")
     @OpenApiRequired
     @OpenApiExample("1697891944000")
+    @SuppressWarnings("java:S2384")
     public long getTime() {
       return time;
     }
 
     @OpenApiRequired
     @OpenApiExample("true")
-    public boolean isComplete() {
-      return complete;
+    public boolean isCompleted() {
+      return completed;
     }
   }
 }

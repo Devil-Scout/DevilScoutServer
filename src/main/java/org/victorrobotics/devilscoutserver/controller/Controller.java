@@ -7,6 +7,8 @@ import org.victorrobotics.devilscoutserver.database.SessionDB;
 import org.victorrobotics.devilscoutserver.database.TeamConfigDB;
 import org.victorrobotics.devilscoutserver.database.UserDB;
 
+import java.security.SecureRandom;
+
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.ForbiddenResponse;
@@ -16,6 +18,15 @@ import io.javalin.http.UnauthorizedResponse;
 public class Controller {
   public static final String SESSION_HEADER = "X-DS-SESSION-KEY";
 
+  protected static final String HASH_ALGORITHM   = "SHA-256";
+  protected static final String MAC_ALGORITHM    = "HmacSHA256";
+  protected static final String KEYGEN_ALGORITHM = "PBKDF2WithHmacSHA256";
+
+  protected static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+  private static final Class<?>[] CONTROLLERS =
+      { SessionController.class, EventInfoController.class, UserController.class };
+
   private static UserDB       USERS;
   private static SessionDB    SESSIONS;
   private static TeamConfigDB TEAMS;
@@ -24,13 +35,13 @@ public class Controller {
 
   protected Controller() {}
 
-  @SuppressWarnings("java:S2221") // catch generic exception
-  protected static <T> T jsonDecode(Context ctx, Class<T> clazz) {
+  @SuppressWarnings("java:S2658") // dynamic class loading
+  public static void loadAll() {
     try {
-      return ctx.bodyAsClass(clazz);
-    } catch (Exception e) {
-      throw new BadRequestResponse();
-    }
+      for (Class<?> controllerClazz : CONTROLLERS) {
+        Class.forName(controllerClazz.getName());
+      }
+    } catch (ClassNotFoundException e) {}
   }
 
   public static void setUserDB(UserDB users) {
@@ -65,23 +76,35 @@ public class Controller {
     return EVENT_INFO_CACHE;
   }
 
+  @SuppressWarnings("java:S2221") // catch generic exception
+  protected static <T> T jsonDecode(Context ctx, Class<T> clazz) {
+    try {
+      return ctx.bodyAsClass(clazz);
+    } catch (Exception e) {
+      throw new BadRequestResponse();
+    }
+  }
+
   protected static Session getValidSession(Context ctx) {
-    String sessionID = ctx.header(SESSION_HEADER);
-    if (sessionID == null) {
+    String sessionStr = ctx.header(SESSION_HEADER);
+    if (sessionStr == null) {
       throw new UnauthorizedResponse("Missing " + SESSION_HEADER + " Header");
     }
 
-    Session session = SESSIONS.getSession(sessionID);
-    if (session == null || session.isExpired()) {
-      throw new UnauthorizedResponse("Invalid/Expired Session");
-    }
-    return session;
+    try {
+      long sessionId = Long.parseLong(sessionStr);
+      Session session = SESSIONS.getSession(sessionId);
+      if (session != null && !session.isExpired()) {
+        return session;
+      }
+    } catch (NumberFormatException e) {}
+
+    throw new UnauthorizedResponse("Invalid/Expired " + SESSION_HEADER + " Header");
   }
 
   protected static Session getValidSession(Context ctx, UserAccessLevel accessLevel) {
     Session session = getValidSession(ctx);
-    if (accessLevel.ordinal() > session.getAccessLevel()
-                                       .ordinal()) {
+    if (!session.hasAccess(accessLevel)) {
       throw new ForbiddenResponse();
     }
     return session;

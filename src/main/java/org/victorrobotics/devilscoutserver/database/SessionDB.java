@@ -6,21 +6,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SessionDB {
-  private final Map<String, Session> sessions;
+  private final Map<Long, Session> sessions;
 
   public SessionDB() {
     sessions = new HashMap<>();
   }
 
   public void registerSession(Session session) {
-    sessions.put(session.getSessionID(), session);
+    sessions.put(session.getId(), session);
   }
 
-  public Session getSession(String sessionID) {
-    return sessions.get(sessionID);
+  public Session getSession(long sessionId) {
+    return sessions.get(sessionId);
   }
 
   public void deleteSession(Session session) {
-    sessions.remove(session.getSessionID());
+    sessions.remove(session.getId());
   }
 }

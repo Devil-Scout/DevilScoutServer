@@ -9,9 +9,9 @@ import org.victorrobotics.devilscoutserver.controller.SessionController.AuthResp
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginChallenge;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginRequest;
 import org.victorrobotics.devilscoutserver.data.Session;
-import org.victorrobotics.devilscoutserver.data.User;
 import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
+import org.victorrobotics.devilscoutserver.database.User;
 import org.victorrobotics.devilscoutserver.database.UserDB;
 
 import java.security.InvalidKeyException;
@@ -20,6 +20,9 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 import io.javalin.http.Context;
+import io.javalin.http.NoContentResponse;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -28,8 +31,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 class SessionControllerTest {
@@ -80,36 +83,38 @@ class SessionControllerTest {
     verify(request, atLeastOnce()).clientProof();
 
     verify(sessions).registerSession(any(Session.class));
-    verify(ctx).json(argThat((AuthResponse r) -> r.accessLevel() == testCase.user.accessLevel()
+    verify(ctx).json(argThat((AuthResponse r) -> r.user()
+                                                  .accessLevel()
+        == testCase.user.accessLevel()
         && testCase.user.fullName()
-                        .equals(r.fullName())
-        && Arrays.equals(r.serverSignature(), testCase.serverSignature)
-        && base64Decode(r.sessionID()).length == 8));
+                        .equals(r.user()
+                                 .fullName())
+        && Arrays.equals(r.serverSignature(), testCase.serverSignature) && r.session() != null));
   }
 
-  @ParameterizedTest
-  @CsvSource("vcOVI8k869c=")
-  void testLogout(String sessionID) {
+  @Test
+  void testLogout() {
+    long sessionId = 5;
     Session session = mock(Session.class);
-    when(session.getSessionID()).thenReturn(sessionID);
+    when(session.getId()).thenReturn(sessionId);
 
     SessionDB sessions = mock(SessionDB.class);
-    when(sessions.getSession(sessionID)).thenReturn(session);
+    when(sessions.getSession(sessionId)).thenReturn(session);
     Controller.setSessionDB(sessions);
 
     Context ctx = mock(Context.class);
-    when(ctx.header(SESSION_HEADER)).thenReturn(sessionID);
+    when(ctx.header(SESSION_HEADER)).thenReturn(Long.toString(sessionId));
 
-    SessionController.logout(ctx);
+    assertThrows(NoContentResponse.class, () -> SessionController.logout(ctx));
 
     verify(ctx).header(SESSION_HEADER);
-    verify(sessions).getSession(sessionID);
+    verify(sessions).getSession(sessionId);
     verify(sessions).deleteSession(session);
   }
 
   static Stream<TestCase> testCases() {
     return Stream.<TestCase>builder()
-                 .add(new TestCase(new User((long) 5, "xander", "Xander Bhalla", 1559,
+                 .add(new TestCase(new User(5, 1559, "xander", "Xander Bhalla",
                                             UserAccessLevel.SUDO, base64Decode("YmFkLXNhbHQ="),
                                             base64Decode("jMeQaCzoJs81MobCQfcMSq4W298aAnSsF5WRGRf7U1s="),
                                             base64Decode("hsEcMmcap9WWLv+XYoT/gamB6b/P3tgOoOOIgbi26W8=")),
