@@ -9,6 +9,7 @@ import static io.javalin.apibuilder.ApiBuilder.put;
 import org.victorrobotics.devilscoutserver.cache.EventInfoCache;
 import org.victorrobotics.devilscoutserver.controller.Controller;
 import org.victorrobotics.devilscoutserver.controller.EventInfoController;
+import org.victorrobotics.devilscoutserver.controller.QuestionsController;
 import org.victorrobotics.devilscoutserver.controller.SessionController;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
 import org.victorrobotics.devilscoutserver.database.TeamConfigDB;
@@ -35,7 +36,7 @@ public class Server {
       """.formatted(Controller.SESSION_HEADER);
   private static final String TAGS_SORTER     = """
       /* INJECTED */ (a,b) => {
-        const tagOrder = ['Authentication', 'Uploads', 'Data', 'Management'];
+        const tagOrder = ['Authentication', 'Configuration', 'Uploads', 'Analysis', 'Management'];
         return tagOrder.indexOf(a) - tagOrder.indexOf(b);
       }
       """;
@@ -96,15 +97,16 @@ public class Server {
 
       get("event_info", EventInfoController::eventInfo);
 
-      path("scout", () -> {
-        get("match", UNIMPLEMENTED); // download match scouting questions
-        get("pit", UNIMPLEMENTED); // download pit scouting questions
-        get("post_match", UNIMPLEMENTED); // download post-match questions
-                                          // (ADMIN)
+      path("questions", () -> {
+        get("match", QuestionsController::matchQuestions);
+        get("pit", QuestionsController::pitQuestions);
+        get("drive_team", QuestionsController::driveTeamQuestions);
+      });
 
+      path("scout", () -> {
         post("match", UNIMPLEMENTED); // upload a match scouting record
         post("pit", UNIMPLEMENTED); // upload a pit scouting record
-        post("post_match", UNIMPLEMENTED); // upload a post-match record (ADMIN)
+        post("drive_team", UNIMPLEMENTED); // upload a post-match record (ADMIN)
       });
 
       path("analyze", () -> {

@@ -15,19 +15,25 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 class EventInfoControllerTest {
+  private static final String SESSION_ID = "vcOVI8k869c=";
+  private static SessionDB    SESSIONS;
+
+  @BeforeAll
+  static void injectSession() {
+    Session session = new Session(SESSION_ID, 5, 1559, UserAccessLevel.ADMIN);
+    SESSIONS = mock(SessionDB.class);
+    when(SESSIONS.getSession(SESSION_ID)).thenReturn(session);
+    Controller.setSessionDB(SESSIONS);
+  }
+
   @ParameterizedTest
   @CsvSource("2023nyrr")
   void testLogin(String eventKey) {
-    String sessionID = "qhdgxgd";
-    Session session = new Session(sessionID, 5, 1559, UserAccessLevel.USER);
-    SessionDB sessions = mock(SessionDB.class);
-    when(sessions.getSession(sessionID)).thenReturn(session);
-    Controller.setSessionDB(sessions);
-
     TeamConfig config = new TeamConfig(1559);
     config.setEventKey(eventKey);
     TeamConfigDB teams = mock(TeamConfigDB.class);
@@ -37,11 +43,10 @@ class EventInfoControllerTest {
     Controller.setEventInfoCache(new EventInfoCache());
 
     Context ctx = mock(Context.class);
-    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(sessionID);
+    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(SESSION_ID);
     EventInfoController.eventInfo(ctx);
 
     verify(ctx).header(Controller.SESSION_HEADER);
-    verify(sessions).getSession(sessionID);
     verify(ctx).json(any(EventInfo.class));
   }
 }

@@ -1,0 +1,48 @@
+{
+  "questions": [
+    {
+      "prompt": "Communication",
+      "type": "SCALE",
+      "config": {
+        "min": 1,
+        "max": 5
+      }
+    },
+    {
+      "prompt": "Leadership",
+      "type": "SCALE",
+      "config": {
+        "min": 1,
+        "max": 5
+      }
+    },
+    {
+      "prompt": "Planning",
+      "type": "SCALE",
+      "config": {
+        "min": 1,
+        "max": 5
+      }
+    },
+    {
+      "prompt": "Quick Thinking",
+      "type": "SCALE",
+      "config": {
+        "min": 1,
+        "max": 5
+      }
+    },
+    {
+      "prompt": "Gracious Professionalism",
+      "type": "SCALE",
+      "config": {
+        "min": 1,
+        "max": 5
+      }
+    },
+    {
+      "prompt": "Enjoyed working with them?",
+      "type": "BOOLEAN"
+    }
+  ]
+}

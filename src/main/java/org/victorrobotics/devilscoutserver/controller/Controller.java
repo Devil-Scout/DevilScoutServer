@@ -2,12 +2,15 @@ package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.cache.EventInfoCache;
 import org.victorrobotics.devilscoutserver.data.Session;
+import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
 import org.victorrobotics.devilscoutserver.database.TeamConfigDB;
 import org.victorrobotics.devilscoutserver.database.UserDB;
 
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
+import io.javalin.http.ForbiddenResponse;
+import io.javalin.http.NotModifiedResponse;
 import io.javalin.http.UnauthorizedResponse;
 
 public class Controller {
@@ -72,7 +75,26 @@ public class Controller {
     if (session == null || session.isExpired()) {
       throw new UnauthorizedResponse("Invalid/Expired Session");
     }
-
     return session;
+  }
+
+  protected static Session getValidSession(Context ctx, UserAccessLevel accessLevel) {
+    Session session = getValidSession(ctx);
+    if (accessLevel.ordinal() > session.getAccessLevel()
+                                       .ordinal()) {
+      throw new ForbiddenResponse();
+    }
+    return session;
+  }
+
+  protected static void checkIfNoneMatch(Context ctx, String latest) {
+    String etag = ctx.header("If-None-Match");
+    if (("\"" + latest + "\"").equals(etag)) {
+      throw new NotModifiedResponse();
+    }
+  }
+
+  protected static void setResponseETag(Context ctx, String etag) {
+    ctx.header("ETag", "\"" + etag + "\"");
   }
 }
