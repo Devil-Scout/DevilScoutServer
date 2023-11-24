@@ -1,8 +1,8 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.controller.QuestionsController.DriveTeamQuestions;
-import org.victorrobotics.devilscoutserver.controller.QuestionsController.MatchQuestions;
-import org.victorrobotics.devilscoutserver.controller.QuestionsController.PitQuestions;
+import org.victorrobotics.devilscoutserver.controller.QuestionController.DriveTeamQuestions;
+import org.victorrobotics.devilscoutserver.controller.QuestionController.MatchQuestions;
+import org.victorrobotics.devilscoutserver.controller.QuestionController.PitQuestions;
 import org.victorrobotics.devilscoutserver.data.Session;
 import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
@@ -36,7 +36,7 @@ class QuestionsControllerTest {
     Context ctx = mock(Context.class);
     when(ctx.header(Controller.SESSION_HEADER)).thenReturn(Long.toString(SESSION_ID));
 
-    QuestionsController.matchQuestions(ctx);
+    QuestionController.matchQuestions(ctx);
 
     verify(ctx).header(Controller.SESSION_HEADER);
     verify(ctx).json(argThat((String s) -> {
@@ -53,7 +53,7 @@ class QuestionsControllerTest {
     Context ctx = mock(Context.class);
     when(ctx.header(Controller.SESSION_HEADER)).thenReturn(Long.toString(SESSION_ID));
 
-    QuestionsController.pitQuestions(ctx);
+    QuestionController.pitQuestions(ctx);
 
     verify(ctx).header(Controller.SESSION_HEADER);
     verify(ctx).json(argThat((String s) -> {
@@ -70,7 +70,7 @@ class QuestionsControllerTest {
     Context ctx = mock(Context.class);
     when(ctx.header(Controller.SESSION_HEADER)).thenReturn(Long.toString(SESSION_ID));
 
-    QuestionsController.driveTeamQuestions(ctx);
+    QuestionController.driveTeamQuestions(ctx);
 
     verify(ctx).header(Controller.SESSION_HEADER);
     verify(ctx).json(argThat((String s) -> {

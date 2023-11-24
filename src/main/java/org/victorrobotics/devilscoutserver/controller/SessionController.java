@@ -1,7 +1,5 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import static org.victorrobotics.devilscoutserver.Utils.base64Encode;
-
 import org.victorrobotics.devilscoutserver.data.Session;
 import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.data.UserInfo;
@@ -53,7 +51,10 @@ public final class SessionController extends Controller {
       throw new NotFoundResponse("Unknown User");
     }
 
-    byte[] nonce = generateNonce(request.clientNonce());
+    byte[] nonce = new byte[16];
+    SECURE_RANDOM.nextBytes(nonce);
+    System.arraycopy(request.clientNonce(), 0, nonce, 0, 8);
+
     String nonceId = request.team() + "," + request.username() + "," + base64Encode(nonce);
     userDB().putNonce(nonceId);
 
@@ -111,13 +112,6 @@ public final class SessionController extends Controller {
     Session session = getValidSession(ctx);
     sessionDB().deleteSession(session);
     throw new NoContentResponse();
-  }
-
-  private static byte[] generateNonce(byte[] clientNonce) {
-    byte[] nonce = new byte[16];
-    SECURE_RANDOM.nextBytes(nonce);
-    System.arraycopy(clientNonce, 0, nonce, 0, 8);
-    return nonce;
   }
 
   private static byte[] xor(byte[] bytes1, byte[] bytes2) {

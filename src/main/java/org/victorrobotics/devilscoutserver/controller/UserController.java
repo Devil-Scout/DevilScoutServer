@@ -33,7 +33,9 @@ import io.javalin.openapi.OpenApiRequired;
 import io.javalin.openapi.OpenApiResponse;
 import io.javalin.openapi.OpenApiSecurity;
 
-public class UserController extends Controller {
+public final class UserController extends Controller {
+  private UserController() {}
+
   @OpenApi(path = "/users", methods = HttpMethod.GET, tags = "Users", summary = "SUDO",
            description = "Get all registered users. Requires SUDO.",
            security = @OpenApiSecurity(name = "Session"),

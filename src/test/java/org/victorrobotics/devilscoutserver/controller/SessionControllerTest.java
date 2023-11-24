@@ -1,8 +1,8 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import static org.victorrobotics.devilscoutserver.Utils.base64Decode;
-import static org.victorrobotics.devilscoutserver.Utils.base64Encode;
 import static org.victorrobotics.devilscoutserver.controller.Controller.SESSION_HEADER;
+import static org.victorrobotics.devilscoutserver.controller.Controller.base64Decode;
+import static org.victorrobotics.devilscoutserver.controller.Controller.base64Encode;
 
 import org.victorrobotics.devilscoutserver.controller.SessionController.AuthRequest;
 import org.victorrobotics.devilscoutserver.controller.SessionController.AuthResponse;

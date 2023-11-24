@@ -1,6 +1,6 @@
 package org.victorrobotics.devilscoutserver.integration;
 
-import static org.victorrobotics.devilscoutserver.Utils.base64Decode;
+import static org.victorrobotics.devilscoutserver.controller.Controller.base64Decode;
 
 import org.victorrobotics.devilscoutserver.Server;
 import org.victorrobotics.devilscoutserver.controller.Controller;

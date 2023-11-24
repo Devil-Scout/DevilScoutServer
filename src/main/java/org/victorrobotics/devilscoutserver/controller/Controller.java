@@ -1,6 +1,9 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.cache.EventInfoCache;
+import org.victorrobotics.devilscoutserver.caches.EventInfoCache;
+import org.victorrobotics.devilscoutserver.caches.EventTeamsCache;
+import org.victorrobotics.devilscoutserver.caches.MatchScheduleCache;
+import org.victorrobotics.devilscoutserver.caches.TeamInfoCache;
 import org.victorrobotics.devilscoutserver.data.Session;
 import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
@@ -8,6 +11,7 @@ import org.victorrobotics.devilscoutserver.database.TeamConfigDB;
 import org.victorrobotics.devilscoutserver.database.UserDB;
 
 import java.security.SecureRandom;
+import java.util.Base64;
 
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
@@ -22,16 +26,21 @@ public class Controller {
   protected static final String MAC_ALGORITHM    = "HmacSHA256";
   protected static final String KEYGEN_ALGORITHM = "PBKDF2WithHmacSHA256";
 
-  protected static final SecureRandom SECURE_RANDOM = new SecureRandom();
+  protected static final SecureRandom SECURE_RANDOM  = new SecureRandom();
+  private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+  private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 
-  private static final Class<?>[] CONTROLLERS =
-      { SessionController.class, EventInfoController.class, UserController.class };
+  private static final Class<?>[] CONTROLLERS = { SessionController.class, UserController.class,
+                                                  QuestionController.class, EventController.class };
 
   private static UserDB       USERS;
   private static SessionDB    SESSIONS;
   private static TeamConfigDB TEAMS;
 
-  private static EventInfoCache EVENT_INFO_CACHE;
+  private static TeamInfoCache      TEAM_INFO_CACHE;
+  private static EventInfoCache     EVENT_INFO_CACHE;
+  private static EventTeamsCache    EVENT_TEAMS_CACHE;
+  private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
 
   protected Controller() {}
 
@@ -60,20 +69,51 @@ public class Controller {
     EVENT_INFO_CACHE = cache;
   }
 
-  protected static UserDB userDB() {
+  public static void setTeamInfoCache(TeamInfoCache cache) {
+    TEAM_INFO_CACHE = cache;
+  }
+
+  public static void setEventTeamsCache(EventTeamsCache cache) {
+    EVENT_TEAMS_CACHE = cache;
+  }
+
+  public static void setMatchScheduleCache(MatchScheduleCache cache) {
+    MATCH_SCHEDULE_CACHE = cache;
+  }
+
+  public static void refreshCaches() {
+    EVENT_INFO_CACHE.refresh();
+    TEAM_INFO_CACHE.refresh();
+    EVENT_TEAMS_CACHE.refresh();
+    MATCH_SCHEDULE_CACHE.refresh();
+  }
+
+  public static UserDB userDB() {
     return USERS;
   }
 
-  protected static SessionDB sessionDB() {
+  public static SessionDB sessionDB() {
     return SESSIONS;
   }
 
-  protected static TeamConfigDB teamDB() {
+  public static TeamConfigDB teamDB() {
     return TEAMS;
   }
 
-  protected static EventInfoCache eventInfoCache() {
+  public static TeamInfoCache teamInfoCache() {
+    return TEAM_INFO_CACHE;
+  }
+
+  public static EventInfoCache eventCache() {
     return EVENT_INFO_CACHE;
+  }
+
+  public static EventTeamsCache eventTeamsCache() {
+    return EVENT_TEAMS_CACHE;
+  }
+
+  public static MatchScheduleCache matchScheduleCache() {
+    return MATCH_SCHEDULE_CACHE;
   }
 
   @SuppressWarnings("java:S2221") // catch generic exception
@@ -117,7 +157,27 @@ public class Controller {
     }
   }
 
+  protected static void checkIfNoneMatch(Context ctx, long timestamp) {
+    try {
+      String etag = ctx.header("If-None-Match");
+      if (etag == null) return;
+
+      long time = Long.parseLong(etag.substring(1, etag.length() - 1));
+      if (time >= timestamp) {
+        throw new NotModifiedResponse();
+      }
+    } catch (NumberFormatException e) {}
+  }
+
   protected static void setResponseETag(Context ctx, String etag) {
     ctx.header("ETag", "\"" + etag + "\"");
+  }
+
+  public static String base64Encode(byte[] bytes) {
+    return BASE64_ENCODER.encodeToString(bytes);
+  }
+
+  public static byte[] base64Decode(String base64) {
+    return BASE64_DECODER.decode(base64);
   }
 }

@@ -7,10 +7,13 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.post;
 import static io.javalin.apibuilder.ApiBuilder.put;
 
-import org.victorrobotics.devilscoutserver.cache.EventInfoCache;
+import org.victorrobotics.devilscoutserver.caches.EventInfoCache;
+import org.victorrobotics.devilscoutserver.caches.EventTeamsCache;
+import org.victorrobotics.devilscoutserver.caches.MatchScheduleCache;
+import org.victorrobotics.devilscoutserver.caches.TeamInfoCache;
 import org.victorrobotics.devilscoutserver.controller.Controller;
-import org.victorrobotics.devilscoutserver.controller.EventInfoController;
-import org.victorrobotics.devilscoutserver.controller.QuestionsController;
+import org.victorrobotics.devilscoutserver.controller.EventController;
+import org.victorrobotics.devilscoutserver.controller.QuestionController;
 import org.victorrobotics.devilscoutserver.controller.SessionController;
 import org.victorrobotics.devilscoutserver.controller.UserController;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
@@ -98,12 +101,20 @@ public class Server {
       post("auth", SessionController::auth);
       delete("logout", SessionController::logout);
 
-      get("event_info", EventInfoController::eventInfo);
+      path("events", () -> {
+        get(EventController::getAllEvents);
+
+        path("{event}", () -> {
+          get(EventController::getEvent);
+          get("teams", EventController::getTeams);
+          get("match-schedule", EventController::getMatchSchedule);
+        });
+      });
 
       path("questions", () -> {
-        get("match", QuestionsController::matchQuestions);
-        get("pit", QuestionsController::pitQuestions);
-        get("drive_team", QuestionsController::driveTeamQuestions);
+        get("match", QuestionController::matchQuestions);
+        get("pit", QuestionController::pitQuestions);
+        get("drive_team", QuestionController::driveTeamQuestions);
       });
 
       path("scout", () -> {
@@ -158,6 +169,9 @@ public class Server {
     Controller.setTeamDB(new TeamConfigDB());
 
     Controller.setEventInfoCache(new EventInfoCache());
+    Controller.setTeamInfoCache(new TeamInfoCache());
+    Controller.setEventTeamsCache(new EventTeamsCache(Controller.teamInfoCache()));
+    Controller.setMatchScheduleCache(new MatchScheduleCache());
 
     Controller.loadAll();
     Server server = new Server();

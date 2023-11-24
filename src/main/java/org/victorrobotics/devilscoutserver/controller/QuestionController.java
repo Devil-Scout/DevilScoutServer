@@ -1,7 +1,5 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import static org.victorrobotics.devilscoutserver.Utils.base64Encode;
-
 import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 
 import java.io.IOException;
@@ -24,7 +22,7 @@ import io.javalin.openapi.OpenApiRequired;
 import io.javalin.openapi.OpenApiResponse;
 import io.javalin.openapi.OpenApiSecurity;
 
-public final class QuestionsController extends Controller {
+public final class QuestionController extends Controller {
   private static final MatchQuestions     MATCH_QUESTIONS;
   private static final PitQuestions       PIT_QUESTIONS;
   private static final DriveTeamQuestions DRIVE_TEAM_QUESTIONS;
@@ -62,10 +60,10 @@ public final class QuestionsController extends Controller {
     }
   }
 
-  private QuestionsController() {}
+  private QuestionController() {}
 
   private static InputStream openResource(String name) {
-    return QuestionsController.class.getResourceAsStream(name);
+    return QuestionController.class.getResourceAsStream(name);
   }
 
   @OpenApi(path = "/questions/match", methods = HttpMethod.GET, tags = "Questions",
