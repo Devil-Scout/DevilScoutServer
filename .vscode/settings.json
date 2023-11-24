@@ -1,23 +1,23 @@
 {
-    "java.completion.importOrder": [
-        "#org.victorrobotics",
-        "#",
-        "org.victorrobotics",
-        "java",
-        "javax",
-        "",
-        "#org.junit.jupiter",
-        "#org.mockito",
-        "org.junit.jupiter",
-        "org.mockito",
-    ],
-    "java.completion.favoriteStaticMembers": [
-        "org.junit.jupiter.api.Assertions.*",
-        "io.javalin.apibuilder.ApiBuilder.*",
-        "org.mockito.Mockito.*",
-        "org.mockito.ArgumentMatchers.*"
-    ],
-    "[java]": {
-        "editor.tabSize": 2
-    }
+  "java.completion.importOrder": [
+    "#org.victorrobotics",
+    "#",
+    "org.victorrobotics",
+    "java",
+    "javax",
+    "",
+    "#org.junit.jupiter",
+    "#org.mockito",
+    "org.junit.jupiter",
+    "org.mockito",
+  ],
+  "java.completion.favoriteStaticMembers": [
+    "org.junit.jupiter.api.Assertions.*",
+    "io.javalin.apibuilder.ApiBuilder.*",
+    "org.mockito.Mockito.*",
+    "org.mockito.ArgumentMatchers.*"
+  ],
+  "[java]": {
+    "editor.tabSize": 2
+  }
 }
