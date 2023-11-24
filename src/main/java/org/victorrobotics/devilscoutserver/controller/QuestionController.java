@@ -18,6 +18,7 @@ import io.javalin.openapi.HttpMethod;
 import io.javalin.openapi.OpenApi;
 import io.javalin.openapi.OpenApiContent;
 import io.javalin.openapi.OpenApiExample;
+import io.javalin.openapi.OpenApiParam;
 import io.javalin.openapi.OpenApiRequired;
 import io.javalin.openapi.OpenApiResponse;
 import io.javalin.openapi.OpenApiSecurity;
@@ -68,6 +69,7 @@ public final class QuestionController extends Controller {
 
   @OpenApi(path = "/questions/match", methods = HttpMethod.GET, tags = "Questions",
            summary = "USER", description = "Get the match scouting questions users should answer.",
+           headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = MatchQuestions.class)),
@@ -77,11 +79,12 @@ public final class QuestionController extends Controller {
     checkIfNoneMatch(ctx, MATCH_QUESTIONS_HASH);
 
     ctx.json(MATCH_QUESTIONS_JSON);
-    setResponseETag(ctx, MATCH_QUESTIONS_HASH);
+    setResponseEtag(ctx, MATCH_QUESTIONS_HASH);
   }
 
   @OpenApi(path = "/questions/pit", methods = HttpMethod.GET, tags = "Questions", summary = "USER",
            description = "Get the pit scouting questions users should answer.",
+           headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = PitQuestions.class)),
@@ -91,12 +94,13 @@ public final class QuestionController extends Controller {
     checkIfNoneMatch(ctx, PIT_QUESTIONS_HASH);
 
     ctx.json(PIT_QUESTIONS_JSON);
-    setResponseETag(ctx, PIT_QUESTIONS_HASH);
+    setResponseEtag(ctx, PIT_QUESTIONS_HASH);
   }
 
   @OpenApi(path = "/questions/drive_team", methods = HttpMethod.GET, tags = "Questions",
            summary = "ADMIN",
            description = "Get the scouting questions drive teams should answer. Requires ADMIN access.",
+           headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = DriveTeamQuestions.class)),
@@ -107,7 +111,7 @@ public final class QuestionController extends Controller {
     checkIfNoneMatch(ctx, DRIVE_TEAM_QUESTIONS_HASH);
 
     ctx.json(DRIVE_TEAM_QUESTIONS_JSON);
-    setResponseETag(ctx, DRIVE_TEAM_QUESTIONS_HASH);
+    setResponseEtag(ctx, DRIVE_TEAM_QUESTIONS_HASH);
   }
 
   enum QuestionType {
@@ -120,7 +124,6 @@ public final class QuestionController extends Controller {
     SEQUENCE,
     SINGLE;
   }
-
 
   public static record Question(@OpenApiRequired @OpenApiExample("Drivetrain Type") String prompt,
                                 @OpenApiRequired QuestionType type,

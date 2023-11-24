@@ -20,6 +20,7 @@ public final class EventController extends Controller {
 
   @OpenApi(path = "/events", methods = HttpMethod.GET, tags = "Events", summary = "USER",
            description = "Get information on all current-year events.",
+           headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = EventInfo[].class)),
@@ -31,15 +32,15 @@ public final class EventController extends Controller {
     long timestamp = eventCache().timestamp();
     checkIfNoneMatch(ctx, timestamp);
 
-    setResponseETag(ctx, timestamp);
+    setResponseEtag(ctx, timestamp);
     ctx.writeJsonStream(eventCache().values()
                                     .sorted());
   }
 
   @OpenApi(path = "/events/{event}", methods = HttpMethod.GET, tags = "Events", summary = "USER",
            description = "Get information on an event.",
-           pathParams = @OpenApiParam(name = "event", type = String.class, required = true,
-                                      example = "2023paca"),
+           pathParams = @OpenApiParam(name = "event", type = String.class, required = true),
+           headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = EventInfo.class)),
@@ -57,14 +58,14 @@ public final class EventController extends Controller {
     long timestamp = entry.timestamp();
     checkIfNoneMatch(ctx, timestamp);
 
-    setResponseETag(ctx, timestamp);
+    setResponseEtag(ctx, timestamp);
     ctx.json(entry.value());
   }
 
   @OpenApi(path = "/events/{event}/teams", methods = HttpMethod.GET, tags = "Events",
            summary = "USER", description = "Get the list of teams attending an event.",
-           pathParams = @OpenApiParam(name = "event", type = String.class, required = true,
-                                      example = "2023paca"),
+           pathParams = @OpenApiParam(name = "event", type = String.class, required = true),
+           headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = TeamInfo[].class)),
@@ -82,14 +83,14 @@ public final class EventController extends Controller {
     long timestamp = entry.timestamp();
     checkIfNoneMatch(ctx, timestamp);
 
-    setResponseETag(ctx, timestamp);
+    setResponseEtag(ctx, timestamp);
     ctx.json(entry.value());
   }
 
   @OpenApi(path = "/events/{event}/match-schedule", methods = HttpMethod.GET, tags = "Events",
            summary = "USER", description = "Get the match schedule at an event.",
-           pathParams = @OpenApiParam(name = "event", type = String.class, required = true,
-                                      example = "2023paca"),
+           pathParams = @OpenApiParam(name = "event", type = String.class, required = true),
+           headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = MatchSchedule.MatchInfo[].class)),
@@ -107,7 +108,7 @@ public final class EventController extends Controller {
     long timestamp = entry.timestamp();
     checkIfNoneMatch(ctx, timestamp);
 
-    setResponseETag(ctx, timestamp);
+    setResponseEtag(ctx, timestamp);
     ctx.json(entry.value());
   }
 }

@@ -42,7 +42,7 @@ public class Server {
           """.formatted(Controller.SESSION_HEADER);
   private static final String TAGS_SORTER     = """
       /* INJECTED */ (a,b) => {
-        const tagOrder = ['Authentication', 'Questions', 'Teams', 'Users'];
+        const tagOrder = ['Authentication', 'Events', 'Questions', 'Teams', 'Users'];
         return tagOrder.indexOf(a) - tagOrder.indexOf(b);
       }
       """;

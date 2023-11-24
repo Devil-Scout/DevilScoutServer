@@ -151,30 +151,29 @@ public class Controller {
   }
 
   protected static void checkIfNoneMatch(Context ctx, String latest) {
-    String etag = ctx.header("If-None-Match");
-    if (("\"" + latest + "\"").equals(etag)) {
+    String etag = ctx.header("if-none-match");
+    if (latest.equals(etag)) {
+      setResponseEtag(ctx, latest);
       throw new NotModifiedResponse();
     }
   }
 
   protected static void checkIfNoneMatch(Context ctx, long timestamp) {
     try {
-      String etag = ctx.header("If-None-Match");
-      if (etag == null) return;
-
-      long time = Long.parseLong(etag.substring(1, etag.length() - 1));
-      if (time >= timestamp) {
+      long etag = Long.parseLong(ctx.header("if-none-match"));
+      if (etag >= timestamp) {
+        setResponseEtag(ctx, etag);
         throw new NotModifiedResponse();
       }
     } catch (NumberFormatException e) {}
   }
 
-  protected static void setResponseETag(Context ctx, String etag) {
-    ctx.header("ETag", "\"" + etag + "\"");
+  protected static void setResponseEtag(Context ctx, String etag) {
+    ctx.header("etag", etag);
   }
 
-  protected static void setResponseETag(Context ctx, long timestamp) {
-    ctx.header("ETag", "\"" + timestamp + "\"");
+  protected static void setResponseEtag(Context ctx, long timestamp) {
+    ctx.header("etag", Long.toString(timestamp));
   }
 
   public static String base64Encode(byte[] bytes) {
