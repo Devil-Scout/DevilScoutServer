@@ -23,13 +23,15 @@ public final class EventController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = EventInfo[].class)),
-                         @OpenApiResponse(status = "301"), @OpenApiResponse(status = "401"),
+                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401"),
                          @OpenApiResponse(status = "404") })
   public static void getAllEvents(Context ctx) {
     getValidSession(ctx);
 
-    checkIfNoneMatch(ctx, eventCache().timestamp());
+    long timestamp = eventCache().timestamp();
+    checkIfNoneMatch(ctx, timestamp);
 
+    setResponseETag(ctx, timestamp);
     ctx.writeJsonStream(eventCache().values()
                                     .sorted());
   }
@@ -41,7 +43,7 @@ public final class EventController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = EventInfo.class)),
-                         @OpenApiResponse(status = "301"), @OpenApiResponse(status = "401"),
+                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401"),
                          @OpenApiResponse(status = "404") })
   public static void getEvent(Context ctx) {
     getValidSession(ctx);
@@ -52,8 +54,10 @@ public final class EventController extends Controller {
     }
 
     CacheValue<?, EventInfo> entry = eventCache().get(eventKey);
-    checkIfNoneMatch(ctx, entry.timestamp());
+    long timestamp = entry.timestamp();
+    checkIfNoneMatch(ctx, timestamp);
 
+    setResponseETag(ctx, timestamp);
     ctx.json(entry.value());
   }
 
@@ -64,7 +68,7 @@ public final class EventController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = TeamInfo[].class)),
-                         @OpenApiResponse(status = "301"), @OpenApiResponse(status = "401"),
+                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401"),
                          @OpenApiResponse(status = "404") })
   public static void getTeams(Context ctx) {
     getValidSession(ctx);
@@ -75,8 +79,10 @@ public final class EventController extends Controller {
     }
 
     CacheValue<?, TeamList> entry = eventTeamsCache().get(eventKey);
-    checkIfNoneMatch(ctx, entry.timestamp());
+    long timestamp = entry.timestamp();
+    checkIfNoneMatch(ctx, timestamp);
 
+    setResponseETag(ctx, timestamp);
     ctx.json(entry.value());
   }
 
@@ -87,7 +93,7 @@ public final class EventController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = MatchSchedule.MatchInfo[].class)),
-                         @OpenApiResponse(status = "301"), @OpenApiResponse(status = "401"),
+                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401"),
                          @OpenApiResponse(status = "404") })
   public static void getMatchSchedule(Context ctx) {
     getValidSession(ctx);
@@ -98,8 +104,10 @@ public final class EventController extends Controller {
     }
 
     CacheValue<?, MatchSchedule> entry = matchScheduleCache().get(eventKey);
-    checkIfNoneMatch(ctx, entry.timestamp());
+    long timestamp = entry.timestamp();
+    checkIfNoneMatch(ctx, timestamp);
 
+    setResponseETag(ctx, timestamp);
     ctx.json(entry.value());
   }
 }

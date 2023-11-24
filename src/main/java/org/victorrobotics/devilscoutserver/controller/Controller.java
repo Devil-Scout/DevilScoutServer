@@ -173,6 +173,10 @@ public class Controller {
     ctx.header("ETag", "\"" + etag + "\"");
   }
 
+  protected static void setResponseETag(Context ctx, long timestamp) {
+    ctx.header("ETag", "\"" + timestamp + "\"");
+  }
+
   public static String base64Encode(byte[] bytes) {
     return BASE64_ENCODER.encodeToString(bytes);
   }
