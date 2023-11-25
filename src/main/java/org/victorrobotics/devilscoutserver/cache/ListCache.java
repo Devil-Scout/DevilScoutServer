@@ -17,7 +17,6 @@ public abstract class ListCache<K, D, V extends Cacheable<D>> implements Cache<K
   protected ListCache(List<Endpoint<List<D>>> endpointList) {
     endpoints = List.copyOf(endpointList);
     cache = new ConcurrentHashMap<>();
-    refresh();
   }
 
   protected abstract V createValue(K key);
@@ -43,6 +42,7 @@ public abstract class ListCache<K, D, V extends Cacheable<D>> implements Cache<K
 
   @Override
   public void refresh() {
+    long start = System.currentTimeMillis();
     List<K> keys = new ArrayList<>();
     boolean mods = endpoints.parallelStream()
                             .map(Endpoint::refresh)
@@ -54,12 +54,15 @@ public abstract class ListCache<K, D, V extends Cacheable<D>> implements Cache<K
                                                            k -> new CacheValue<>(createValue(k)))
                                           .update(data);
                             })
+                            .sequential()
                             .reduce(false, Boolean::logicalOr);
     boolean removals = cache.keySet()
                             .retainAll(keys);
     if (mods || removals) {
       timestamp = System.currentTimeMillis();
     }
+    System.out.printf("Refreshed %s (%d) in %dms%n", getClass().getSimpleName(), size(),
+                      System.currentTimeMillis() - start);
   }
 
   @Override

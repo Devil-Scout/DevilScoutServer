@@ -81,13 +81,6 @@ public class Controller {
     MATCH_SCHEDULE_CACHE = cache;
   }
 
-  public static void refreshCaches() {
-    EVENT_INFO_CACHE.refresh();
-    TEAM_INFO_CACHE.refresh();
-    EVENT_TEAMS_CACHE.refresh();
-    MATCH_SCHEDULE_CACHE.refresh();
-  }
-
   public static UserDB userDB() {
     return USERS;
   }

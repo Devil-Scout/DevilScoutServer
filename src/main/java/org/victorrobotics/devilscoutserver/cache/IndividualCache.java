@@ -44,15 +44,19 @@ public abstract class IndividualCache<K, D, V extends Cacheable<D>> implements C
 
   @Override
   public void refresh() {
+    long start = System.currentTimeMillis();
     boolean change = cache.entrySet()
                           .parallelStream()
                           .map(entry -> entry.getValue()
                                              .startRefresh(getEndpoint(entry.getKey())))
                           .map(CompletableFuture::join)
+                          .sequential()
                           .reduce(false, Boolean::logicalOr);
     if (change) {
       timestamp = System.currentTimeMillis();
     }
+    System.out.printf("Refreshed %s (%d) in %dms%n", getClass().getSimpleName(), size(),
+                      System.currentTimeMillis() - start);
   }
 
   @Override

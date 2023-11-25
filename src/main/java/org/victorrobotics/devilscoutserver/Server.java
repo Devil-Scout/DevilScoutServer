@@ -20,6 +20,10 @@ import org.victorrobotics.devilscoutserver.database.SessionDB;
 import org.victorrobotics.devilscoutserver.database.TeamConfigDB;
 import org.victorrobotics.devilscoutserver.database.UserDB;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import io.javalin.Javalin;
 import io.javalin.http.Handler;
 import io.javalin.openapi.ApiKeyAuth;
@@ -163,6 +167,7 @@ public class Server {
     javalin.stop();
   }
 
+  @SuppressWarnings("java:S2095") // close the executor
   public static void main(String... args) {
     Controller.setUserDB(new UserDB());
     Controller.setSessionDB(new SessionDB());
@@ -172,6 +177,16 @@ public class Server {
     Controller.setTeamInfoCache(new TeamInfoCache());
     Controller.setEventTeamsCache(new EventTeamsCache(Controller.teamInfoCache()));
     Controller.setMatchScheduleCache(new MatchScheduleCache());
+
+    ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
+    executor.scheduleAtFixedRate(Controller.eventCache()::refresh, 0, 5, TimeUnit.MINUTES);
+    executor.scheduleAtFixedRate(Controller.matchScheduleCache()::refresh, 0, 1, TimeUnit.MINUTES);
+    executor.scheduleAtFixedRate(() -> {
+      Controller.teamInfoCache()
+                .refresh();
+      Controller.eventTeamsCache()
+                .refresh();
+    }, 0, 5, TimeUnit.MINUTES);
 
     Controller.loadAll();
     Server server = new Server();
