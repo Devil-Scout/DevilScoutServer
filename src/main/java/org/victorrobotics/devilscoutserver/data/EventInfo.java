@@ -3,17 +3,12 @@ package org.victorrobotics.devilscoutserver.data;
 import org.victorrobotics.bluealliance.Event;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 import io.javalin.openapi.OpenApiExample;
 import io.javalin.openapi.OpenApiRequired;
 
 public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo> {
-  private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("uuuu-MM-DD")
-                                                                        .withZone(ZoneOffset.UTC);
-
   private final String eventKey;
 
   private String name;
@@ -44,13 +39,13 @@ public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo>
       changed = true;
     }
 
-    String eventStart = DATE_FORMAT.format(event.startDate.toInstant());
+    String eventStart = event.startDate.toString();
     if (!Objects.equals(start, eventStart)) {
       start = eventStart;
       changed = true;
     }
 
-    String eventEnd = DATE_FORMAT.format(event.endDate.toInstant());
+    String eventEnd = event.endDate.toString();
     if (!Objects.equals(end, eventEnd)) {
       end = eventEnd;
       changed = true;

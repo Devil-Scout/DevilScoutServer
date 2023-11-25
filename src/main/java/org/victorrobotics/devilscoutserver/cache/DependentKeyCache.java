@@ -70,8 +70,7 @@ public abstract class DependentKeyCache<K, K2, D, I extends Cacheable<D>, V exte
   }
 
   private List<I> getData(K key) {
-    return getEndpoint(key).request()
-                           .join()
+    return getEndpoint(key).refresh()
                            .stream()
                            .map(source::get)
                            .map(CacheValue::value)

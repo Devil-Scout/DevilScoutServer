@@ -14,11 +14,11 @@ public class CacheValue<D, V extends Cacheable<D>> {
   }
 
   public boolean refresh(Endpoint<D> endpoint) {
-    return startRefresh(endpoint).join();
+    return update(endpoint.refresh());
   }
 
   public CompletableFuture<Boolean> startRefresh(Endpoint<D> endpoint) {
-    return endpoint.request()
+    return endpoint.refreshAsync()
                    .thenApply(this::update);
   }
 

@@ -4,7 +4,6 @@ import org.victorrobotics.bluealliance.Endpoint;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
@@ -46,8 +45,7 @@ public abstract class ListCache<K, D, V extends Cacheable<D>> implements Cache<K
   public void refresh() {
     List<K> keys = new ArrayList<>();
     boolean mods = endpoints.parallelStream()
-                            .map(Endpoint::request)
-                            .map(CompletableFuture::join)
+                            .map(Endpoint::refresh)
                             .flatMap(List::stream)
                             .map(data -> {
                               K key = getKey(data);
