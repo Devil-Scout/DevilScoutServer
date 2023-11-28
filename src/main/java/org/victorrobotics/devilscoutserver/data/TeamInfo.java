@@ -8,7 +8,7 @@ import java.util.Objects;
 import io.javalin.openapi.OpenApiExample;
 import io.javalin.openapi.OpenApiRequired;
 
-public class TeamInfo implements Cacheable<Team.Simple> {
+public class TeamInfo implements Cacheable<Team.Simple>, Comparable<TeamInfo> {
   private final String key;
 
   private int    number;
@@ -62,5 +62,10 @@ public class TeamInfo implements Cacheable<Team.Simple> {
   @OpenApiRequired
   public String getLocation() {
     return location;
+  }
+
+  @Override
+  public int compareTo(TeamInfo other) {
+    return Integer.compare(number, other.number);
   }
 }

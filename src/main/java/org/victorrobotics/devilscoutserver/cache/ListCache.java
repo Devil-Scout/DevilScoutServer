@@ -15,8 +15,8 @@ public abstract class ListCache<K, D, V extends Cacheable<D>> implements Cache<K
   private volatile long timestamp;
 
   protected ListCache(List<Endpoint<List<D>>> endpointList) {
-    endpoints = List.copyOf(endpointList);
     cache = new ConcurrentHashMap<>();
+    endpoints = List.copyOf(endpointList);
   }
 
   protected abstract V createValue(K key);
@@ -34,13 +34,7 @@ public abstract class ListCache<K, D, V extends Cacheable<D>> implements Cache<K
   }
 
   @Override
-  public Stream<V> values() {
-    return cache.values()
-                .stream()
-                .map(CacheValue::value);
-  }
-
-  @Override
+  @SuppressWarnings("java:S1941") // move start further down
   public void refresh() {
     long start = System.currentTimeMillis();
     List<K> keys = new ArrayList<>();
@@ -73,5 +67,11 @@ public abstract class ListCache<K, D, V extends Cacheable<D>> implements Cache<K
   @Override
   public long timestamp() {
     return timestamp;
+  }
+
+  public Stream<CacheValue<D, V>> values() {
+    return cache.values()
+                .stream()
+                .sorted();
   }
 }

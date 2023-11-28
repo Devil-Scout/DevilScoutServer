@@ -11,10 +11,10 @@ import io.javalin.openapi.OpenApiRequired;
 public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo> {
   private final String eventKey;
 
-  private String name;
-  private String location;
-  private String start;
-  private String end;
+  private String     name;
+  private String     location;
+  private Event.Date start;
+  private Event.Date end;
 
   public EventInfo(String eventKey) {
     this.eventKey = eventKey;
@@ -39,15 +39,13 @@ public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo>
       changed = true;
     }
 
-    String eventStart = event.startDate.toString();
-    if (!Objects.equals(start, eventStart)) {
-      start = eventStart;
+    if (!Objects.equals(start, event.startDate)) {
+      start = event.startDate;
       changed = true;
     }
 
-    String eventEnd = event.endDate.toString();
-    if (!Objects.equals(end, eventEnd)) {
-      end = eventEnd;
+    if (!Objects.equals(end, event.endDate)) {
+      end = event.endDate;
       changed = true;
     }
 
@@ -75,17 +73,29 @@ public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo>
   @OpenApiExample("2023-10-21")
   @OpenApiRequired
   public String getStart() {
-    return start;
+    return start.toString();
   }
 
   @OpenApiExample("2023-10-21")
   @OpenApiRequired
   public String getEnd() {
-    return end;
+    return end.toString();
   }
 
   @Override
-  public int compareTo(EventInfo o) {
-    return getStart().compareTo(o.getStart());
+  public int compareTo(EventInfo other) {
+    if (start.year != other.start.year) {
+      return Integer.compare(start.year, other.start.year);
+    }
+
+    if (start.month != other.start.month) {
+      return Integer.compare(start.month, other.start.month);
+    }
+
+    if (start.day != other.start.day) {
+      return Integer.compare(start.day, other.start.day);
+    }
+
+    return eventKey.compareTo(other.eventKey);
   }
 }

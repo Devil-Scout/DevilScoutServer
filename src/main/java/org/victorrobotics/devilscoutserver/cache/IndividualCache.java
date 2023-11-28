@@ -5,15 +5,17 @@ import org.victorrobotics.bluealliance.Endpoint;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Stream;
 
 public abstract class IndividualCache<K, D, V extends Cacheable<D>> implements Cache<K, D, V> {
   private final ConcurrentMap<K, CacheValue<D, V>> cache;
 
+  private final long purgeTime;
+
   private volatile long timestamp;
 
-  protected IndividualCache() {
+  protected IndividualCache(long purgeTime) {
     cache = new ConcurrentHashMap<>();
+    this.purgeTime = purgeTime;
   }
 
   protected abstract Endpoint<D> getEndpoint(K key);
@@ -36,23 +38,18 @@ public abstract class IndividualCache<K, D, V extends Cacheable<D>> implements C
   }
 
   @Override
-  public Stream<V> values() {
-    return cache.values()
-                .stream()
-                .map(CacheValue::value);
-  }
-
-  @Override
   public void refresh() {
     long start = System.currentTimeMillis();
-    boolean change = cache.entrySet()
-                          .parallelStream()
-                          .map(entry -> entry.getValue()
-                                             .startRefresh(getEndpoint(entry.getKey())))
-                          .map(CompletableFuture::join)
-                          .sequential()
-                          .reduce(false, Boolean::logicalOr);
-    if (change) {
+    boolean mods = cache.entrySet()
+                        .parallelStream()
+                        .map(entry -> entry.getValue()
+                                           .startRefresh(getEndpoint(entry.getKey())))
+                        .map(CompletableFuture::join)
+                        .sequential()
+                        .reduce(false, Boolean::logicalOr);
+    boolean removals = cache.values()
+                            .removeIf(value -> start - value.lastAccess() > purgeTime);
+    if (mods || removals) {
       timestamp = System.currentTimeMillis();
     }
     System.out.printf("Refreshed %s (%d) in %dms%n", getClass().getSimpleName(), size(),

@@ -33,8 +33,7 @@ public final class EventController extends Controller {
     checkIfNoneMatch(ctx, timestamp);
 
     setResponseEtag(ctx, timestamp);
-    ctx.writeJsonStream(eventCache().values()
-                                    .sorted());
+    ctx.writeJsonStream(eventCache().values());
   }
 
   @OpenApi(path = "/events/{event}", methods = HttpMethod.GET, tags = "Events", summary = "USER",
@@ -55,11 +54,11 @@ public final class EventController extends Controller {
     }
 
     CacheValue<?, EventInfo> entry = eventCache().get(eventKey);
-    long timestamp = entry.timestamp();
+    long timestamp = entry.lastRefresh();
     checkIfNoneMatch(ctx, timestamp);
 
     setResponseEtag(ctx, timestamp);
-    ctx.json(entry.value());
+    ctx.json(entry);
   }
 
   @OpenApi(path = "/events/{event}/teams", methods = HttpMethod.GET, tags = "Events",
@@ -80,11 +79,11 @@ public final class EventController extends Controller {
     }
 
     CacheValue<?, TeamList> entry = eventTeamsCache().get(eventKey);
-    long timestamp = entry.timestamp();
+    long timestamp = entry.lastRefresh();
     checkIfNoneMatch(ctx, timestamp);
 
     setResponseEtag(ctx, timestamp);
-    ctx.json(entry.value());
+    ctx.json(entry);
   }
 
   @OpenApi(path = "/events/{event}/match-schedule", methods = HttpMethod.GET, tags = "Events",
@@ -105,10 +104,10 @@ public final class EventController extends Controller {
     }
 
     CacheValue<?, MatchSchedule> entry = matchScheduleCache().get(eventKey);
-    long timestamp = entry.timestamp();
+    long timestamp = entry.lastRefresh();
     checkIfNoneMatch(ctx, timestamp);
 
     setResponseEtag(ctx, timestamp);
-    ctx.json(entry.value());
+    ctx.json(entry);
   }
 }

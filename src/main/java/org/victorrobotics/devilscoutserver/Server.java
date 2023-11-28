@@ -7,6 +7,7 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.post;
 import static io.javalin.apibuilder.ApiBuilder.put;
 
+import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.devilscoutserver.caches.EventInfoCache;
 import org.victorrobotics.devilscoutserver.caches.EventTeamsCache;
 import org.victorrobotics.devilscoutserver.caches.MatchScheduleCache;
@@ -177,6 +178,8 @@ public class Server {
     Controller.setTeamInfoCache(new TeamInfoCache());
     Controller.setEventTeamsCache(new EventTeamsCache(Controller.teamInfoCache()));
     Controller.setMatchScheduleCache(new MatchScheduleCache());
+
+    Endpoint.setExecutor(Executors.newFixedThreadPool(16));
 
     ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
     executor.scheduleAtFixedRate(Controller.eventCache()::refresh, 0, 5, TimeUnit.MINUTES);
