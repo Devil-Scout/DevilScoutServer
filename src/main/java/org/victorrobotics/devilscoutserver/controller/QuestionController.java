@@ -1,6 +1,6 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
+import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -97,7 +97,7 @@ public final class QuestionController extends Controller {
     setResponseEtag(ctx, PIT_QUESTIONS_HASH);
   }
 
-  @OpenApi(path = "/questions/drive_team", methods = HttpMethod.GET, tags = "Questions",
+  @OpenApi(path = "/questions/drive-team", methods = HttpMethod.GET, tags = "Questions",
            summary = "ADMIN",
            description = "Get the scouting questions drive teams should answer. Requires ADMIN access.",
            headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),

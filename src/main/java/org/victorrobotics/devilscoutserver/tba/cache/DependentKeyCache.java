@@ -1,4 +1,4 @@
-package org.victorrobotics.devilscoutserver.cache;
+package org.victorrobotics.devilscoutserver.tba.cache;
 
 import org.victorrobotics.bluealliance.Endpoint;
 

@@ -1,10 +1,9 @@
-package org.victorrobotics.devilscoutserver.caches;
+package org.victorrobotics.devilscoutserver.tba.data;
 
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.bluealliance.Match;
 import org.victorrobotics.bluealliance.Match.Simple;
-import org.victorrobotics.devilscoutserver.cache.IndividualCache;
-import org.victorrobotics.devilscoutserver.data.MatchSchedule;
+import org.victorrobotics.devilscoutserver.tba.cache.IndividualCache;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;

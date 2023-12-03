@@ -1,15 +1,13 @@
 package org.victorrobotics.devilscoutserver.database;
 
-import org.victorrobotics.devilscoutserver.data.Session;
-
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class SessionDB {
-  private final Map<Long, Session> sessions;
+  private final ConcurrentMap<Long, Session> sessions;
 
   public SessionDB() {
-    sessions = new HashMap<>();
+    sessions = new ConcurrentHashMap<>();
   }
 
   public void registerSession(Session session) {

@@ -1,4 +1,4 @@
-package org.victorrobotics.devilscoutserver.data;
+package org.victorrobotics.devilscoutserver.database;
 
 public enum UserAccessLevel {
   USER,

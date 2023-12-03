@@ -1,21 +1,21 @@
-package org.victorrobotics.devilscoutserver.data;
+package org.victorrobotics.devilscoutserver.tba.data;
 
-import org.victorrobotics.devilscoutserver.cache.Cacheable;
+import org.victorrobotics.devilscoutserver.tba.cache.Cacheable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public class TeamList implements Cacheable<Collection<TeamInfo>> {
-  private final SortedMap<Integer, TeamInfo> teamMap;
+  private final ConcurrentNavigableMap<Integer, TeamInfo> teamMap;
   private final Collection<TeamInfo>         teams;
 
   public TeamList() {
-    teamMap = new TreeMap<>();
+    teamMap = new ConcurrentSkipListMap<>();
     teams = Collections.unmodifiableCollection(teamMap.values());
   }
 

@@ -8,9 +8,9 @@ import org.victorrobotics.devilscoutserver.controller.SessionController.AuthRequ
 import org.victorrobotics.devilscoutserver.controller.SessionController.AuthResponse;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginChallenge;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginRequest;
-import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
 import org.victorrobotics.devilscoutserver.database.User;
+import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.database.UserDB;
 
 import java.io.IOException;
@@ -75,7 +75,7 @@ class SessionIntegrationTest {
 
     // Login Request
     LoginRequest loginRequest =
-        new LoginRequest(testCase.user.team(), testCase.user.username(), clientNonce);
+        new LoginRequest(testCase.user.getTeam(), testCase.user.getUsername(), clientNonce);
     HttpResponse<String> response =
         client.send(HttpRequest.newBuilder(URI.create("http://localhost:8000/login"))
                                .POST(BodyPublishers.ofString(json.writeValueAsString(loginRequest)))
@@ -118,7 +118,7 @@ class SessionIntegrationTest {
     byte[] serverKey = hmacFunction.doFinal("Server Key".getBytes());
     byte[] storedKey = hashFunction.digest(clientKey);
 
-    byte[] userAndNonce = toStr(testCase.user.team() + testCase.user.username(), nonce);
+    byte[] userAndNonce = toStr(testCase.user.getTeam() + testCase.user.getUsername(), nonce);
 
     try {
       hmacFunction.init(new SecretKeySpec(storedKey, "HmacSHA256"));
@@ -141,7 +141,7 @@ class SessionIntegrationTest {
 
     // Auth Request
     AuthRequest authRequest =
-        new AuthRequest(testCase.user.team(), testCase.user.username(), nonce, clientProof);
+        new AuthRequest(testCase.user.getTeam(), testCase.user.getUsername(), nonce, clientProof);
     response = client.send(HttpRequest.newBuilder(URI.create("http://localhost:8000/auth"))
                                       .POST(BodyPublishers.ofString(json.writeValueAsString(authRequest)))
                                       .build(),
@@ -151,9 +151,9 @@ class SessionIntegrationTest {
     AuthResponse authResponse = json.readValue(responseBody, AuthResponse.class);
 
     assertEquals(UserAccessLevel.SUDO, authResponse.user()
-                                                   .accessLevel());
-    assertEquals(testCase.user.fullName(), authResponse.user()
-                                                       .fullName());
+                                                   .getAccessLevel());
+    assertEquals(testCase.user.getFullName(), authResponse.user()
+                                                          .getFullName());
     assertArrayEquals(serverSignature, authResponse.serverSignature());
 
     // Logout

@@ -1,8 +1,7 @@
-package org.victorrobotics.devilscoutserver.caches;
+package org.victorrobotics.devilscoutserver.tba.data;
 
 import org.victorrobotics.bluealliance.Event;
-import org.victorrobotics.devilscoutserver.cache.ListCache;
-import org.victorrobotics.devilscoutserver.data.EventInfo;
+import org.victorrobotics.devilscoutserver.tba.cache.ListCache;
 
 import java.util.List;
 

@@ -1,10 +1,9 @@
-package org.victorrobotics.devilscoutserver.data;
-
-import org.victorrobotics.devilscoutserver.database.User;
+package org.victorrobotics.devilscoutserver.database;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.javalin.http.ForbiddenResponse;
 import io.javalin.openapi.OpenApiExample;
 import io.javalin.openapi.OpenApiIgnore;
 
@@ -21,11 +20,9 @@ public class Session {
 
   public Session(long id, User user) {
     this.id = id;
-    this.userId = user.id();
-    this.team = user.info()
-                    .team();
-    this.accessLevel = user.info()
-                           .accessLevel();
+    this.userId = user.getId();
+    this.team = user.getTeam();
+    this.accessLevel = user.getAccessLevel();
 
     expiration = System.currentTimeMillis() + DURATION_MILLIS;
   }
@@ -76,7 +73,9 @@ public class Session {
     expiration = System.currentTimeMillis() + DURATION_MILLIS;
   }
 
-  public boolean hasAccess(UserAccessLevel accessLevel) {
-    return accessLevel != null && accessLevel.ordinal() <= this.accessLevel.ordinal();
+  public void verifyAccess(UserAccessLevel accessLevel) {
+    if (accessLevel.ordinal() > this.accessLevel.ordinal()) {
+      throw new ForbiddenResponse();
+    }
   }
 }

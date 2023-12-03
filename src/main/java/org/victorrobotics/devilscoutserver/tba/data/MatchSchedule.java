@@ -1,7 +1,7 @@
-package org.victorrobotics.devilscoutserver.data;
+package org.victorrobotics.devilscoutserver.tba.data;
 
 import org.victorrobotics.bluealliance.Match;
-import org.victorrobotics.devilscoutserver.cache.Cacheable;
+import org.victorrobotics.devilscoutserver.tba.cache.Cacheable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,8 +10,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -177,11 +177,11 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
     return Integer.compare(num1, num2);
   };
 
-  private final SortedMap<String, MatchInfo> matchMap;
-  private final Collection<MatchInfo>        matches;
+  private final ConcurrentNavigableMap<String, MatchInfo> matchMap;
+  private final Collection<MatchInfo>                     matches;
 
   public MatchSchedule() {
-    matchMap = new TreeMap<>(MATCH_KEY_COMPARATOR);
+    matchMap = new ConcurrentSkipListMap<>(MATCH_KEY_COMPARATOR);
     matches = Collections.unmodifiableCollection(matchMap.values());
   }
 

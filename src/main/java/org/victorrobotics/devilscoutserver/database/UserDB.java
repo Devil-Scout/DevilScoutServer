@@ -3,37 +3,36 @@ package org.victorrobotics.devilscoutserver.database;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class UserDB {
   private final Set<String> nonces;
 
-  private final Map<String, User> usersByKey;
-  private final Map<Long, User>   usersById;
+  private final ConcurrentMap<String, User> usersByKey;
+  private final ConcurrentMap<Long, User>   usersById;
 
-  private final Map<Integer, Collection<User>> usersByTeam;
+  private final ConcurrentMap<Integer, Collection<User>> usersByTeam;
 
   public UserDB() {
-    nonces = new HashSet<>();
-    usersByKey = new HashMap<>();
-    usersById = new HashMap<>();
-    usersByTeam = new HashMap<>();
+    nonces = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    usersByKey = new ConcurrentHashMap<>();
+    usersById = new ConcurrentHashMap<>();
+    usersByTeam = new ConcurrentHashMap<>();
   }
 
   public void addUser(User user) {
-    usersByKey.put(userKey(user.team(), user.username()), user);
-    usersById.put(user.id(), user);
-    usersByTeam.computeIfAbsent(user.team(), x -> new ArrayList<>())
+    usersByKey.put(userKey(user.getTeam(), user.getUsername()), user);
+    usersById.put(user.getId(), user);
+    usersByTeam.computeIfAbsent(user.getTeam(), x -> new ArrayList<>())
                .add(user);
   }
 
   public void removeUser(User user) {
-    usersByKey.remove(userKey(user.team(), user.username()));
-    usersById.remove(user.id());
-    usersByTeam.get(user.team())
+    usersByKey.remove(userKey(user.getTeam(), user.getUsername()));
+    usersById.remove(user.getId());
+    usersByTeam.get(user.getTeam())
                .remove(user);
   }
 
@@ -52,7 +51,7 @@ public class UserDB {
 
   public byte[] getSalt(int team, String username) {
     User entry = getUser(team, username);
-    return entry == null ? null : entry.salt();
+    return entry == null ? null : entry.getSalt();
   }
 
   public Collection<User> allUsers() {

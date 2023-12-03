@@ -1,21 +1,20 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.caches.EventInfoCache;
-import org.victorrobotics.devilscoutserver.caches.EventTeamsCache;
-import org.victorrobotics.devilscoutserver.caches.MatchScheduleCache;
-import org.victorrobotics.devilscoutserver.caches.TeamInfoCache;
-import org.victorrobotics.devilscoutserver.data.Session;
-import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
+import org.victorrobotics.devilscoutserver.database.Session;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
-import org.victorrobotics.devilscoutserver.database.TeamConfigDB;
+import org.victorrobotics.devilscoutserver.database.TeamDB;
+import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.database.UserDB;
+import org.victorrobotics.devilscoutserver.tba.data.EventInfoCache;
+import org.victorrobotics.devilscoutserver.tba.data.EventTeamsCache;
+import org.victorrobotics.devilscoutserver.tba.data.MatchScheduleCache;
+import org.victorrobotics.devilscoutserver.tba.data.TeamInfoCache;
 
 import java.security.SecureRandom;
 import java.util.Base64;
 
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
-import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.NotModifiedResponse;
 import io.javalin.http.UnauthorizedResponse;
 
@@ -35,7 +34,7 @@ public class Controller {
 
   private static UserDB       USERS;
   private static SessionDB    SESSIONS;
-  private static TeamConfigDB TEAMS;
+  private static TeamDB TEAMS;
 
   private static TeamInfoCache      TEAM_INFO_CACHE;
   private static EventInfoCache     EVENT_INFO_CACHE;
@@ -61,7 +60,7 @@ public class Controller {
     SESSIONS = sessions;
   }
 
-  public static void setTeamDB(TeamConfigDB teams) {
+  public static void setTeamDB(TeamDB teams) {
     TEAMS = teams;
   }
 
@@ -89,7 +88,7 @@ public class Controller {
     return SESSIONS;
   }
 
-  public static TeamConfigDB teamDB() {
+  public static TeamDB teamDB() {
     return TEAMS;
   }
 
@@ -137,9 +136,7 @@ public class Controller {
 
   protected static Session getValidSession(Context ctx, UserAccessLevel accessLevel) {
     Session session = getValidSession(ctx);
-    if (!session.hasAccess(accessLevel)) {
-      throw new ForbiddenResponse();
-    }
+    session.verifyAccess(accessLevel);
     return session;
   }
 

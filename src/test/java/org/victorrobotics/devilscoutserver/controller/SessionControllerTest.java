@@ -8,10 +8,10 @@ import org.victorrobotics.devilscoutserver.controller.SessionController.AuthRequ
 import org.victorrobotics.devilscoutserver.controller.SessionController.AuthResponse;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginChallenge;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginRequest;
-import org.victorrobotics.devilscoutserver.data.Session;
-import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
+import org.victorrobotics.devilscoutserver.database.Session;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
 import org.victorrobotics.devilscoutserver.database.User;
+import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.database.UserDB;
 
 import java.security.InvalidKeyException;
@@ -42,8 +42,8 @@ class SessionControllerTest {
     testCase.inject();
 
     LoginRequest request = mock(LoginRequest.class);
-    when(request.team()).thenReturn(testCase.user.team());
-    when(request.username()).thenReturn(testCase.user.username());
+    when(request.team()).thenReturn(testCase.user.getTeam());
+    when(request.username()).thenReturn(testCase.user.getUsername());
     when(request.clientNonce()).thenReturn(testCase.clientNonce);
 
     Context ctx = mock(Context.class);
@@ -55,7 +55,7 @@ class SessionControllerTest {
     verify(request, atLeastOnce()).username();
     verify(request, atLeastOnce()).clientNonce();
 
-    verify(ctx).json(argThat((LoginChallenge c) -> Arrays.equals(testCase.user.salt(), c.salt())
+    verify(ctx).json(argThat((LoginChallenge c) -> Arrays.equals(testCase.user.getSalt(), c.salt())
         && c.nonce().length == 16));
   }
 
@@ -67,8 +67,8 @@ class SessionControllerTest {
     testCase.inject();
 
     AuthRequest request = mock(AuthRequest.class);
-    when(request.team()).thenReturn(testCase.user.team());
-    when(request.username()).thenReturn(testCase.user.username());
+    when(request.team()).thenReturn(testCase.user.getTeam());
+    when(request.username()).thenReturn(testCase.user.getUsername());
     when(request.nonce()).thenReturn(testCase.nonce);
     when(request.clientProof()).thenReturn(testCase.clientProof);
 
@@ -84,11 +84,11 @@ class SessionControllerTest {
 
     verify(sessions).registerSession(any(Session.class));
     verify(ctx).json(argThat((AuthResponse r) -> r.user()
-                                                  .accessLevel()
-        == testCase.user.accessLevel()
-        && testCase.user.fullName()
+                                                  .getAccessLevel()
+        == testCase.user.getAccessLevel()
+        && testCase.user.getFullName()
                         .equals(r.user()
-                                 .fullName())
+                                 .getFullName())
         && Arrays.equals(r.serverSignature(), testCase.serverSignature) && r.session() != null));
   }
 
@@ -136,7 +136,7 @@ class SessionControllerTest {
     void inject() {
       UserDB users = new UserDB();
       users.addUser(user);
-      users.putNonce(user.team() + "," + user.username() + "," + base64Encode(nonce));
+      users.putNonce(user.getTeam() + "," + user.getUsername() + "," + base64Encode(nonce));
       Controller.setUserDB(users);
     }
   }

@@ -1,11 +1,9 @@
-package org.victorrobotics.devilscoutserver.caches;
+package org.victorrobotics.devilscoutserver.tba.data;
 
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.bluealliance.Team;
-import org.victorrobotics.devilscoutserver.cache.Cache;
-import org.victorrobotics.devilscoutserver.cache.DependentKeyCache;
-import org.victorrobotics.devilscoutserver.data.TeamInfo;
-import org.victorrobotics.devilscoutserver.data.TeamList;
+import org.victorrobotics.devilscoutserver.tba.cache.Cache;
+import org.victorrobotics.devilscoutserver.tba.cache.DependentKeyCache;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;

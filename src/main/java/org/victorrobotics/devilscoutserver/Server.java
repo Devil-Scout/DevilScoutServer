@@ -5,21 +5,21 @@ import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.patch;
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.post;
-import static io.javalin.apibuilder.ApiBuilder.put;
 
 import org.victorrobotics.bluealliance.Endpoint;
-import org.victorrobotics.devilscoutserver.caches.EventInfoCache;
-import org.victorrobotics.devilscoutserver.caches.EventTeamsCache;
-import org.victorrobotics.devilscoutserver.caches.MatchScheduleCache;
-import org.victorrobotics.devilscoutserver.caches.TeamInfoCache;
 import org.victorrobotics.devilscoutserver.controller.Controller;
 import org.victorrobotics.devilscoutserver.controller.EventController;
 import org.victorrobotics.devilscoutserver.controller.QuestionController;
 import org.victorrobotics.devilscoutserver.controller.SessionController;
+import org.victorrobotics.devilscoutserver.controller.TeamController;
 import org.victorrobotics.devilscoutserver.controller.UserController;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
-import org.victorrobotics.devilscoutserver.database.TeamConfigDB;
+import org.victorrobotics.devilscoutserver.database.TeamDB;
 import org.victorrobotics.devilscoutserver.database.UserDB;
+import org.victorrobotics.devilscoutserver.tba.data.EventInfoCache;
+import org.victorrobotics.devilscoutserver.tba.data.EventTeamsCache;
+import org.victorrobotics.devilscoutserver.tba.data.MatchScheduleCache;
+import org.victorrobotics.devilscoutserver.tba.data.TeamInfoCache;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -119,13 +119,13 @@ public class Server {
       path("questions", () -> {
         get("match", QuestionController::matchQuestions);
         get("pit", QuestionController::pitQuestions);
-        get("drive_team", QuestionController::driveTeamQuestions);
+        get("drive-team", QuestionController::driveTeamQuestions);
       });
 
       path("scout", () -> {
         post("match", UNIMPLEMENTED); // upload a match scouting record
         post("pit", UNIMPLEMENTED); // upload a pit scouting record
-        post("drive_team", UNIMPLEMENTED); // upload a post-match record (ADMIN)
+        post("drive-team", UNIMPLEMENTED); // upload a post-match record (ADMIN)
       });
 
       path("analysis", () -> {
@@ -135,19 +135,20 @@ public class Server {
       });
 
       path("teams", () -> {
-        get(UNIMPLEMENTED); // get registered teams (SUDO)
-        put(UNIMPLEMENTED); // register new team (SUDO)
-        delete(UNIMPLEMENTED); // unregister team (SUDO)
-        patch(UNIMPLEMENTED); // update team info (ADMIN/SUDO)
+        get(TeamController::teamList);
+        post(TeamController::registerTeam);
 
         path("{team}", () -> {
+          get(TeamController::getTeam);
+          delete(TeamController::unregisterTeam);
+          patch(TeamController::editTeam);
           get("users", UserController::usersOnTeam);
         });
       });
 
       path("users", () -> {
         get(UserController::allUsers);
-        put(UserController::registerUser);
+        post(UserController::registerUser);
 
         path("{id}", () -> {
           get(UserController::getUser);
@@ -172,7 +173,7 @@ public class Server {
   public static void main(String... args) {
     Controller.setUserDB(new UserDB());
     Controller.setSessionDB(new SessionDB());
-    Controller.setTeamDB(new TeamConfigDB());
+    Controller.setTeamDB(new TeamDB());
 
     Controller.setEventInfoCache(new EventInfoCache());
     Controller.setTeamInfoCache(new TeamInfoCache());

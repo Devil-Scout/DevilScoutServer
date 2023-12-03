@@ -1,9 +1,8 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.data.Session;
-import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
-import org.victorrobotics.devilscoutserver.data.UserInfo;
+import org.victorrobotics.devilscoutserver.database.Session;
 import org.victorrobotics.devilscoutserver.database.User;
+import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
 
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -85,23 +84,23 @@ public final class SessionController extends Controller {
 
     MessageDigest hashFunction = MessageDigest.getInstance(HASH_ALGORITHM);
     Mac hmacFunction = Mac.getInstance(MAC_ALGORITHM);
-    hmacFunction.init(new SecretKeySpec(user.storedKey(), MAC_ALGORITHM));
+    hmacFunction.init(new SecretKeySpec(user.getStoredKey(), MAC_ALGORITHM));
 
     byte[] userAndNonce = combine(request.team() + request.username(), request.nonce());
     byte[] clientSignature = hmacFunction.doFinal(userAndNonce);
     byte[] clientKey = xor(request.clientProof(), clientSignature);
     byte[] storedKey = hashFunction.digest(clientKey);
-    if (!MessageDigest.isEqual(user.storedKey(), storedKey)) {
+    if (!MessageDigest.isEqual(user.getStoredKey(), storedKey)) {
       throw new UnauthorizedResponse("Incorrect Proof");
     }
 
-    hmacFunction.init(new SecretKeySpec(user.serverKey(), MAC_ALGORITHM));
+    hmacFunction.init(new SecretKeySpec(user.getServerKey(), MAC_ALGORITHM));
     byte[] serverSignature = hmacFunction.doFinal(userAndNonce);
     userDB().removeNonce(nonceId);
 
     Session session = new Session(SECURE_RANDOM.nextLong(1L << 53), user);
     sessionDB().registerSession(session);
-    ctx.json(new AuthResponse(user.info(), session, serverSignature));
+    ctx.json(new AuthResponse(user, session, serverSignature));
   }
 
   @OpenApi(path = "/logout", methods = HttpMethod.DELETE, tags = "Authentication", summary = "USER",
@@ -151,7 +150,7 @@ public final class SessionController extends Controller {
                                    @OpenApiRequired
                                    @JsonProperty(required = true) byte[] clientProof) {}
 
-  public static record AuthResponse(@OpenApiRequired UserInfo user,
+  public static record AuthResponse(@OpenApiRequired User user,
                                     @OpenApiRequired Session session,
                                     @OpenApiExample("m7squ/lkrdjWSAER1g84uxQm3yDAOYUtVfYEJeYR2Tw=")
                                     @OpenApiRequired byte[] serverSignature) {}

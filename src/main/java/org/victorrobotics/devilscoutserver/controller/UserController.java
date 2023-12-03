@@ -1,9 +1,8 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.data.Session;
-import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
-import org.victorrobotics.devilscoutserver.data.UserInfo;
+import org.victorrobotics.devilscoutserver.database.Session;
 import org.victorrobotics.devilscoutserver.database.User;
+import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
 
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -18,9 +17,9 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.javalin.http.BadRequestResponse;
 import io.javalin.http.ConflictResponse;
 import io.javalin.http.Context;
-import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.NoContentResponse;
 import io.javalin.http.NotFoundResponse;
 import io.javalin.openapi.HttpMethod;
@@ -40,33 +39,35 @@ public final class UserController extends Controller {
            description = "Get all registered users. Requires SUDO.",
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = UserInfo[].class)),
+                                          content = @OpenApiContent(from = User[].class)),
                          @OpenApiResponse(status = "401"), @OpenApiResponse(status = "403") })
   public static void allUsers(Context ctx) {
     getValidSession(ctx, UserAccessLevel.SUDO);
     ctx.writeJsonStream(userDB().allUsers()
-                                .stream()
-                                .map(User::info));
+                                .stream());
   }
 
   @OpenApi(path = "/teams/{team}/users", methods = HttpMethod.GET, tags = "Users",
            summary = "ADMIN, SUDO",
            description = "Get all registered users on the specified team. "
                + "Requires ADMIN if from the same team, or SUDO if from a different team.",
-           pathParams = @OpenApiParam(name = "team", type = Integer.class, required = true,
-                                      example = "1559"),
+           pathParams = @OpenApiParam(name = "team", type = Integer.class, required = true),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = UserInfo[].class)),
+                                          content = @OpenApiContent(from = User[].class)),
                          @OpenApiResponse(status = "400"), @OpenApiResponse(status = "401"),
                          @OpenApiResponse(status = "403"), @OpenApiResponse(status = "404") })
   public static void usersOnTeam(Context ctx) {
     Session session = getValidSession(ctx, UserAccessLevel.ADMIN);
+
     int team = ctx.pathParamAsClass("team", Integer.class)
                   .get();
+    if (team <= 0 || team > 9999) {
+      throw new BadRequestResponse();
+    }
 
-    if (team != session.getTeam() && !session.hasAccess(UserAccessLevel.SUDO)) {
-      throw new ForbiddenResponse();
+    if (team != session.getTeam()) {
+      session.verifyAccess(UserAccessLevel.SUDO);
     }
 
     Collection<User> users = userDB().usersByTeam(team);
@@ -74,41 +75,45 @@ public final class UserController extends Controller {
       throw new NotFoundResponse();
     }
 
-    ctx.writeJsonStream(users.stream()
-                             .map(User::info));
+    ctx.writeJsonStream(users.stream());
   }
 
-  @OpenApi(path = "/users", methods = HttpMethod.PUT, tags = "Users", summary = "ADMIN, SUDO",
+  @OpenApi(path = "/users", methods = HttpMethod.POST, tags = "Users", summary = "ADMIN, SUDO",
            description = "Register a new user. The new user's access level may not exceed client's. "
                + "Requires ADMIN if from the same team, or SUDO if from a different team.",
            security = @OpenApiSecurity(name = "Session"),
            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = UserRegistration.class)),
            responses = { @OpenApiResponse(status = "201",
-                                          content = @OpenApiContent(from = UserInfo.class)),
+                                          content = @OpenApiContent(from = User.class)),
                          @OpenApiResponse(status = "400"), @OpenApiResponse(status = "401"),
-                         @OpenApiResponse(status = "403"), @OpenApiResponse(status = "409") })
+                         @OpenApiResponse(status = "403"), @OpenApiResponse(status = "404"),
+                         @OpenApiResponse(status = "409") })
   public static void registerUser(Context ctx) {
     Session session = getValidSession(ctx, UserAccessLevel.ADMIN);
     UserRegistration registration = jsonDecode(ctx, UserRegistration.class);
 
-    if (session.getTeam() != registration.team() && !session.hasAccess(UserAccessLevel.SUDO)) {
-      throw new ForbiddenResponse();
+    if (registration.team() <= 0 || registration.team() > 9999) {
+      throw new BadRequestResponse();
+    }
+
+    if (session.getTeam() != registration.team()) {
+      session.verifyAccess(UserAccessLevel.SUDO);
+    }
+
+    if (teamDB().get(registration.team()) == null) {
+      throw new NotFoundResponse();
     }
 
     if (userDB().getUser(registration.team(), registration.username()) != null) {
       throw new ConflictResponse();
     }
 
-    if (!session.hasAccess(registration.accessLevel())) {
-      throw new ForbiddenResponse();
-    }
+    session.verifyAccess(registration.accessLevel());
 
-    byte[] salt = new byte[8];
-    SECURE_RANDOM.nextBytes(salt);
-
-    byte[][] keys = computeKeys(registration.password(), salt);
-    byte[] storedKey = keys[0];
-    byte[] serverKey = keys[1];
+    byte[][] auth = computeAuthentication(registration.password());
+    byte[] salt = auth[0];
+    byte[] storedKey = auth[1];
+    byte[] serverKey = auth[2];
 
     long id;
     do {
@@ -119,7 +124,7 @@ public final class UserController extends Controller {
                          registration.accessLevel(), salt, storedKey, serverKey);
     userDB().addUser(user);
 
-    ctx.json(user.info());
+    ctx.json(user);
     ctx.status(201);
   }
 
@@ -131,7 +136,7 @@ public final class UserController extends Controller {
                + "or SUDO if from a different team.",
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = UserInfo.class)),
+                                          content = @OpenApiContent(from = User.class)),
                          @OpenApiResponse(status = "400"), @OpenApiResponse(status = "401"),
                          @OpenApiResponse(status = "403"), @OpenApiResponse(status = "404") })
   @SuppressWarnings("java:S1941") // move session closer to code that uses it
@@ -140,8 +145,8 @@ public final class UserController extends Controller {
 
     long userId = ctx.pathParamAsClass("id", Long.class)
                      .get();
-    if (userId != session.getUserId() && !session.hasAccess(UserAccessLevel.ADMIN)) {
-      throw new ForbiddenResponse();
+    if (userId != session.getUserId()) {
+      session.verifyAccess(UserAccessLevel.ADMIN);
     }
 
     User user = userDB().getUser(userId);
@@ -149,11 +154,11 @@ public final class UserController extends Controller {
       throw new NotFoundResponse();
     }
 
-    if (user.team() != session.getTeam() && !session.hasAccess(UserAccessLevel.SUDO)) {
-      throw new ForbiddenResponse();
+    if (user.getTeam() != session.getTeam()) {
+      session.verifyAccess(UserAccessLevel.SUDO);
     }
 
-    ctx.json(user.info());
+    ctx.json(user);
   }
 
   @OpenApi(path = "/users/{id}", methods = HttpMethod.PATCH, tags = "Users",
@@ -165,7 +170,7 @@ public final class UserController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = UserEdits.class)),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = UserInfo.class)),
+                                          content = @OpenApiContent(from = User.class)),
                          @OpenApiResponse(status = "400"), @OpenApiResponse(status = "401"),
                          @OpenApiResponse(status = "403"), @OpenApiResponse(status = "409") })
   @SuppressWarnings("java:S1941") // move session closer to code that uses it
@@ -174,49 +179,38 @@ public final class UserController extends Controller {
 
     long userId = ctx.pathParamAsClass("id", Long.class)
                      .get();
-    User oldUser = userDB().getUser(userId);
-    if (oldUser == null) {
+    User user = userDB().getUser(userId);
+    if (user == null) {
       throw new NotFoundResponse();
     }
 
-    if (session.getTeam() != oldUser.team() && !session.hasAccess(UserAccessLevel.SUDO)) {
-      throw new ForbiddenResponse();
+    if (session.getTeam() != user.getTeam()) {
+      session.verifyAccess(UserAccessLevel.SUDO);
     }
 
     UserEdits edits = jsonDecode(ctx, UserEdits.class);
 
-    if (edits.team() != null && edits.team() != session.getTeam()
-        && !session.hasAccess(UserAccessLevel.SUDO)) {
-      throw new ForbiddenResponse();
+    if (edits.accessLevel() != null) {
+      session.verifyAccess(edits.accessLevel());
+      user.setAccessLevel(edits.accessLevel());
     }
 
-    if (!session.hasAccess(edits.accessLevel())) {
-      throw new ForbiddenResponse();
+    if (edits.username() != null) {
+      user.setUsername(edits.username());
     }
 
-    byte[] storedKey;
-    byte[] serverKey;
-    if (edits.password() == null) {
-      storedKey = oldUser.storedKey();
-      serverKey = oldUser.serverKey();
-    } else {
-      byte[][] keys = computeKeys(edits.password(), oldUser.salt());
-      storedKey = keys[0];
-      serverKey = keys[1];
+    if (edits.fullName() != null) {
+      user.setFullName(edits.fullName());
     }
 
-    int team = edits.team() == null ? oldUser.team() : edits.team();
-    String username = edits.username() == null ? oldUser.username() : edits.username();
-    String fullName = edits.fullName() == null ? oldUser.fullName() : edits.fullName();
-    UserAccessLevel accessLevel =
-        edits.accessLevel() == null ? oldUser.accessLevel() : edits.accessLevel();
+    if (edits.password() != null) {
+      byte[][] keys = computeAuthentication(edits.password());
+      user.setSalt(keys[0]);
+      user.setStoredKey(keys[1]);
+      user.setServerKey(keys[2]);
+    }
 
-    User newUser = new User(oldUser.id(), team, username, fullName, accessLevel, oldUser.salt(),
-                            storedKey, serverKey);
-    userDB().editUser(oldUser, newUser);
-
-    User editedUser = newUser;
-    ctx.json(editedUser.info());
+    ctx.json(user);
   }
 
   @OpenApi(path = "/users/{id}", methods = HttpMethod.DELETE, tags = "Users",
@@ -239,20 +233,20 @@ public final class UserController extends Controller {
       throw new NotFoundResponse();
     }
 
-    if (session.getTeam() != user.team() && !session.hasAccess(UserAccessLevel.SUDO)) {
-      throw new ForbiddenResponse();
-    }
-
-    if (!session.hasAccess(user.accessLevel())) {
-      throw new ForbiddenResponse();
+    session.verifyAccess(user.getAccessLevel());
+    if (session.getTeam() != user.getTeam()) {
+      session.verifyAccess(UserAccessLevel.SUDO);
     }
 
     userDB().removeUser(user);
     throw new NoContentResponse();
   }
 
-  private static byte[][] computeKeys(String password, byte[] salt) {
+  private static byte[][] computeAuthentication(String password) {
     try {
+      byte[] salt = new byte[8];
+      SECURE_RANDOM.nextBytes(salt);
+
       SecretKeyFactory factory = SecretKeyFactory.getInstance(KEYGEN_ALGORITHM);
       KeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, 4096, 256);
       SecretKey saltedPassword = factory.generateSecret(keySpec);
@@ -264,7 +258,7 @@ public final class UserController extends Controller {
       byte[] clientKey = hmacSha256.doFinal("Client Key".getBytes());
       byte[] storedKey = sha256.digest(clientKey);
       byte[] serverKey = hmacSha256.doFinal("Server Key".getBytes());
-      return new byte[][] { storedKey, serverKey };
+      return new byte[][] { salt, storedKey, serverKey };
     } catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
       throw new IllegalStateException(e);
     }
@@ -281,9 +275,8 @@ public final class UserController extends Controller {
                                  @OpenApiRequired @OpenApiExample("verybadpassword")
                                  @JsonProperty(required = true) String password) {}
 
-  static record UserEdits(Integer team,
-                          @OpenApiExample("xbhalla") String username,
-                          @OpenApiExample("Alexander Bhalla") String fullName,
+  static record UserEdits(@OpenApiExample("xander") String username,
+                          @OpenApiExample("Xander Bhalla") String fullName,
                           UserAccessLevel accessLevel,
                           @OpenApiExample("verybadpassword") String password) {}
 }
