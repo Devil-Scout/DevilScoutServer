@@ -11,7 +11,7 @@ public class Session {
   private static final long DURATION_MILLIS = 8 * 60 * 60 * 1000;
 
   private final long id;
-  private final long userId;
+  private final long user;
   private final int  team;
 
   private final UserAccessLevel accessLevel;
@@ -20,7 +20,7 @@ public class Session {
 
   public Session(long id, User user) {
     this.id = id;
-    this.userId = user.getId();
+    this.user = user.getId();
     this.team = user.getTeam();
     this.accessLevel = user.getAccessLevel();
 
@@ -28,11 +28,11 @@ public class Session {
   }
 
   @JsonCreator
-  public Session(@JsonProperty("id") long id, @JsonProperty("userID") long userId,
+  public Session(@JsonProperty("id") long id, @JsonProperty("user") long user,
                  @JsonProperty("team") int team,
                  @JsonProperty("accessLevel") UserAccessLevel accessLevel) {
     this.id = id;
-    this.userId = userId;
+    this.user = user;
     this.team = team;
     this.accessLevel = accessLevel;
 
@@ -51,8 +51,8 @@ public class Session {
   }
 
   @OpenApiExample("6536270208735686")
-  public long getUserId() {
-    return userId;
+  public long getUser() {
+    return user;
   }
 
   @OpenApiExample("1559")

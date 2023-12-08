@@ -46,7 +46,8 @@ public final class EventController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = EventInfo.class)),
-                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401",
+                         @OpenApiResponse(status = "304"),
+                         @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "404",
                                           content = @OpenApiContent(from = Error.class)) })
@@ -74,7 +75,8 @@ public final class EventController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = TeamInfo[].class)),
-                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401",
+                         @OpenApiResponse(status = "304"),
+                         @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "404",
                                           content = @OpenApiContent(from = Error.class)) })
@@ -102,7 +104,8 @@ public final class EventController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = MatchSchedule.MatchInfo[].class)),
-                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401",
+                         @OpenApiResponse(status = "304"),
+                         @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "404",
                                           content = @OpenApiContent(from = Error.class)) })

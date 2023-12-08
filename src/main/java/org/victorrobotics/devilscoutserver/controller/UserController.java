@@ -126,7 +126,7 @@ public final class UserController extends Controller {
 
     long userId = ctx.pathParamAsClass("id", Long.class)
                      .get();
-    if (userId != session.getUserId()) {
+    if (userId != session.getUser()) {
       session.verifyAccess(UserAccessLevel.ADMIN);
     }
 

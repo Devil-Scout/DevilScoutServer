@@ -177,7 +177,7 @@ public sealed class Controller
 
   protected static void checkTeamRange(int team) {
     if (team <= 0 || team > 9999) {
-      throw new BadRequestResponse("{team} (" + team + ") must be in range 1 to 9999");
+      throw new BadRequestResponse("Team [" + team + "] must be in range 1 to 9999");
     }
   }
 
@@ -194,7 +194,7 @@ public sealed class Controller
   }
 
   protected static void throwUserNotFound(long userId) {
-    throw new NotFoundResponse("User with id " + userId + " not found");
+    throw new NotFoundResponse("User #" + userId + " not found");
   }
 
   protected static void throwUserNotFound(String username, int team) {
