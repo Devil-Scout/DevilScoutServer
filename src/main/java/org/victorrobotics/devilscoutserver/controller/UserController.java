@@ -9,7 +9,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
-import java.util.Collection;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
@@ -17,11 +16,8 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.javalin.http.BadRequestResponse;
 import io.javalin.http.ConflictResponse;
 import io.javalin.http.Context;
-import io.javalin.http.NoContentResponse;
-import io.javalin.http.NotFoundResponse;
 import io.javalin.openapi.HttpMethod;
 import io.javalin.openapi.OpenApi;
 import io.javalin.openapi.OpenApiContent;
@@ -40,42 +36,14 @@ public final class UserController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = User[].class)),
-                         @OpenApiResponse(status = "401"), @OpenApiResponse(status = "403") })
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "403",
+                                          content = @OpenApiContent(from = Error.class)) })
   public static void allUsers(Context ctx) {
     getValidSession(ctx, UserAccessLevel.SUDO);
     ctx.writeJsonStream(userDB().allUsers()
                                 .stream());
-  }
-
-  @OpenApi(path = "/teams/{team}/users", methods = HttpMethod.GET, tags = "Users",
-           summary = "ADMIN, SUDO",
-           description = "Get all registered users on the specified team. "
-               + "Requires ADMIN if from the same team, or SUDO if from a different team.",
-           pathParams = @OpenApiParam(name = "team", type = Integer.class, required = true),
-           security = @OpenApiSecurity(name = "Session"),
-           responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = User[].class)),
-                         @OpenApiResponse(status = "400"), @OpenApiResponse(status = "401"),
-                         @OpenApiResponse(status = "403"), @OpenApiResponse(status = "404") })
-  public static void usersOnTeam(Context ctx) {
-    Session session = getValidSession(ctx, UserAccessLevel.ADMIN);
-
-    int team = ctx.pathParamAsClass("team", Integer.class)
-                  .get();
-    if (team <= 0 || team > 9999) {
-      throw new BadRequestResponse();
-    }
-
-    if (team != session.getTeam()) {
-      session.verifyAccess(UserAccessLevel.SUDO);
-    }
-
-    Collection<User> users = userDB().usersByTeam(team);
-    if (users == null) {
-      throw new NotFoundResponse();
-    }
-
-    ctx.writeJsonStream(users.stream());
   }
 
   @OpenApi(path = "/users", methods = HttpMethod.POST, tags = "Users", summary = "ADMIN, SUDO",
@@ -85,27 +53,34 @@ public final class UserController extends Controller {
            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = UserRegistration.class)),
            responses = { @OpenApiResponse(status = "201",
                                           content = @OpenApiContent(from = User.class)),
-                         @OpenApiResponse(status = "400"), @OpenApiResponse(status = "401"),
-                         @OpenApiResponse(status = "403"), @OpenApiResponse(status = "404"),
-                         @OpenApiResponse(status = "409") })
+                         @OpenApiResponse(status = "400",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "403",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "404",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "409",
+                                          content = @OpenApiContent(from = Error.class)) })
   public static void registerUser(Context ctx) {
     Session session = getValidSession(ctx, UserAccessLevel.ADMIN);
     UserRegistration registration = jsonDecode(ctx, UserRegistration.class);
 
-    if (registration.team() <= 0 || registration.team() > 9999) {
-      throw new BadRequestResponse();
-    }
+    int team = registration.team();
+    String username = registration.username();
+    checkTeamRange(team);
 
-    if (session.getTeam() != registration.team()) {
+    if (session.getTeam() != team) {
       session.verifyAccess(UserAccessLevel.SUDO);
     }
 
-    if (teamDB().get(registration.team()) == null) {
-      throw new NotFoundResponse();
+    if (teamDB().get(team) == null) {
+      throwTeamNotFound(team);
     }
 
-    if (userDB().getUser(registration.team(), registration.username()) != null) {
-      throw new ConflictResponse();
+    if (userDB().getUser(team, username) != null) {
+      throw new ConflictResponse("User " + username + "@" + team + " already exists");
     }
 
     session.verifyAccess(registration.accessLevel());
@@ -120,12 +95,12 @@ public final class UserController extends Controller {
       id = SECURE_RANDOM.nextLong(1L << 53);
     } while (userDB().getUser(id) != null);
 
-    User user = new User(id, registration.team(), registration.username(), registration.fullName(),
-                         registration.accessLevel(), salt, storedKey, serverKey);
+    User user = new User(id, team, username, registration.fullName(), registration.accessLevel(),
+                         salt, storedKey, serverKey);
     userDB().addUser(user);
 
     ctx.json(user);
-    ctx.status(201);
+    throwCreated();
   }
 
   @OpenApi(path = "/users/{id}", methods = HttpMethod.GET, tags = "Users",
@@ -137,8 +112,14 @@ public final class UserController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = User.class)),
-                         @OpenApiResponse(status = "400"), @OpenApiResponse(status = "401"),
-                         @OpenApiResponse(status = "403"), @OpenApiResponse(status = "404") })
+                         @OpenApiResponse(status = "400",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "403",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "404",
+                                          content = @OpenApiContent(from = Error.class)) })
   @SuppressWarnings("java:S1941") // move session closer to code that uses it
   public static void getUser(Context ctx) {
     Session session = getValidSession(ctx);
@@ -151,7 +132,7 @@ public final class UserController extends Controller {
 
     User user = userDB().getUser(userId);
     if (user == null) {
-      throw new NotFoundResponse();
+      throwUserNotFound(userId);
     }
 
     if (user.getTeam() != session.getTeam()) {
@@ -171,8 +152,14 @@ public final class UserController extends Controller {
            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = UserEdits.class)),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = User.class)),
-                         @OpenApiResponse(status = "400"), @OpenApiResponse(status = "401"),
-                         @OpenApiResponse(status = "403"), @OpenApiResponse(status = "409") })
+                         @OpenApiResponse(status = "400",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "403",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "409",
+                                          content = @OpenApiContent(from = Error.class)) })
   @SuppressWarnings("java:S1941") // move session closer to code that uses it
   public static void editUser(Context ctx) {
     Session session = getValidSession(ctx, UserAccessLevel.ADMIN);
@@ -181,7 +168,7 @@ public final class UserController extends Controller {
                      .get();
     User user = userDB().getUser(userId);
     if (user == null) {
-      throw new NotFoundResponse();
+      throwUserNotFound(userId);
     }
 
     if (session.getTeam() != user.getTeam()) {
@@ -219,9 +206,15 @@ public final class UserController extends Controller {
            description = "Delete a user. USERs may not delete themselves. "
                + "Requires ADMIN if from the same team, or SUDO if from a different team.",
            security = @OpenApiSecurity(name = "Session"),
-           responses = { @OpenApiResponse(status = "204"), @OpenApiResponse(status = "400"),
-                         @OpenApiResponse(status = "401"), @OpenApiResponse(status = "403"),
-                         @OpenApiResponse(status = "404") })
+           responses = { @OpenApiResponse(status = "204"),
+                         @OpenApiResponse(status = "400",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "403",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "404",
+                                          content = @OpenApiContent(from = Error.class)) })
   @SuppressWarnings("java:S1941") // move session closer to code that uses it
   public static void deleteUser(Context ctx) {
     Session session = getValidSession(ctx, UserAccessLevel.ADMIN);
@@ -230,7 +223,7 @@ public final class UserController extends Controller {
                      .get();
     User user = userDB().getUser(userId);
     if (user == null) {
-      throw new NotFoundResponse();
+      throwUserNotFound(userId);
     }
 
     session.verifyAccess(user.getAccessLevel());
@@ -239,7 +232,7 @@ public final class UserController extends Controller {
     }
 
     userDB().removeUser(user);
-    throw new NoContentResponse();
+    throwNoContent();
   }
 
   private static byte[][] computeAuthentication(String password) {

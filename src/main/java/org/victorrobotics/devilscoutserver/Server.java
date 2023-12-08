@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.javalin.Javalin;
 import io.javalin.http.Handler;
+import io.javalin.http.HttpResponseException;
 import io.javalin.openapi.ApiKeyAuth;
 import io.javalin.openapi.plugin.OpenApiPlugin;
 import io.javalin.openapi.plugin.OpenApiPluginConfiguration;
@@ -47,7 +48,7 @@ public class Server {
           """.formatted(Controller.SESSION_HEADER);
   private static final String TAGS_SORTER     = """
       /* INJECTED */ (a,b) => {
-        const tagOrder = ['Authentication', 'Events', 'Questions', 'Teams', 'Users'];
+        const tagOrder = ['Authentication', 'Event Data', 'Questions', 'Teams', 'Users'];
         return tagOrder.indexOf(a) - tagOrder.indexOf(b);
       }
       """;
@@ -104,6 +105,7 @@ public class Server {
     javalin.routes(() -> {
       post("login", SessionController::login);
       post("auth", SessionController::auth);
+      get("session", SessionController::getSession);
       delete("logout", SessionController::logout);
 
       path("events", () -> {
@@ -142,7 +144,7 @@ public class Server {
           get(TeamController::getTeam);
           delete(TeamController::unregisterTeam);
           patch(TeamController::editTeam);
-          get("users", UserController::usersOnTeam);
+          get("users", TeamController::usersOnTeam);
         });
       });
 
@@ -157,7 +159,15 @@ public class Server {
         });
       });
 
-      get("dev_session", SessionController::generateDevSession);
+      get("dev_session/{accessLevel}", SessionController::generateDevSession);
+    });
+
+    javalin.exception(HttpResponseException.class, (e, ctx) -> {
+      int status = e.getStatus();
+      ctx.status(status);
+      if (status >= 400) {
+        ctx.json(new Controller.Error(e.getMessage()));
+      }
     });
   }
 
@@ -192,7 +202,6 @@ public class Server {
                 .refresh();
     }, 0, 5, TimeUnit.MINUTES);
 
-    Controller.loadAll();
     Server server = new Server();
     server.start();
   }

@@ -78,7 +78,7 @@
   "general": [
     {
       "prompt": "Speed",
-      "type": "SCALE",
+      "type": "RANGE",
       "config": {
         "min": 1,
         "max": 5
@@ -86,7 +86,7 @@
     },
     {
       "prompt": "Stability",
-      "type": "SCALE",
+      "type": "RANGE",
       "config": {
         "min": 1,
         "max": 5
@@ -111,7 +111,7 @@
   "human": [
     {
       "prompt": "Driver Skill",
-      "type": "SCALE",
+      "type": "RANGE",
       "config": {
         "min": 1,
         "max": 5

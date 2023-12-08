@@ -3,20 +3,16 @@ package org.victorrobotics.devilscoutserver.database;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class UserDB {
-  private final Set<String> nonces;
-
   private final ConcurrentMap<String, User> usersByKey;
   private final ConcurrentMap<Long, User>   usersById;
 
   private final ConcurrentMap<Integer, Collection<User>> usersByTeam;
 
   public UserDB() {
-    nonces = Collections.newSetFromMap(new ConcurrentHashMap<>());
     usersByKey = new ConcurrentHashMap<>();
     usersById = new ConcurrentHashMap<>();
     usersByTeam = new ConcurrentHashMap<>();
@@ -61,18 +57,6 @@ public class UserDB {
   public Collection<User> usersByTeam(int team) {
     Collection<User> users = usersByTeam.get(team);
     return users == null ? null : Collections.unmodifiableCollection(users);
-  }
-
-  public void putNonce(String nonceId) {
-    nonces.add(nonceId);
-  }
-
-  public boolean containsNonce(String nonceId) {
-    return nonces.contains(nonceId);
-  }
-
-  public void removeNonce(String nonceId) {
-    nonces.remove(nonceId);
   }
 
   private static String userKey(int team, String username) {

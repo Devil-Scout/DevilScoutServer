@@ -10,11 +10,11 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public class TeamList implements Cacheable<Collection<TeamInfo>> {
+public class EventTeams implements Cacheable<Collection<TeamInfo>> {
   private final ConcurrentNavigableMap<Integer, TeamInfo> teamMap;
-  private final Collection<TeamInfo>         teams;
+  private final Collection<TeamInfo>                      teams;
 
-  public TeamList() {
+  public EventTeams() {
     teamMap = new ConcurrentSkipListMap<>();
     teams = Collections.unmodifiableCollection(teamMap.values());
   }

@@ -5,3 +5,6 @@ bin
 .factorypath
 .settings
 .vscode/launch.json
+.classpath
+.factorypath
+.project

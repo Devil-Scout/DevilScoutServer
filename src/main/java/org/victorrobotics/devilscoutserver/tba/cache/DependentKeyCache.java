@@ -12,7 +12,7 @@ public abstract class DependentKeyCache<K, K2, D, D2 extends Cacheable<D>, V ext
   private final ConcurrentMap<K, CacheValue<Collection<D2>, V>> cache;
 
   private final Cache<K2, D, D2> source;
-  private final long            purgeTime;
+  private final long             purgeTime;
 
   private volatile long timestamp;
 

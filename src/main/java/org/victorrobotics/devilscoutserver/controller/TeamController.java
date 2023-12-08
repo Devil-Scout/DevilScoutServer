@@ -2,14 +2,14 @@ package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.database.Session;
 import org.victorrobotics.devilscoutserver.database.Team;
+import org.victorrobotics.devilscoutserver.database.User;
 import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.tba.data.TeamInfo;
 
-import io.javalin.http.BadRequestResponse;
+import java.util.Collection;
+
 import io.javalin.http.ConflictResponse;
 import io.javalin.http.Context;
-import io.javalin.http.NoContentResponse;
-import io.javalin.http.NotFoundResponse;
 import io.javalin.openapi.HttpMethod;
 import io.javalin.openapi.OpenApi;
 import io.javalin.openapi.OpenApiContent;
@@ -27,7 +27,10 @@ public final class TeamController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = Team[].class)),
-                         @OpenApiResponse(status = "401"), @OpenApiResponse(status = "403") })
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "403",
+                                          content = @OpenApiContent(from = Error.class)) })
   public static void teamList(Context ctx) {
     getValidSession(ctx, UserAccessLevel.SUDO);
     ctx.writeJsonStream(teamDB().teams());
@@ -39,22 +42,27 @@ public final class TeamController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "201",
                                           content = @OpenApiContent(from = Team.class)),
-                         @OpenApiResponse(status = "401"), @OpenApiResponse(status = "403"),
-                         @OpenApiResponse(status = "409") })
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "403",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "409",
+                                          content = @OpenApiContent(from = Error.class)) })
   public static void registerTeam(Context ctx) {
     getValidSession(ctx, UserAccessLevel.SUDO);
     TeamRegistration registration = jsonDecode(ctx, TeamRegistration.class);
 
     int teamNum = registration.number();
-    if (teamNum <= 0 || teamNum > 9999) {
-      throw new BadRequestResponse();
-    } else if (teamDB().get(teamNum) != null) {
-      throw new ConflictResponse();
+    checkTeamRange(teamNum);
+
+    if (teamDB().get(teamNum) != null) {
+      throw new ConflictResponse("Team with number " + teamNum + " already exists");
     }
 
     Team team = new Team(teamNum, registration.name());
     teamDB().put(team);
     ctx.json(team);
+    throwCreated();
   }
 
   @OpenApi(path = "/teams/{team}", methods = HttpMethod.GET, tags = "Teams", summary = "USER, SUDO",
@@ -63,12 +71,17 @@ public final class TeamController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = TeamInfo.class)),
-                         @OpenApiResponse(status = "401"), @OpenApiResponse(status = "403"),
-                         @OpenApiResponse(status = "404") })
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "403",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "404",
+                                          content = @OpenApiContent(from = Error.class)) })
   public static void getTeam(Context ctx) {
     Session session = getValidSession(ctx);
     int teamNum = ctx.pathParamAsClass("team", Integer.class)
                      .get();
+    checkTeamRange(teamNum);
 
     if (teamNum != session.getTeam()) {
       session.verifyAccess(UserAccessLevel.SUDO);
@@ -76,7 +89,7 @@ public final class TeamController extends Controller {
 
     Team team = teamDB().get(teamNum);
     if (team == null) {
-      throw new NotFoundResponse();
+      throwTeamNotFound(teamNum);
     }
 
     ctx.json(team);
@@ -91,19 +104,25 @@ public final class TeamController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = Team.class)),
-                         @OpenApiResponse(status = "401"), @OpenApiResponse(status = "403"),
-                         @OpenApiResponse(status = "404") })
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "403",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "404",
+                                          content = @OpenApiContent(from = Error.class)) })
   public static void editTeam(Context ctx) {
     Session session = getValidSession(ctx, UserAccessLevel.ADMIN);
     int teamNum = ctx.pathParamAsClass("team", Integer.class)
                      .get();
+    checkTeamRange(teamNum);
+
     if (session.getTeam() != teamNum) {
       session.verifyAccess(UserAccessLevel.SUDO);
     }
 
     Team team = teamDB().get(teamNum);
     if (team == null) {
-      throw new NotFoundResponse();
+      throwTeamNotFound(teamNum);
     }
 
     TeamEdits edits = jsonDecode(ctx, TeamEdits.class);
@@ -123,20 +142,60 @@ public final class TeamController extends Controller {
            description = "Unregister a team. Requires SUDO.",
            pathParams = @OpenApiParam(name = "team", type = Integer.class, required = true),
            security = @OpenApiSecurity(name = "Session"),
-           responses = { @OpenApiResponse(status = "204"), @OpenApiResponse(status = "401"),
-                         @OpenApiResponse(status = "403"), @OpenApiResponse(status = "404") })
+           responses = { @OpenApiResponse(status = "204"),
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "403",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "404",
+                                          content = @OpenApiContent(from = Error.class)) })
   public static void unregisterTeam(Context ctx) {
     getValidSession(ctx, UserAccessLevel.SUDO);
     int teamNum = ctx.pathParamAsClass("team", Integer.class)
                      .get();
+    checkTeamRange(teamNum);
 
     Team team = teamDB().get(teamNum);
     if (team == null) {
-      throw new NotFoundResponse();
+      throwTeamNotFound(teamNum);
     }
 
     teamDB().remove(team);
-    throw new NoContentResponse();
+    throwNoContent();
+  }
+
+  @OpenApi(path = "/teams/{team}/users", methods = HttpMethod.GET, tags = "Users",
+           summary = "ADMIN, SUDO",
+           description = "Get all registered users on the specified team. "
+               + "Requires ADMIN if from the same team, or SUDO if from a different team.",
+           pathParams = @OpenApiParam(name = "team", type = Integer.class, required = true),
+           security = @OpenApiSecurity(name = "Session"),
+           responses = { @OpenApiResponse(status = "200",
+                                          content = @OpenApiContent(from = User[].class)),
+                         @OpenApiResponse(status = "400",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "403",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "404",
+                                          content = @OpenApiContent(from = Error.class)) })
+  public static void usersOnTeam(Context ctx) {
+    Session session = getValidSession(ctx, UserAccessLevel.ADMIN);
+    int team = ctx.pathParamAsClass("team", Integer.class)
+                  .get();
+    checkTeamRange(team);
+
+    if (team != session.getTeam()) {
+      session.verifyAccess(UserAccessLevel.SUDO);
+    }
+
+    Collection<User> users = userDB().usersByTeam(team);
+    if (users == null) {
+      throwTeamNotFound(team);
+    }
+
+    ctx.writeJsonStream(users.stream());
   }
 
   static record TeamRegistration(@OpenApiExample("1559") int number,

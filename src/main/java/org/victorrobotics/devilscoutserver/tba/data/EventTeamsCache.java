@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class EventTeamsCache
-    extends DependentKeyCache<String, String, Team.Simple, TeamInfo, TeamList> {
+    extends DependentKeyCache<String, String, Team.Simple, TeamInfo, EventTeams> {
   public EventTeamsCache(Cache<String, Team.Simple, TeamInfo> source) {
     super(source, TimeUnit.HOURS.toMillis(8));
   }
@@ -20,7 +20,7 @@ public class EventTeamsCache
   }
 
   @Override
-  protected TeamList createValue(String eventKey) {
-    return new TeamList();
+  protected EventTeams createValue(String eventKey) {
+    return new EventTeams();
   }
 }

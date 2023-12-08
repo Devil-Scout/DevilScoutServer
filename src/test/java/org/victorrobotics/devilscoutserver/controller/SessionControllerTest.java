@@ -136,8 +136,9 @@ class SessionControllerTest {
     void inject() {
       UserDB users = new UserDB();
       users.addUser(user);
-      users.putNonce(user.getTeam() + "," + user.getUsername() + "," + base64Encode(nonce));
       Controller.setUserDB(users);
+      SessionController.NONCES.add(user.getTeam() + "," + user.getUsername() + ","
+          + base64Encode(nonce));
     }
   }
 }

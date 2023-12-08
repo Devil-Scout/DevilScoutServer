@@ -73,7 +73,8 @@ public final class QuestionController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = MatchQuestions.class)),
-                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401") })
+                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401",
+                         content = @OpenApiContent(from = Error.class)) })
   public static void matchQuestions(Context ctx) {
     getValidSession(ctx);
     checkIfNoneMatch(ctx, MATCH_QUESTIONS_HASH);
@@ -88,7 +89,8 @@ public final class QuestionController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = PitQuestions.class)),
-                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401") })
+                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401",
+                         content = @OpenApiContent(from = Error.class)) })
   public static void pitQuestions(Context ctx) {
     getValidSession(ctx);
     checkIfNoneMatch(ctx, PIT_QUESTIONS_HASH);
@@ -104,8 +106,10 @@ public final class QuestionController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = DriveTeamQuestions.class)),
-                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401"),
-                         @OpenApiResponse(status = "403") })
+                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401",
+                         content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "403",
+                         content = @OpenApiContent(from = Error.class)) })
   public static void driveTeamQuestions(Context ctx) {
     getValidSession(ctx, UserAccessLevel.ADMIN);
     checkIfNoneMatch(ctx, DRIVE_TEAM_QUESTIONS_HASH);
@@ -120,7 +124,7 @@ public final class QuestionController extends Controller {
     GRID,
     MULTIPLE,
     NUMBER,
-    SCALE,
+    RANGE,
     SEQUENCE,
     SINGLE;
   }

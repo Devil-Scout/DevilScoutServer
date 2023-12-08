@@ -15,26 +15,30 @@ import java.util.Base64;
 
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
+import io.javalin.http.CreatedResponse;
+import io.javalin.http.NoContentResponse;
+import io.javalin.http.NotFoundResponse;
 import io.javalin.http.NotModifiedResponse;
 import io.javalin.http.UnauthorizedResponse;
+import io.javalin.openapi.OpenApiExample;
+import io.javalin.openapi.OpenApiRequired;
 
-public class Controller {
+public sealed class Controller
+    permits EventController, QuestionController, SessionController, TeamController, UserController {
   public static final String SESSION_HEADER = "X-DS-SESSION-KEY";
 
   protected static final String HASH_ALGORITHM   = "SHA-256";
   protected static final String MAC_ALGORITHM    = "HmacSHA256";
   protected static final String KEYGEN_ALGORITHM = "PBKDF2WithHmacSHA256";
 
-  protected static final SecureRandom SECURE_RANDOM  = new SecureRandom();
+  protected static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
   private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
   private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 
-  private static final Class<?>[] CONTROLLERS = { SessionController.class, UserController.class,
-                                                  QuestionController.class, EventController.class };
-
-  private static UserDB       USERS;
-  private static SessionDB    SESSIONS;
-  private static TeamDB TEAMS;
+  private static UserDB    USERS;
+  private static SessionDB SESSIONS;
+  private static TeamDB    TEAMS;
 
   private static TeamInfoCache      TEAM_INFO_CACHE;
   private static EventInfoCache     EVENT_INFO_CACHE;
@@ -42,15 +46,6 @@ public class Controller {
   private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
 
   protected Controller() {}
-
-  @SuppressWarnings("java:S2658") // dynamic class loading
-  public static void loadAll() {
-    try {
-      for (Class<?> controllerClazz : CONTROLLERS) {
-        Class.forName(controllerClazz.getName());
-      }
-    } catch (ClassNotFoundException e) {}
-  }
 
   public static void setUserDB(UserDB users) {
     USERS = users;
@@ -113,25 +108,31 @@ public class Controller {
     try {
       return ctx.bodyAsClass(clazz);
     } catch (Exception e) {
-      throw new BadRequestResponse();
+      throw new BadRequestResponse("Failed to decode body as " + clazz.getSimpleName());
     }
   }
 
   protected static Session getValidSession(Context ctx) {
     String sessionStr = ctx.header(SESSION_HEADER);
     if (sessionStr == null) {
-      throw new UnauthorizedResponse("Missing " + SESSION_HEADER + " Header");
+      throw new UnauthorizedResponse("Missing " + SESSION_HEADER + " header");
     }
 
+    long sessionId;
     try {
-      long sessionId = Long.parseLong(sessionStr);
-      Session session = SESSIONS.getSession(sessionId);
-      if (session != null && !session.isExpired()) {
-        return session;
-      }
-    } catch (NumberFormatException e) {}
+      sessionId = Long.parseLong(sessionStr);
+    } catch (NumberFormatException e) {
+      throw new UnauthorizedResponse("Invalid " + SESSION_HEADER + " header");
+    }
 
-    throw new UnauthorizedResponse("Invalid/Expired " + SESSION_HEADER + " Header");
+    Session session = SESSIONS.getSession(sessionId);
+
+    if (session == null || session.isExpired()) {
+      throw new UnauthorizedResponse("Invalid/Expired " + SESSION_HEADER + " header");
+    }
+
+    session.refresh();
+    return session;
   }
 
   protected static Session getValidSession(Context ctx, UserAccessLevel accessLevel) {
@@ -173,4 +174,36 @@ public class Controller {
   public static byte[] base64Decode(String base64) {
     return BASE64_DECODER.decode(base64);
   }
+
+  protected static void checkTeamRange(int team) {
+    if (team <= 0 || team > 9999) {
+      throw new BadRequestResponse("{team} (" + team + ") must be in range 1 to 9999");
+    }
+  }
+
+  protected static void throwNoContent() {
+    throw new NoContentResponse();
+  }
+
+  protected static void throwCreated() {
+    throw new CreatedResponse();
+  }
+
+  protected static void throwTeamNotFound(int team) {
+    throw new NotFoundResponse("Team " + team + " not found");
+  }
+
+  protected static void throwUserNotFound(long userId) {
+    throw new NotFoundResponse("User with id " + userId + " not found");
+  }
+
+  protected static void throwUserNotFound(String username, int team) {
+    throw new NotFoundResponse("User " + username + "@" + team + "not found");
+  }
+
+  protected static void throwEventNotFound(String eventKey) {
+    throw new NotFoundResponse("Event " + eventKey + " not found");
+  }
+
+  public static record Error(@OpenApiRequired @OpenApiExample("Error message") String error) {}
 }

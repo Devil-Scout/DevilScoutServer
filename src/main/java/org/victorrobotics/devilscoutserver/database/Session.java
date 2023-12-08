@@ -75,7 +75,7 @@ public class Session {
 
   public void verifyAccess(UserAccessLevel accessLevel) {
     if (accessLevel.ordinal() > this.accessLevel.ordinal()) {
-      throw new ForbiddenResponse();
+      throw new ForbiddenResponse("Resource requires " + accessLevel + " access");
     }
   }
 }
