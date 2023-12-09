@@ -2,7 +2,7 @@
   "specs": [
     {
       "prompt": "Chassis size (smallest)",
-      "type": "SCALE",
+      "type": "RANGE",
       "config": {
         "min": 20,
         "max": 30,
@@ -11,7 +11,7 @@
     },
     {
       "prompt": "Weight (no battery/bumpers)",
-      "type": "SCALE",
+      "type": "RANGE",
       "config": {
         "min": 90,
         "max": 130,
@@ -100,7 +100,7 @@
     },
     {
       "prompt": "Time to Balance",
-      "type": "SCALE",
+      "type": "RANGE",
       "config": {
         "min": 5,
         "max": 30,
@@ -111,7 +111,7 @@
   "general": [
     {
       "prompt": "Driver Skill",
-      "type": "SCALE",
+      "type": "RANGE",
       "config": {
         "min": 1,
         "max": 5
@@ -130,7 +130,7 @@
     },
     {
       "prompt": "Gracious Professionalism (do NOT ask)",
-      "type": "SCALE",
+      "type": "RANGE",
       "config": {
         "min": 1,
         "max": 5

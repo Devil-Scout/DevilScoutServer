@@ -1,11 +1,11 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.controller.QuestionsController.DriveTeamQuestions;
-import org.victorrobotics.devilscoutserver.controller.QuestionsController.MatchQuestions;
-import org.victorrobotics.devilscoutserver.controller.QuestionsController.PitQuestions;
-import org.victorrobotics.devilscoutserver.data.Session;
-import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
+import org.victorrobotics.devilscoutserver.controller.QuestionController.DriveTeamQuestions;
+import org.victorrobotics.devilscoutserver.controller.QuestionController.MatchQuestions;
+import org.victorrobotics.devilscoutserver.controller.QuestionController.PitQuestions;
+import org.victorrobotics.devilscoutserver.database.Session;
 import org.victorrobotics.devilscoutserver.database.SessionDB;
+import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -20,8 +20,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class QuestionsControllerTest {
-  private static final String SESSION_ID = "vcOVI8k869c=";
-  private static SessionDB    SESSIONS;
+  private static final long SESSION_ID = 5;
+  private static SessionDB  SESSIONS;
 
   @BeforeAll
   static void injectSession() {
@@ -34,9 +34,9 @@ class QuestionsControllerTest {
   @Test
   void testMatchQuestions() {
     Context ctx = mock(Context.class);
-    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(SESSION_ID);
+    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(Long.toString(SESSION_ID));
 
-    QuestionsController.matchQuestions(ctx);
+    QuestionController.matchQuestions(ctx);
 
     verify(ctx).header(Controller.SESSION_HEADER);
     verify(ctx).json(argThat((String s) -> {
@@ -51,9 +51,9 @@ class QuestionsControllerTest {
   @Test
   void testPitQuestions() {
     Context ctx = mock(Context.class);
-    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(SESSION_ID);
+    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(Long.toString(SESSION_ID));
 
-    QuestionsController.pitQuestions(ctx);
+    QuestionController.pitQuestions(ctx);
 
     verify(ctx).header(Controller.SESSION_HEADER);
     verify(ctx).json(argThat((String s) -> {
@@ -68,9 +68,9 @@ class QuestionsControllerTest {
   @Test
   void testDriveTeamQuestions() {
     Context ctx = mock(Context.class);
-    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(SESSION_ID);
+    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(Long.toString(SESSION_ID));
 
-    QuestionsController.driveTeamQuestions(ctx);
+    QuestionController.driveTeamQuestions(ctx);
 
     verify(ctx).header(Controller.SESSION_HEADER);
     verify(ctx).json(argThat((String s) -> {

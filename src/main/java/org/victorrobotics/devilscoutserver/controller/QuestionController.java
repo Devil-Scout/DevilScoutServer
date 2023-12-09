@@ -1,9 +1,6 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import static org.victorrobotics.devilscoutserver.Utils.base64Encode;
-
-import org.victorrobotics.devilscoutserver.data.QuestionType;
-import org.victorrobotics.devilscoutserver.data.UserAccessLevel;
+import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,16 +10,20 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.javalin.http.Context;
 import io.javalin.openapi.HttpMethod;
 import io.javalin.openapi.OpenApi;
 import io.javalin.openapi.OpenApiContent;
 import io.javalin.openapi.OpenApiExample;
+import io.javalin.openapi.OpenApiParam;
 import io.javalin.openapi.OpenApiRequired;
 import io.javalin.openapi.OpenApiResponse;
+import io.javalin.openapi.OpenApiSecurity;
 
-public final class QuestionsController extends Controller {
+public final class QuestionController extends Controller {
   private static final MatchQuestions     MATCH_QUESTIONS;
   private static final PitQuestions       PIT_QUESTIONS;
   private static final DriveTeamQuestions DRIVE_TEAM_QUESTIONS;
@@ -60,55 +61,81 @@ public final class QuestionsController extends Controller {
     }
   }
 
-  private QuestionsController() {}
+  private QuestionController() {}
 
   private static InputStream openResource(String name) {
-    return QuestionsController.class.getResourceAsStream(name);
+    return QuestionController.class.getResourceAsStream(name);
   }
 
-  @OpenApi(path = "/questions/match", methods = HttpMethod.GET, tags = "Configuration",
-           description = "Get the match scouting questions users should answer.",
+  @OpenApi(path = "/questions/match", methods = HttpMethod.GET, tags = "Questions",
+           summary = "USER", description = "Get the match scouting questions users should answer.",
+           headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
+           security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = MatchQuestions.class)),
-                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401") })
+                         @OpenApiResponse(status = "304"),
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)) })
   public static void matchQuestions(Context ctx) {
     getValidSession(ctx);
     checkIfNoneMatch(ctx, MATCH_QUESTIONS_HASH);
 
     ctx.json(MATCH_QUESTIONS_JSON);
-    setResponseETag(ctx, MATCH_QUESTIONS_HASH);
+    setResponseEtag(ctx, MATCH_QUESTIONS_HASH);
   }
 
-  @OpenApi(path = "/questions/pit", methods = HttpMethod.GET, tags = "Configuration",
+  @OpenApi(path = "/questions/pit", methods = HttpMethod.GET, tags = "Questions", summary = "USER",
            description = "Get the pit scouting questions users should answer.",
+           headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
+           security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = MatchQuestions.class)),
-                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401") })
+                                          content = @OpenApiContent(from = PitQuestions.class)),
+                         @OpenApiResponse(status = "304"),
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)) })
   public static void pitQuestions(Context ctx) {
     getValidSession(ctx);
     checkIfNoneMatch(ctx, PIT_QUESTIONS_HASH);
 
     ctx.json(PIT_QUESTIONS_JSON);
-    setResponseETag(ctx, PIT_QUESTIONS_HASH);
+    setResponseEtag(ctx, PIT_QUESTIONS_HASH);
   }
 
-  @OpenApi(path = "/questions/drive_team", methods = HttpMethod.GET, tags = "Configuration",
+  @OpenApi(path = "/questions/drive-team", methods = HttpMethod.GET, tags = "Questions",
+           summary = "ADMIN",
            description = "Get the scouting questions drive teams should answer. Requires ADMIN access.",
+           headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
+           security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = MatchQuestions.class)),
-                         @OpenApiResponse(status = "304"), @OpenApiResponse(status = "401"),
-                         @OpenApiResponse(status = "403") })
+                                          content = @OpenApiContent(from = DriveTeamQuestions.class)),
+                         @OpenApiResponse(status = "304"),
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)),
+                         @OpenApiResponse(status = "403",
+                                          content = @OpenApiContent(from = Error.class)) })
   public static void driveTeamQuestions(Context ctx) {
     getValidSession(ctx, UserAccessLevel.ADMIN);
     checkIfNoneMatch(ctx, DRIVE_TEAM_QUESTIONS_HASH);
 
     ctx.json(DRIVE_TEAM_QUESTIONS_JSON);
-    setResponseETag(ctx, DRIVE_TEAM_QUESTIONS_HASH);
+    setResponseEtag(ctx, DRIVE_TEAM_QUESTIONS_HASH);
+  }
+
+  enum QuestionType {
+    BOOLEAN,
+    COUNTER,
+    GRID,
+    MULTIPLE,
+    NUMBER,
+    RANGE,
+    SEQUENCE,
+    SINGLE;
   }
 
   public static record Question(@OpenApiRequired @OpenApiExample("Drivetrain Type") String prompt,
                                 @OpenApiRequired QuestionType type,
-                                @OpenApiExample("{}") Map<String, Object> config) {}
+                                @OpenApiExample("{}")
+                                @JsonInclude(Include.NON_NULL) Map<String, Object> config) {}
 
   public static record MatchQuestions(@OpenApiRequired List<Question> auto,
                                       @OpenApiRequired @OpenApiExample("[]") List<Question> teleop,

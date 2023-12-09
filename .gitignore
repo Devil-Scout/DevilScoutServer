@@ -4,3 +4,7 @@ bin
 **/.DS_Store
 .factorypath
 .settings
+.vscode/launch.json
+.classpath
+.factorypath
+.project
