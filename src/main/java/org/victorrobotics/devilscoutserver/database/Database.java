@@ -5,7 +5,7 @@ import java.sql.SQLException;
 
 import org.postgresql.ds.PGConnectionPoolDataSource;
 
-public sealed class Database permits UserDB, TeamDB {
+public sealed class Database permits UserDatabase, TeamDatabase {
   private static PGConnectionPoolDataSource CONNECTION_POOL;
 
   protected Database() {}

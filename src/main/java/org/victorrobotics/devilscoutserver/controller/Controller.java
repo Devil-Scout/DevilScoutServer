@@ -1,8 +1,8 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.database.Session;
-import org.victorrobotics.devilscoutserver.database.TeamDB;
-import org.victorrobotics.devilscoutserver.database.UserDB;
+import org.victorrobotics.devilscoutserver.database.TeamDatabase;
+import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.tba.data.EventInfoCache;
 import org.victorrobotics.devilscoutserver.tba.data.EventTeamsCache;
 import org.victorrobotics.devilscoutserver.tba.data.MatchScheduleCache;
@@ -26,15 +26,16 @@ public sealed class Controller
     permits EventController, QuestionController, SessionController, TeamController, UserController {
   public static final String SESSION_HEADER = "X-DS-SESSION-KEY";
 
+  private static final ConcurrentMap<Long, Session> SESSIONS = new ConcurrentHashMap<>();
+
   protected static final String HASH_ALGORITHM   = "SHA-256";
   protected static final String MAC_ALGORITHM    = "HmacSHA256";
   protected static final String KEYGEN_ALGORITHM = "PBKDF2WithHmacSHA256";
 
   protected static final SecureRandom SECURE_RANDOM = new SecureRandom();
-  protected static final ConcurrentMap<Long, Session> SESSIONS = new ConcurrentHashMap<>();;
 
-  private static UserDB    USERS;
-  private static TeamDB    TEAMS;
+  private static UserDatabase USERS;
+  private static TeamDatabase TEAMS;
 
   private static TeamInfoCache      TEAM_INFO_CACHE;
   private static EventInfoCache     EVENT_INFO_CACHE;
@@ -43,11 +44,11 @@ public sealed class Controller
 
   protected Controller() {}
 
-  public static void setUserDB(UserDB users) {
+  public static void setUserDB(UserDatabase users) {
     USERS = users;
   }
 
-  public static void setTeamDB(TeamDB teams) {
+  public static void setTeamDB(TeamDatabase teams) {
     TEAMS = teams;
   }
 
@@ -67,11 +68,15 @@ public sealed class Controller
     MATCH_SCHEDULE_CACHE = cache;
   }
 
-  public static UserDB userDB() {
+  public static ConcurrentMap<Long, Session> sessions() {
+    return SESSIONS;
+  }
+
+  public static UserDatabase userDB() {
     return USERS;
   }
 
-  public static TeamDB teamDB() {
+  public static TeamDatabase teamDB() {
     return TEAMS;
   }
 

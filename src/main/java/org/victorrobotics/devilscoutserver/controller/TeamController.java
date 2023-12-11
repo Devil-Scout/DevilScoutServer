@@ -9,6 +9,7 @@ import org.victorrobotics.devilscoutserver.tba.data.TeamInfo;
 import java.sql.SQLException;
 import java.util.Collection;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.javalin.http.ConflictResponse;
 import io.javalin.http.Context;
 import io.javalin.openapi.HttpMethod;
@@ -17,6 +18,7 @@ import io.javalin.openapi.OpenApiContent;
 import io.javalin.openapi.OpenApiExample;
 import io.javalin.openapi.OpenApiParam;
 import io.javalin.openapi.OpenApiRequestBody;
+import io.javalin.openapi.OpenApiRequired;
 import io.javalin.openapi.OpenApiResponse;
 import io.javalin.openapi.OpenApiSecurity;
 
@@ -138,7 +140,6 @@ public final class TeamController extends Controller {
     }
 
     TeamEdits edits = jsonDecode(ctx, TeamEdits.class);
-
     team = teamDB().editTeam(teamNum, edits.name(), edits.eventKey());
 
     ctx.json(team);
@@ -203,8 +204,10 @@ public final class TeamController extends Controller {
     ctx.writeJsonStream(users.stream());
   }
 
-  static record TeamRegistration(@OpenApiExample("1559") int number,
-                                 @OpenApiExample("Devil Tech") String name) {}
+  static record TeamRegistration(@OpenApiRequired @OpenApiExample("1559")
+  @JsonProperty(required = true) int number,
+                                 @OpenApiRequired @OpenApiExample("Devil Tech")
+                                 @JsonProperty(required = true) String name) {}
 
   static record TeamEdits(@OpenApiExample("Devil Tech") String name,
                           @OpenApiExample("2023nyrr") String eventKey) {}

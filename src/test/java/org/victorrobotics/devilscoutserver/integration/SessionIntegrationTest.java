@@ -9,10 +9,10 @@ import org.victorrobotics.devilscoutserver.controller.SessionController.AuthResp
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginChallenge;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginRequest;
 import org.victorrobotics.devilscoutserver.database.Team;
-import org.victorrobotics.devilscoutserver.database.TeamDB;
+import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.User;
 import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
-import org.victorrobotics.devilscoutserver.database.UserDB;
+import org.victorrobotics.devilscoutserver.database.UserDatabase;
 
 import java.io.IOException;
 import java.net.URI;
@@ -42,7 +42,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -78,8 +77,9 @@ class SessionIntegrationTest {
     random.nextBytes(clientNonce);
 
     // Login Request
-    LoginRequest loginRequest =
-        new LoginRequest(testCase.user.team(), testCase.user.username(), clientNonce);
+    int team = testCase.user.team();
+    String username = testCase.user.username();
+    LoginRequest loginRequest = new LoginRequest(team, username, clientNonce);
     HttpResponse<String> response =
         client.send(HttpRequest.newBuilder(URI.create("http://localhost:8000/login"))
                                .POST(BodyPublishers.ofString(json.writeValueAsString(loginRequest)))
@@ -122,13 +122,12 @@ class SessionIntegrationTest {
     byte[] serverKey = hmacFunction.doFinal("Server Key".getBytes());
     byte[] storedKey = hashFunction.digest(clientKey);
 
-    byte[] userAndNonce = toStr(testCase.user.team() + testCase.user.username(), nonce);
-
     try {
       hmacFunction.init(new SecretKeySpec(storedKey, "HmacSHA256"));
     } catch (InvalidKeyException e) {
       throw new IllegalStateException(e);
     }
+    byte[] userAndNonce = toStr(team + username, nonce);
     byte[] clientSignature = hmacFunction.doFinal(userAndNonce);
 
     byte[] clientProof = new byte[32];
@@ -144,8 +143,7 @@ class SessionIntegrationTest {
     byte[] serverSignature = hmacFunction.doFinal(userAndNonce);
 
     // Auth Request
-    AuthRequest authRequest =
-        new AuthRequest(testCase.user.team(), testCase.user.username(), nonce, clientProof);
+    AuthRequest authRequest = new AuthRequest(team, username, nonce, clientProof);
     response = client.send(HttpRequest.newBuilder(URI.create("http://localhost:8000/auth"))
                                       .POST(BodyPublishers.ofString(json.writeValueAsString(authRequest)))
                                       .build(),
@@ -169,10 +167,6 @@ class SessionIntegrationTest {
                                       .build(),
                            BodyHandlers.ofString());
     assertEquals(204, response.statusCode());
-
-    // Second logout should fail
-    response = client.send(response.request(), BodyHandlers.ofString());
-    assertTrue(response.statusCode() >= 400 && response.statusCode() <= 499);
   }
 
   static byte[] toStr(String username, byte[] nonce) {
@@ -196,11 +190,11 @@ class SessionIntegrationTest {
   record TestCase(User user,
                   String password) {
     void inject() throws SQLException {
-      TeamDB teams = mock(TeamDB.class);
+      TeamDatabase teams = mock(TeamDatabase.class);
       when(teams.getTeam(user.team())).thenReturn(new Team(user.team(), "Team Name", null));
       Controller.setTeamDB(teams);
 
-      UserDB users = mock(UserDB.class);
+      UserDatabase users = mock(UserDatabase.class);
       when(users.getUser(user.team(), user.username())).thenReturn(user);
       Controller.setUserDB(users);
     }

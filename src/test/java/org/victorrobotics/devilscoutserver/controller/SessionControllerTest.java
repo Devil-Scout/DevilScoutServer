@@ -10,10 +10,10 @@ import org.victorrobotics.devilscoutserver.controller.SessionController.LoginCha
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginRequest;
 import org.victorrobotics.devilscoutserver.database.Session;
 import org.victorrobotics.devilscoutserver.database.Team;
-import org.victorrobotics.devilscoutserver.database.TeamDB;
+import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.User;
 import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
-import org.victorrobotics.devilscoutserver.database.UserDB;
+import org.victorrobotics.devilscoutserver.database.UserDatabase;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -66,11 +66,12 @@ class SessionControllerTest {
   void testAuth(TestCase testCase)
       throws InvalidKeyException, NoSuchAlgorithmException, SQLException {
     testCase.inject();
-    AuthRequest request = new AuthRequest(testCase.user.team(), testCase.user.username(),
-                                          testCase.nonce, testCase.clientProof);
 
     Context ctx = mock(Context.class);
-    when(ctx.bodyAsClass(AuthRequest.class)).thenReturn(request);
+    when(ctx.bodyAsClass(AuthRequest.class)).thenReturn(new AuthRequest(testCase.user.team(),
+                                                                        testCase.user.username(),
+                                                                        testCase.nonce,
+                                                                        testCase.clientProof));
 
     SessionController.auth(ctx);
 
@@ -85,9 +86,8 @@ class SessionControllerTest {
 
   @Test
   void testLogout() {
-    Session session = mock(Session.class);
-    when(session.getId()).thenReturn(-1L);
-    Controller.SESSIONS.put(-1L, session);
+    Controller.sessions()
+              .put(-1L, new Session(-1, -1, 1559));
 
     Context ctx = mock(Context.class);
     when(ctx.header(SESSION_HEADER)).thenReturn("-1");
@@ -95,7 +95,8 @@ class SessionControllerTest {
     assertThrows(NoContentResponse.class, () -> SessionController.logout(ctx));
 
     verify(ctx).header(SESSION_HEADER);
-    assertNull(Controller.SESSIONS.get(-1L));
+    assertNull(Controller.sessions()
+                         .get(-1L));
   }
 
   static Stream<TestCase> testCases() {
@@ -120,16 +121,15 @@ class SessionControllerTest {
     }
 
     void inject() throws SQLException {
-      TeamDB teams = mock(TeamDB.class);
+      TeamDatabase teams = mock(TeamDatabase.class);
       when(teams.getTeam(user.team())).thenReturn(new Team(user.team(), "Team Name", null));
       Controller.setTeamDB(teams);
 
-      UserDB users = mock(UserDB.class);
+      UserDatabase users = mock(UserDatabase.class);
       when(users.getUser(user.team(), user.username())).thenReturn(user);
       Controller.setUserDB(users);
 
-      SessionController.NONCES.add(user.team() + "," + user.username() + ","
-          + base64Encode(nonce));
+      SessionController.NONCES.add(user.team() + "," + user.username() + "," + base64Encode(nonce));
     }
   }
 }

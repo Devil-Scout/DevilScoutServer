@@ -10,16 +10,15 @@ import java.util.Collection;
 import java.util.List;
 
 @SuppressWarnings("java:S2325")
-public final class TeamDB extends Database {
+public final class TeamDatabase extends Database {
   private static final String GET_TEAM      = "SELECT * FROM teams WHERE number = ?;";
   private static final String ALL_TEAMS     = "SELECT * FROM teams;";
   private static final String DELETE_TEAM   = "DELETE FROM teams WHERE number = ?;";
   private static final String REGISTER_TEAM = """
       INSERT INTO teams (number, name)
-      VALUES (?, ?);
-      """;
+      VALUES (?, ?);""";
 
-  public TeamDB() {}
+  public TeamDatabase() {}
 
   public Team getTeam(int number) throws SQLException {
     try (Connection connection = getConnection();
@@ -45,32 +44,33 @@ public final class TeamDB extends Database {
   }
 
   public Team editTeam(int number, String name, String eventKey) throws SQLException {
-    StringBuilder edits = new StringBuilder();
+    List<String> edits = new ArrayList<>();
 
     if (name != null) {
-      edits.append("name = '" + name + "', ");
+      edits.add("name = '" + name + "'");
     }
 
     if (eventKey != null) {
       if ("".equals(eventKey)) {
-        edits.append("event_key = NULL, ");
+        edits.add("event_key = NULL");
       } else {
-        edits.append("event_key = '" + eventKey + "', ");
+        edits.add("event_key = '" + eventKey + "'");
       }
     }
 
-    if (edits.length() == 0) {
+    if (edits.isEmpty()) {
       return getTeam(number);
     }
 
-    String query = "UPDATE teams SET " + edits.substring(0, edits.length() - 2) + " WHERE number = "
-        + number + ";";
+    String query = "UPDATE teams SET " + String.join(", ", edits) + " WHERE number = " + number
+        + " RETURNING *;";
     try (Connection connection = getConnection();
          Statement statement = connection.createStatement()) {
       statement.execute(query);
-    }
 
-    return getTeam(number);
+      ResultSet resultSet = statement.getResultSet();
+      return resultSet.next() ? Team.fromDatabase(resultSet) : null;
+    }
   }
 
   public void deleteTeam(int number) throws SQLException {
@@ -88,11 +88,10 @@ public final class TeamDB extends Database {
 
       ResultSet resultSet = statement.getResultSet();
       List<Team> teams = new ArrayList<>();
-
       while (resultSet.next()) {
         teams.add(Team.fromDatabase(resultSet));
       }
-      return teams;
+      return List.copyOf(teams);
     }
   }
 }

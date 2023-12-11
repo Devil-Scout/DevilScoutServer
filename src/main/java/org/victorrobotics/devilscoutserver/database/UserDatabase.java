@@ -12,7 +12,7 @@ import java.util.Collection;
 import java.util.List;
 
 @SuppressWarnings("java:S2325")
-public final class UserDB extends Database {
+public final class UserDatabase extends Database {
   private static final String ADD_USER      = """
       INSERT INTO users
       (team, username, full_name, access_level, salt, stored_key, server_key)
@@ -26,7 +26,7 @@ public final class UserDB extends Database {
   private static final String USERS_BY_TEAM = "SELECT * FROM users WHERE team = ?;";
   private static final String ALL_USERS     = "SELECT * FROM users;";
 
-  public UserDB() {}
+  public UserDatabase() {}
 
   public User registerUser(int team, String username, String fullName, UserAccessLevel accessLevel,
                            byte[] salt, byte[] storedKey, byte[] serverKey)
@@ -58,37 +58,39 @@ public final class UserDB extends Database {
   public User editUser(long id, String username, String fullName, UserAccessLevel accessLevel,
                        byte[][] authInfo)
       throws SQLException {
-    StringBuilder edits = new StringBuilder();
+    List<String> edits = new ArrayList<>();
 
     if (username != null) {
-      edits.append("username = '" + username + "', ");
+      edits.add("username = '" + username + "'");
     }
 
     if (fullName != null) {
-      edits.append("full_name = '" + fullName + "', ");
+      edits.add("full_name = '" + fullName + "'");
     }
 
     if (accessLevel != null) {
-      edits.append("access_level = '" + accessLevel + "', ");
+      edits.add("access_level = '" + accessLevel + "'");
     }
 
     if (authInfo != null) {
-      edits.append("salt = '" + base64Encode(authInfo[0]) + "', stored_key = '"
-          + base64Encode(authInfo[1]) + "', server_key = '" + base64Encode(authInfo[2]) + "', ");
+      edits.add("salt = '" + base64Encode(authInfo[0]) + "'");
+      edits.add("stored_key = '" + base64Encode(authInfo[1]) + "'");
+      edits.add("server_key = '" + base64Encode(authInfo[2]) + "'");
     }
 
-    if (edits.length() == 0) {
+    if (edits.isEmpty()) {
       return getUser(id);
     }
 
     String query =
-        "UPDATE users SET " + edits.substring(0, edits.length() - 2) + "WHERE id = " + id + ";";
+        "UPDATE users SET " + String.join(", ", edits) + "WHERE id = " + id + " RETURNING *;";
     try (Connection connection = getConnection();
          Statement statement = connection.createStatement()) {
       statement.execute(query);
-    }
 
-    return getUser(id);
+      ResultSet resultSet = statement.getResultSet();
+      return resultSet.next() ? User.fromDatabase(resultSet) : null;
+    }
   }
 
   public User getUser(int team, String username) throws SQLException {
@@ -124,7 +126,6 @@ public final class UserDB extends Database {
       while (resultSet.next()) {
         users.add(User.fromDatabase(resultSet));
       }
-
       return List.copyOf(users);
     }
   }

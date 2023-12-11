@@ -2,9 +2,11 @@ package org.victorrobotics.devilscoutserver;
 
 import java.util.Base64;
 
-public class Base64Util {
+public final class Base64Util {
   private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
   private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
+
+  private Base64Util() {}
 
   public static String base64Encode(byte[] bytes) {
     return BASE64_ENCODER.encodeToString(bytes);

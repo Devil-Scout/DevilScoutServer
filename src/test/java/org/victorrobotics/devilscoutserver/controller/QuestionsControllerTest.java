@@ -5,7 +5,7 @@ import org.victorrobotics.devilscoutserver.controller.QuestionController.MatchQu
 import org.victorrobotics.devilscoutserver.controller.QuestionController.PitQuestions;
 import org.victorrobotics.devilscoutserver.database.Session;
 import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
-import org.victorrobotics.devilscoutserver.database.UserDB;
+import org.victorrobotics.devilscoutserver.database.UserDatabase;
 
 import java.sql.SQLException;
 
@@ -24,9 +24,10 @@ import org.junit.jupiter.api.Test;
 class QuestionsControllerTest {
   @BeforeAll
   static void injectSession() throws SQLException {
-    Controller.SESSIONS.put(-1L, new Session(-1, -1, 1559));
+    Controller.sessions()
+              .put(-1L, new Session(-1, -1, 1559));
 
-    UserDB users = mock(UserDB.class);
+    UserDatabase users = mock(UserDatabase.class);
     when(users.getAccessLevel(-1)).thenReturn(UserAccessLevel.SUDO);
     Controller.setUserDB(users);
   }

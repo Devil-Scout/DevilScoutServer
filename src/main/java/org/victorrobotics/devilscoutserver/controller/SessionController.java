@@ -49,7 +49,7 @@ public final class SessionController extends Controller {
   public static void generateDevSession(Context ctx) {
     UserAccessLevel accessLevel = UserAccessLevel.valueOf(ctx.pathParam("accessLevel"));
     Session session = new Session(-1, accessLevel.ordinal() - 3, 1559);
-    SESSIONS.put(session.getId(), session);
+    sessions().put(session.getId(), session);
     ctx.json(session);
   }
 
@@ -79,7 +79,7 @@ public final class SessionController extends Controller {
     SECURE_RANDOM.nextBytes(nonce);
     System.arraycopy(request.clientNonce(), 0, nonce, 0, 8);
 
-    String nonceId = team + "," + username + "," + base64Encode(nonce);
+    String nonceId = username + "@" + team + ":" + base64Encode(nonce);
     NONCES.add(nonceId);
 
     ctx.json(new LoginChallenge(user.salt(), nonce));
@@ -116,7 +116,7 @@ public final class SessionController extends Controller {
       return;
     }
 
-    String nonceId = teamNum + "," + username + "," + base64Encode(request.nonce());
+    String nonceId = username + "@" + team + ":" + base64Encode(request.nonce());
     if (!NONCES.contains(nonceId)) {
       throw new NotFoundResponse("Invalid nonce");
     }
@@ -138,7 +138,7 @@ public final class SessionController extends Controller {
     NONCES.remove(nonceId);
 
     Session session = new Session(SECURE_RANDOM.nextLong(1L << 53), user.id(), user.team());
-    SESSIONS.put(session.getId(), session);
+    sessions().put(session.getId(), session);
     ctx.json(new AuthResponse(user, team, session, serverSignature));
   }
 
@@ -162,7 +162,7 @@ public final class SessionController extends Controller {
                                           content = @OpenApiContent(from = Error.class)) })
   public static void logout(Context ctx) {
     Session session = getValidSession(ctx);
-    SESSIONS.remove(session.getId());
+    sessions().remove(session.getId());
     throwNoContent();
   }
 

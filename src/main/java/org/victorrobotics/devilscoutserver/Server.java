@@ -14,8 +14,8 @@ import org.victorrobotics.devilscoutserver.controller.SessionController;
 import org.victorrobotics.devilscoutserver.controller.TeamController;
 import org.victorrobotics.devilscoutserver.controller.UserController;
 import org.victorrobotics.devilscoutserver.database.Database;
-import org.victorrobotics.devilscoutserver.database.TeamDB;
-import org.victorrobotics.devilscoutserver.database.UserDB;
+import org.victorrobotics.devilscoutserver.database.TeamDatabase;
+import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.tba.data.EventInfoCache;
 import org.victorrobotics.devilscoutserver.tba.data.EventTeamsCache;
 import org.victorrobotics.devilscoutserver.tba.data.MatchScheduleCache;
@@ -188,8 +188,8 @@ public class Server {
   public static void main(String... args) {
     Database.initConnectionPool();
 
-    Controller.setUserDB(new UserDB());
-    Controller.setTeamDB(new TeamDB());
+    Controller.setUserDB(new UserDatabase());
+    Controller.setTeamDB(new TeamDatabase());
 
     Controller.setEventInfoCache(new EventInfoCache());
     Controller.setTeamInfoCache(new TeamInfoCache());
