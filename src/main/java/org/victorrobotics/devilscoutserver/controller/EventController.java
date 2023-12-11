@@ -58,6 +58,7 @@ public final class EventController extends Controller {
     CacheValue<?, EventInfo> entry = eventCache().get(eventKey);
     if (entry == null) {
       throwEventNotFound(eventKey);
+      return;
     }
 
     long timestamp = entry.lastRefresh();
@@ -86,6 +87,7 @@ public final class EventController extends Controller {
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
     if (!eventCache().containsKey(eventKey)) {
       throwEventNotFound(eventKey);
+      return;
     }
 
     CacheValue<?, EventTeams> entry = eventTeamsCache().get(eventKey);
@@ -115,6 +117,7 @@ public final class EventController extends Controller {
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
     if (!eventCache().containsKey(eventKey)) {
       throwEventNotFound(eventKey);
+      return;
     }
 
     CacheValue<?, MatchSchedule> entry = matchScheduleCache().get(eventKey);

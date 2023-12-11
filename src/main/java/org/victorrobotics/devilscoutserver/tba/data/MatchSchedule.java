@@ -78,7 +78,7 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
         change = true;
       }
 
-      boolean matchIsComplete = match.winner != null;
+      boolean matchIsComplete = match.actualTime != null;
       if (completed != matchIsComplete) {
         completed = matchIsComplete;
         change = true;

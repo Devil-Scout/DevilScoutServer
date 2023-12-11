@@ -9,7 +9,7 @@ import io.javalin.openapi.OpenApiExample;
 import io.javalin.openapi.OpenApiRequired;
 
 public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo> {
-  private final String eventKey;
+  private final String key;
 
   private String     name;
   private String     location;
@@ -17,12 +17,12 @@ public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo>
   private Event.Date end;
 
   public EventInfo(String eventKey) {
-    this.eventKey = eventKey;
+    this.key = eventKey;
   }
 
   @Override
   public boolean update(Event.Simple event) {
-    if (!Objects.equals(eventKey, event.key)) {
+    if (!Objects.equals(key, event.key)) {
       throw new IllegalArgumentException();
     }
 
@@ -54,8 +54,8 @@ public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo>
 
   @OpenApiExample("2023nyrr")
   @OpenApiRequired
-  public String getEventKey() {
-    return eventKey;
+  public String getKey() {
+    return key;
   }
 
   @OpenApiExample("Rah Cha Cha Ruckus")
@@ -73,13 +73,13 @@ public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo>
   @OpenApiExample("2023-10-21")
   @OpenApiRequired
   public String getStart() {
-    return start.toString();
+    return String.format("%04d-%02d-%02d", start.year, start.month, start.day);
   }
 
   @OpenApiExample("2023-10-21")
   @OpenApiRequired
   public String getEnd() {
-    return end.toString();
+    return String.format("%04d-%02d-%02d", end.year, end.month, end.day);
   }
 
   @Override
@@ -96,6 +96,6 @@ public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo>
       return Integer.compare(start.day, other.start.day);
     }
 
-    return eventKey.compareTo(other.eventKey);
+    return key.compareTo(other.key);
   }
 }

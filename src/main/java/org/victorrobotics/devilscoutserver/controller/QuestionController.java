@@ -1,5 +1,8 @@
 package org.victorrobotics.devilscoutserver.controller;
 
+import static org.victorrobotics.devilscoutserver.Base64Util.base64Encode;
+
+import org.victorrobotics.devilscoutserver.database.Session;
 import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
 
 import java.io.IOException;
@@ -7,6 +10,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
@@ -113,8 +117,10 @@ public final class QuestionController extends Controller {
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "403",
                                           content = @OpenApiContent(from = Error.class)) })
-  public static void driveTeamQuestions(Context ctx) {
-    getValidSession(ctx, UserAccessLevel.ADMIN);
+  public static void driveTeamQuestions(Context ctx) throws SQLException {
+    Session session = getValidSession(ctx);
+    userDB().getAccessLevel(session.getUser())
+            .verifyAccess(UserAccessLevel.ADMIN);
     checkIfNoneMatch(ctx, DRIVE_TEAM_QUESTIONS_HASH);
 
     ctx.json(DRIVE_TEAM_QUESTIONS_JSON);

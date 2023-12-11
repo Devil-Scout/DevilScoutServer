@@ -1,12 +1,16 @@
 package org.victorrobotics.devilscoutserver.controller;
 
+import static org.victorrobotics.devilscoutserver.Base64Util.base64Encode;
+
 import org.victorrobotics.devilscoutserver.database.Session;
+import org.victorrobotics.devilscoutserver.database.Team;
 import org.victorrobotics.devilscoutserver.database.User;
 import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
 
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,7 +31,6 @@ import io.javalin.openapi.OpenApiRequestBody;
 import io.javalin.openapi.OpenApiRequired;
 import io.javalin.openapi.OpenApiResponse;
 import io.javalin.openapi.OpenApiSecurity;
-import io.javalin.validation.JavalinValidation;
 
 @SuppressWarnings("java:S6218") // override equals for array content
 public final class SessionController extends Controller {
@@ -44,11 +47,9 @@ public final class SessionController extends Controller {
            responses = @OpenApiResponse(status = "200",
                                         content = @OpenApiContent(from = Session.class)))
   public static void generateDevSession(Context ctx) {
-    JavalinValidation.register(UserAccessLevel.class, UserAccessLevel::valueOf);
-    UserAccessLevel accessLevel = ctx.pathParamAsClass("accessLevel", UserAccessLevel.class)
-                                     .get();
-    Session session = new Session(-1, -1, 1559, accessLevel);
-    sessionDB().registerSession(session);
+    UserAccessLevel accessLevel = UserAccessLevel.valueOf(ctx.pathParam("accessLevel"));
+    Session session = new Session(-1, accessLevel.ordinal() - 3, 1559);
+    SESSIONS.put(session.getId(), session);
     ctx.json(session);
   }
 
@@ -63,14 +64,15 @@ public final class SessionController extends Controller {
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "404",
                                           content = @OpenApiContent(from = Error.class)) })
-  public static void login(Context ctx) {
+  public static void login(Context ctx) throws SQLException {
     LoginRequest request = jsonDecode(ctx, LoginRequest.class);
     int team = request.team();
     String username = request.username();
 
-    byte[] salt = userDB().getSalt(team, username);
-    if (salt == null) {
+    User user = userDB().getUser(team, username);
+    if (user == null) {
       throwUserNotFound(username, team);
+      return;
     }
 
     byte[] nonce = new byte[16];
@@ -80,7 +82,7 @@ public final class SessionController extends Controller {
     String nonceId = team + "," + username + "," + base64Encode(nonce);
     NONCES.add(nonceId);
 
-    ctx.json(new LoginChallenge(salt, nonce));
+    ctx.json(new LoginChallenge(user.salt(), nonce));
   }
 
   @OpenApi(path = "/auth", methods = HttpMethod.POST, tags = "Authentication",
@@ -96,40 +98,48 @@ public final class SessionController extends Controller {
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "404",
                                           content = @OpenApiContent(from = Error.class)) })
-  public static void auth(Context ctx) throws NoSuchAlgorithmException, InvalidKeyException {
+  public static void auth(Context ctx)
+      throws NoSuchAlgorithmException, InvalidKeyException, SQLException {
     AuthRequest request = jsonDecode(ctx, AuthRequest.class);
     String username = request.username();
-    int team = request.team();
+    int teamNum = request.team();
 
-    User user = userDB().getUser(team, username);
+    User user = userDB().getUser(teamNum, username);
     if (user == null) {
-      throwUserNotFound(username, team);
+      throwUserNotFound(username, teamNum);
+      return;
     }
 
-    String nonceId = team + "," + username + "," + base64Encode(request.nonce());
+    Team team = teamDB().getTeam(teamNum);
+    if (team == null) {
+      throwTeamNotFound(teamNum);
+      return;
+    }
+
+    String nonceId = teamNum + "," + username + "," + base64Encode(request.nonce());
     if (!NONCES.contains(nonceId)) {
       throw new NotFoundResponse("Invalid nonce");
     }
 
     MessageDigest hashFunction = MessageDigest.getInstance(HASH_ALGORITHM);
     Mac hmacFunction = Mac.getInstance(MAC_ALGORITHM);
-    hmacFunction.init(new SecretKeySpec(user.getStoredKey(), MAC_ALGORITHM));
+    hmacFunction.init(new SecretKeySpec(user.storedKey(), MAC_ALGORITHM));
 
-    byte[] userAndNonce = combine(team + username, request.nonce());
+    byte[] userAndNonce = combine(teamNum + username, request.nonce());
     byte[] clientSignature = hmacFunction.doFinal(userAndNonce);
     byte[] clientKey = xor(request.clientProof(), clientSignature);
     byte[] storedKey = hashFunction.digest(clientKey);
-    if (!MessageDigest.isEqual(user.getStoredKey(), storedKey)) {
-      throw new UnauthorizedResponse("Incorrect credentials for user " + username + "@" + team);
+    if (!MessageDigest.isEqual(user.storedKey(), storedKey)) {
+      throw new UnauthorizedResponse("Incorrect credentials for user " + username + "@" + teamNum);
     }
 
-    hmacFunction.init(new SecretKeySpec(user.getServerKey(), MAC_ALGORITHM));
+    hmacFunction.init(new SecretKeySpec(user.serverKey(), MAC_ALGORITHM));
     byte[] serverSignature = hmacFunction.doFinal(userAndNonce);
     NONCES.remove(nonceId);
 
-    Session session = new Session(SECURE_RANDOM.nextLong(1L << 53), user);
-    sessionDB().registerSession(session);
-    ctx.json(new AuthResponse(user, session, serverSignature));
+    Session session = new Session(SECURE_RANDOM.nextLong(1L << 53), user.id(), user.team());
+    SESSIONS.put(session.getId(), session);
+    ctx.json(new AuthResponse(user, team, session, serverSignature));
   }
 
   @OpenApi(path = "/session", methods = HttpMethod.GET, tags = "Authentication", summary = "USER",
@@ -152,7 +162,7 @@ public final class SessionController extends Controller {
                                           content = @OpenApiContent(from = Error.class)) })
   public static void logout(Context ctx) {
     Session session = getValidSession(ctx);
-    sessionDB().deleteSession(session);
+    SESSIONS.remove(session.getId());
     throwNoContent();
   }
 
@@ -194,6 +204,7 @@ public final class SessionController extends Controller {
                                    @JsonProperty(required = true) byte[] clientProof) {}
 
   public static record AuthResponse(@OpenApiRequired User user,
+                                    @OpenApiRequired Team team,
                                     @OpenApiRequired Session session,
                                     @OpenApiExample("m7squ/lkrdjWSAER1g84uxQm3yDAOYUtVfYEJeYR2Tw=")
                                     @OpenApiRequired byte[] serverSignature) {}

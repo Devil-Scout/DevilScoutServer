@@ -9,6 +9,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.sql.SQLException;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
@@ -40,8 +41,10 @@ public final class UserController extends Controller {
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "403",
                                           content = @OpenApiContent(from = Error.class)) })
-  public static void allUsers(Context ctx) {
-    getValidSession(ctx, UserAccessLevel.SUDO);
+  public static void allUsers(Context ctx) throws SQLException {
+    Session session = getValidSession(ctx);
+    userDB().getAccessLevel(session.getUser())
+            .verifyAccess(UserAccessLevel.SUDO);
     ctx.writeJsonStream(userDB().allUsers()
                                 .stream());
   }
@@ -63,19 +66,21 @@ public final class UserController extends Controller {
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "409",
                                           content = @OpenApiContent(from = Error.class)) })
-  public static void registerUser(Context ctx) {
-    Session session = getValidSession(ctx, UserAccessLevel.ADMIN);
-    UserRegistration registration = jsonDecode(ctx, UserRegistration.class);
+  public static void registerUser(Context ctx) throws SQLException {
+    Session session = getValidSession(ctx);
+    UserAccessLevel accessLevel = userDB().getAccessLevel(session.getUser());
+    accessLevel.verifyAccess(UserAccessLevel.ADMIN);
 
+    UserRegistration registration = jsonDecode(ctx, UserRegistration.class);
     int team = registration.team();
     String username = registration.username();
     checkTeamRange(team);
 
     if (session.getTeam() != team) {
-      session.verifyAccess(UserAccessLevel.SUDO);
+      accessLevel.verifyAccess(UserAccessLevel.SUDO);
     }
 
-    if (teamDB().get(team) == null) {
+    if (teamDB().getTeam(team) == null) {
       throwTeamNotFound(team);
     }
 
@@ -83,22 +88,15 @@ public final class UserController extends Controller {
       throw new ConflictResponse("User " + username + "@" + team + " already exists");
     }
 
-    session.verifyAccess(registration.accessLevel());
+    accessLevel.verifyAccess(registration.accessLevel());
 
     byte[][] auth = computeAuthentication(registration.password());
     byte[] salt = auth[0];
     byte[] storedKey = auth[1];
     byte[] serverKey = auth[2];
 
-    long id;
-    do {
-      id = SECURE_RANDOM.nextLong(1L << 53);
-    } while (userDB().getUser(id) != null);
-
-    User user = new User(id, team, username, registration.fullName(), registration.accessLevel(),
-                         salt, storedKey, serverKey);
-    userDB().addUser(user);
-
+    User user = userDB().registerUser(team, username, registration.fullName(),
+                                      registration.accessLevel(), salt, storedKey, serverKey);
     ctx.json(user);
     throwCreated();
   }
@@ -121,22 +119,24 @@ public final class UserController extends Controller {
                          @OpenApiResponse(status = "404",
                                           content = @OpenApiContent(from = Error.class)) })
   @SuppressWarnings("java:S1941") // move session closer to code that uses it
-  public static void getUser(Context ctx) {
+  public static void getUser(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
+    UserAccessLevel accessLevel = userDB().getAccessLevel(session.getUser());
 
     long userId = ctx.pathParamAsClass("id", Long.class)
                      .get();
     if (userId != session.getUser()) {
-      session.verifyAccess(UserAccessLevel.ADMIN);
+      accessLevel.verifyAccess(UserAccessLevel.ADMIN);
     }
 
     User user = userDB().getUser(userId);
     if (user == null) {
       throwUserNotFound(userId);
+      return;
     }
 
-    if (user.getTeam() != session.getTeam()) {
-      session.verifyAccess(UserAccessLevel.SUDO);
+    if (user.team() != session.getTeam()) {
+      accessLevel.verifyAccess(UserAccessLevel.SUDO);
     }
 
     ctx.json(user);
@@ -161,41 +161,35 @@ public final class UserController extends Controller {
                          @OpenApiResponse(status = "409",
                                           content = @OpenApiContent(from = Error.class)) })
   @SuppressWarnings("java:S1941") // move session closer to code that uses it
-  public static void editUser(Context ctx) {
-    Session session = getValidSession(ctx, UserAccessLevel.ADMIN);
+  public static void editUser(Context ctx) throws SQLException {
+    Session session = getValidSession(ctx);
+    UserAccessLevel accessLevel = userDB().getAccessLevel(session.getUser());
 
     long userId = ctx.pathParamAsClass("id", Long.class)
                      .get();
     User user = userDB().getUser(userId);
     if (user == null) {
       throwUserNotFound(userId);
+      return;
     }
 
-    if (session.getTeam() != user.getTeam()) {
-      session.verifyAccess(UserAccessLevel.SUDO);
+    if (session.getTeam() != user.team()) {
+      accessLevel.verifyAccess(UserAccessLevel.SUDO);
     }
 
     UserEdits edits = jsonDecode(ctx, UserEdits.class);
 
     if (edits.accessLevel() != null) {
-      session.verifyAccess(edits.accessLevel());
-      user.setAccessLevel(edits.accessLevel());
+      accessLevel.verifyAccess(edits.accessLevel());
     }
 
-    if (edits.username() != null) {
-      user.setUsername(edits.username());
-    }
-
-    if (edits.fullName() != null) {
-      user.setFullName(edits.fullName());
-    }
-
+    byte[][] authInfo = null;
     if (edits.password() != null) {
-      byte[][] keys = computeAuthentication(edits.password());
-      user.setSalt(keys[0]);
-      user.setStoredKey(keys[1]);
-      user.setServerKey(keys[2]);
+      authInfo = computeAuthentication(edits.password());
     }
+
+    user = userDB().editUser(userId, edits.username(), edits.fullName(), edits.accessLevel(),
+                             authInfo);
 
     ctx.json(user);
   }
@@ -216,22 +210,26 @@ public final class UserController extends Controller {
                          @OpenApiResponse(status = "404",
                                           content = @OpenApiContent(from = Error.class)) })
   @SuppressWarnings("java:S1941") // move session closer to code that uses it
-  public static void deleteUser(Context ctx) {
-    Session session = getValidSession(ctx, UserAccessLevel.ADMIN);
+  public static void deleteUser(Context ctx) throws SQLException {
+    Session session = getValidSession(ctx);
+    UserAccessLevel accessLevel = userDB().getAccessLevel(session.getUser());
+    accessLevel.verifyAccess(UserAccessLevel.ADMIN);
 
     long userId = ctx.pathParamAsClass("id", Long.class)
                      .get();
     User user = userDB().getUser(userId);
     if (user == null) {
       throwUserNotFound(userId);
+      return;
     }
 
-    session.verifyAccess(user.getAccessLevel());
-    if (session.getTeam() != user.getTeam()) {
-      session.verifyAccess(UserAccessLevel.SUDO);
+    if (session.getTeam() == user.team()) {
+      accessLevel.verifyAccess(user.accessLevel());
+    } else {
+      accessLevel.verifyAccess(UserAccessLevel.SUDO);
     }
 
-    userDB().removeUser(user);
+    userDB().deleteUser(user.id());
     throwNoContent();
   }
 
@@ -257,19 +255,19 @@ public final class UserController extends Controller {
     }
   }
 
-  static record UserRegistration(@OpenApiRequired @OpenApiExample("1559")
+  public static record UserRegistration(@OpenApiRequired @OpenApiExample("1559")
   @JsonProperty(required = true) int team,
-                                 @OpenApiRequired @OpenApiExample("xander")
-                                 @JsonProperty(required = true) String username,
-                                 @OpenApiRequired @OpenApiExample("Xander Bhalla")
-                                 @JsonProperty(required = true) String fullName,
-                                 @OpenApiRequired
-                                 @JsonProperty(required = true) UserAccessLevel accessLevel,
-                                 @OpenApiRequired @OpenApiExample("verybadpassword")
-                                 @JsonProperty(required = true) String password) {}
+                                        @OpenApiRequired @OpenApiExample("xander")
+                                        @JsonProperty(required = true) String username,
+                                        @OpenApiRequired @OpenApiExample("Xander Bhalla")
+                                        @JsonProperty(required = true) String fullName,
+                                        @OpenApiRequired
+                                        @JsonProperty(required = true) UserAccessLevel accessLevel,
+                                        @OpenApiRequired @OpenApiExample("password")
+                                        @JsonProperty(required = true) String password) {}
 
-  static record UserEdits(@OpenApiExample("xander") String username,
-                          @OpenApiExample("Xander Bhalla") String fullName,
-                          UserAccessLevel accessLevel,
-                          @OpenApiExample("verybadpassword") String password) {}
+  public static record UserEdits(@OpenApiExample("xander") String username,
+                                 @OpenApiExample("Xander Bhalla") String fullName,
+                                 UserAccessLevel accessLevel,
+                                 @OpenApiExample("password") String password) {}
 }

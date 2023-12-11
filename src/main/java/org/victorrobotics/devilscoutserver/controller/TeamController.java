@@ -6,6 +6,7 @@ import org.victorrobotics.devilscoutserver.database.User;
 import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.tba.data.TeamInfo;
 
+import java.sql.SQLException;
 import java.util.Collection;
 
 import io.javalin.http.ConflictResponse;
@@ -31,9 +32,12 @@ public final class TeamController extends Controller {
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "403",
                                           content = @OpenApiContent(from = Error.class)) })
-  public static void teamList(Context ctx) {
-    getValidSession(ctx, UserAccessLevel.SUDO);
-    ctx.writeJsonStream(teamDB().teams());
+  public static void teamList(Context ctx) throws SQLException {
+    Session session = getValidSession(ctx);
+    userDB().getAccessLevel(session.getUser())
+            .verifyAccess(UserAccessLevel.SUDO);
+    ctx.writeJsonStream(teamDB().allTeams()
+                                .stream());
   }
 
   @OpenApi(path = "/teams", methods = HttpMethod.POST, tags = "Teams", summary = "SUDO",
@@ -48,19 +52,20 @@ public final class TeamController extends Controller {
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "409",
                                           content = @OpenApiContent(from = Error.class)) })
-  public static void registerTeam(Context ctx) {
-    getValidSession(ctx, UserAccessLevel.SUDO);
-    TeamRegistration registration = jsonDecode(ctx, TeamRegistration.class);
+  public static void registerTeam(Context ctx) throws SQLException {
+    Session session = getValidSession(ctx);
+    userDB().getAccessLevel(session.getUser())
+            .verifyAccess(UserAccessLevel.SUDO);
 
+    TeamRegistration registration = jsonDecode(ctx, TeamRegistration.class);
     int teamNum = registration.number();
     checkTeamRange(teamNum);
 
-    if (teamDB().get(teamNum) != null) {
+    if (teamDB().getTeam(teamNum) != null) {
       throw new ConflictResponse("Team with number " + teamNum + " already exists");
     }
 
-    Team team = new Team(teamNum, registration.name());
-    teamDB().put(team);
+    Team team = teamDB().registerTeam(teamNum, registration.name());
     ctx.json(team);
     throwCreated();
   }
@@ -77,19 +82,21 @@ public final class TeamController extends Controller {
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "404",
                                           content = @OpenApiContent(from = Error.class)) })
-  public static void getTeam(Context ctx) {
+  public static void getTeam(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     int teamNum = ctx.pathParamAsClass("team", Integer.class)
                      .get();
     checkTeamRange(teamNum);
 
     if (teamNum != session.getTeam()) {
-      session.verifyAccess(UserAccessLevel.SUDO);
+      userDB().getAccessLevel(session.getUser())
+              .verifyAccess(UserAccessLevel.SUDO);
     }
 
-    Team team = teamDB().get(teamNum);
+    Team team = teamDB().getTeam(teamNum);
     if (team == null) {
       throwTeamNotFound(teamNum);
+      return;
     }
 
     ctx.json(team);
@@ -110,30 +117,29 @@ public final class TeamController extends Controller {
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "404",
                                           content = @OpenApiContent(from = Error.class)) })
-  public static void editTeam(Context ctx) {
-    Session session = getValidSession(ctx, UserAccessLevel.ADMIN);
+  public static void editTeam(Context ctx) throws SQLException {
+    Session session = getValidSession(ctx);
     int teamNum = ctx.pathParamAsClass("team", Integer.class)
                      .get();
     checkTeamRange(teamNum);
 
-    if (session.getTeam() != teamNum) {
-      session.verifyAccess(UserAccessLevel.SUDO);
+    if (session.getTeam() == teamNum) {
+      userDB().getAccessLevel(session.getUser())
+              .verifyAccess(UserAccessLevel.ADMIN);
+    } else {
+      userDB().getAccessLevel(session.getUser())
+              .verifyAccess(UserAccessLevel.SUDO);
     }
 
-    Team team = teamDB().get(teamNum);
+    Team team = teamDB().getTeam(teamNum);
     if (team == null) {
       throwTeamNotFound(teamNum);
+      return;
     }
 
     TeamEdits edits = jsonDecode(ctx, TeamEdits.class);
 
-    if (edits.name() != null) {
-      team.setName(edits.name());
-    }
-
-    if (edits.eventKey() != null) {
-      team.setEventKey(edits.eventKey());
-    }
+    team = teamDB().editTeam(teamNum, edits.name(), edits.eventKey());
 
     ctx.json(team);
   }
@@ -149,18 +155,22 @@ public final class TeamController extends Controller {
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "404",
                                           content = @OpenApiContent(from = Error.class)) })
-  public static void unregisterTeam(Context ctx) {
-    getValidSession(ctx, UserAccessLevel.SUDO);
+  public static void unregisterTeam(Context ctx) throws SQLException {
+    Session session = getValidSession(ctx);
+    userDB().getAccessLevel(session.getUser())
+            .verifyAccess(UserAccessLevel.SUDO);
+
     int teamNum = ctx.pathParamAsClass("team", Integer.class)
                      .get();
     checkTeamRange(teamNum);
 
-    Team team = teamDB().get(teamNum);
+    Team team = teamDB().getTeam(teamNum);
     if (team == null) {
       throwTeamNotFound(teamNum);
+      return;
     }
 
-    teamDB().remove(team);
+    teamDB().deleteTeam(team.number());
     throwNoContent();
   }
 
@@ -180,21 +190,16 @@ public final class TeamController extends Controller {
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "404",
                                           content = @OpenApiContent(from = Error.class)) })
-  public static void usersOnTeam(Context ctx) {
-    Session session = getValidSession(ctx, UserAccessLevel.ADMIN);
+  public static void usersOnTeam(Context ctx) throws SQLException {
+    Session session = getValidSession(ctx);
     int team = ctx.pathParamAsClass("team", Integer.class)
                   .get();
     checkTeamRange(team);
 
-    if (team != session.getTeam()) {
-      session.verifyAccess(UserAccessLevel.SUDO);
-    }
+    userDB().getAccessLevel(session.getUser())
+            .verifyAccess(team == session.getTeam() ? UserAccessLevel.ADMIN : UserAccessLevel.SUDO);
 
-    Collection<User> users = userDB().usersByTeam(team);
-    if (users == null) {
-      throwTeamNotFound(team);
-    }
-
+    Collection<User> users = userDB().usersOnTeam(team);
     ctx.writeJsonStream(users.stream());
   }
 

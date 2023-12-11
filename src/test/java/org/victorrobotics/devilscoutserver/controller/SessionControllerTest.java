@@ -1,30 +1,32 @@
 package org.victorrobotics.devilscoutserver.controller;
 
+import static org.victorrobotics.devilscoutserver.Base64Util.base64Decode;
+import static org.victorrobotics.devilscoutserver.Base64Util.base64Encode;
 import static org.victorrobotics.devilscoutserver.controller.Controller.SESSION_HEADER;
-import static org.victorrobotics.devilscoutserver.controller.Controller.base64Decode;
-import static org.victorrobotics.devilscoutserver.controller.Controller.base64Encode;
 
 import org.victorrobotics.devilscoutserver.controller.SessionController.AuthRequest;
 import org.victorrobotics.devilscoutserver.controller.SessionController.AuthResponse;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginChallenge;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginRequest;
 import org.victorrobotics.devilscoutserver.database.Session;
-import org.victorrobotics.devilscoutserver.database.SessionDB;
+import org.victorrobotics.devilscoutserver.database.Team;
+import org.victorrobotics.devilscoutserver.database.TeamDB;
 import org.victorrobotics.devilscoutserver.database.User;
 import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.database.UserDB;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
 import io.javalin.http.Context;
 import io.javalin.http.NoContentResponse;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
@@ -38,12 +40,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 class SessionControllerTest {
   @ParameterizedTest
   @MethodSource("testCases")
-  void testLogin(TestCase testCase) {
+  void testLogin(TestCase testCase) throws SQLException {
     testCase.inject();
 
     LoginRequest request = mock(LoginRequest.class);
-    when(request.team()).thenReturn(testCase.user.getTeam());
-    when(request.username()).thenReturn(testCase.user.getUsername());
+    when(request.team()).thenReturn(testCase.user.team());
+    when(request.username()).thenReturn(testCase.user.username());
     when(request.clientNonce()).thenReturn(testCase.clientNonce);
 
     Context ctx = mock(Context.class);
@@ -55,61 +57,45 @@ class SessionControllerTest {
     verify(request, atLeastOnce()).username();
     verify(request, atLeastOnce()).clientNonce();
 
-    verify(ctx).json(argThat((LoginChallenge c) -> Arrays.equals(testCase.user.getSalt(), c.salt())
+    verify(ctx).json(argThat((LoginChallenge c) -> Arrays.equals(testCase.user.salt(), c.salt())
         && c.nonce().length == 16));
   }
 
   @ParameterizedTest
   @MethodSource("testCases")
-  void testAuth(TestCase testCase) throws InvalidKeyException, NoSuchAlgorithmException {
-    SessionDB sessions = mock(SessionDB.class);
-    Controller.setSessionDB(sessions);
+  void testAuth(TestCase testCase)
+      throws InvalidKeyException, NoSuchAlgorithmException, SQLException {
     testCase.inject();
-
-    AuthRequest request = mock(AuthRequest.class);
-    when(request.team()).thenReturn(testCase.user.getTeam());
-    when(request.username()).thenReturn(testCase.user.getUsername());
-    when(request.nonce()).thenReturn(testCase.nonce);
-    when(request.clientProof()).thenReturn(testCase.clientProof);
+    AuthRequest request = new AuthRequest(testCase.user.team(), testCase.user.username(),
+                                          testCase.nonce, testCase.clientProof);
 
     Context ctx = mock(Context.class);
     when(ctx.bodyAsClass(AuthRequest.class)).thenReturn(request);
 
     SessionController.auth(ctx);
 
-    verify(request, atLeastOnce()).username();
-    verify(request, atLeastOnce()).team();
-    verify(request, atLeastOnce()).nonce();
-    verify(request, atLeastOnce()).clientProof();
-
-    verify(sessions).registerSession(any(Session.class));
     verify(ctx).json(argThat((AuthResponse r) -> r.user()
-                                                  .getAccessLevel()
-        == testCase.user.getAccessLevel()
-        && testCase.user.getFullName()
+                                                  .accessLevel()
+        == testCase.user.accessLevel()
+        && testCase.user.fullName()
                         .equals(r.user()
-                                 .getFullName())
+                                 .fullName())
         && Arrays.equals(r.serverSignature(), testCase.serverSignature) && r.session() != null));
   }
 
   @Test
   void testLogout() {
-    long sessionId = 5;
     Session session = mock(Session.class);
-    when(session.getId()).thenReturn(sessionId);
-
-    SessionDB sessions = mock(SessionDB.class);
-    when(sessions.getSession(sessionId)).thenReturn(session);
-    Controller.setSessionDB(sessions);
+    when(session.getId()).thenReturn(-1L);
+    Controller.SESSIONS.put(-1L, session);
 
     Context ctx = mock(Context.class);
-    when(ctx.header(SESSION_HEADER)).thenReturn(Long.toString(sessionId));
+    when(ctx.header(SESSION_HEADER)).thenReturn("-1");
 
     assertThrows(NoContentResponse.class, () -> SessionController.logout(ctx));
 
     verify(ctx).header(SESSION_HEADER);
-    verify(sessions).getSession(sessionId);
-    verify(sessions).deleteSession(session);
+    assertNull(Controller.SESSIONS.get(-1L));
   }
 
   static Stream<TestCase> testCases() {
@@ -133,11 +119,16 @@ class SessionControllerTest {
       this(user, Arrays.copyOf(nonce, 8), nonce, clientProof, serverSignature);
     }
 
-    void inject() {
-      UserDB users = new UserDB();
-      users.addUser(user);
+    void inject() throws SQLException {
+      TeamDB teams = mock(TeamDB.class);
+      when(teams.getTeam(user.team())).thenReturn(new Team(user.team(), "Team Name", null));
+      Controller.setTeamDB(teams);
+
+      UserDB users = mock(UserDB.class);
+      when(users.getUser(user.team(), user.username())).thenReturn(user);
       Controller.setUserDB(users);
-      SessionController.NONCES.add(user.getTeam() + "," + user.getUsername() + ","
+
+      SessionController.NONCES.add(user.team() + "," + user.username() + ","
           + base64Encode(nonce));
     }
   }

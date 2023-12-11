@@ -1,6 +1,6 @@
 package org.victorrobotics.devilscoutserver.integration;
 
-import static org.victorrobotics.devilscoutserver.controller.Controller.base64Decode;
+import static org.victorrobotics.devilscoutserver.Base64Util.base64Decode;
 
 import org.victorrobotics.devilscoutserver.Server;
 import org.victorrobotics.devilscoutserver.controller.Controller;
@@ -8,7 +8,8 @@ import org.victorrobotics.devilscoutserver.controller.SessionController.AuthRequ
 import org.victorrobotics.devilscoutserver.controller.SessionController.AuthResponse;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginChallenge;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginRequest;
-import org.victorrobotics.devilscoutserver.database.SessionDB;
+import org.victorrobotics.devilscoutserver.database.Team;
+import org.victorrobotics.devilscoutserver.database.TeamDB;
 import org.victorrobotics.devilscoutserver.database.User;
 import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
 import org.victorrobotics.devilscoutserver.database.UserDB;
@@ -26,6 +27,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -42,6 +44,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -52,7 +57,6 @@ class SessionIntegrationTest {
 
   @BeforeAll
   static void startServer() {
-    Controller.setSessionDB(new SessionDB());
     server.start();
   }
 
@@ -63,7 +67,7 @@ class SessionIntegrationTest {
 
   @ParameterizedTest
   @MethodSource("testCases")
-  void testLoginSequence(TestCase testCase) throws IOException, InterruptedException {
+  void testLoginSequence(TestCase testCase) throws IOException, InterruptedException, SQLException {
     testCase.inject();
 
     HttpClient client = HttpClient.newHttpClient();
@@ -75,7 +79,7 @@ class SessionIntegrationTest {
 
     // Login Request
     LoginRequest loginRequest =
-        new LoginRequest(testCase.user.getTeam(), testCase.user.getUsername(), clientNonce);
+        new LoginRequest(testCase.user.team(), testCase.user.username(), clientNonce);
     HttpResponse<String> response =
         client.send(HttpRequest.newBuilder(URI.create("http://localhost:8000/login"))
                                .POST(BodyPublishers.ofString(json.writeValueAsString(loginRequest)))
@@ -118,7 +122,7 @@ class SessionIntegrationTest {
     byte[] serverKey = hmacFunction.doFinal("Server Key".getBytes());
     byte[] storedKey = hashFunction.digest(clientKey);
 
-    byte[] userAndNonce = toStr(testCase.user.getTeam() + testCase.user.getUsername(), nonce);
+    byte[] userAndNonce = toStr(testCase.user.team() + testCase.user.username(), nonce);
 
     try {
       hmacFunction.init(new SecretKeySpec(storedKey, "HmacSHA256"));
@@ -141,7 +145,7 @@ class SessionIntegrationTest {
 
     // Auth Request
     AuthRequest authRequest =
-        new AuthRequest(testCase.user.getTeam(), testCase.user.getUsername(), nonce, clientProof);
+        new AuthRequest(testCase.user.team(), testCase.user.username(), nonce, clientProof);
     response = client.send(HttpRequest.newBuilder(URI.create("http://localhost:8000/auth"))
                                       .POST(BodyPublishers.ofString(json.writeValueAsString(authRequest)))
                                       .build(),
@@ -151,9 +155,9 @@ class SessionIntegrationTest {
     AuthResponse authResponse = json.readValue(responseBody, AuthResponse.class);
 
     assertEquals(UserAccessLevel.SUDO, authResponse.user()
-                                                   .getAccessLevel());
-    assertEquals(testCase.user.getFullName(), authResponse.user()
-                                                          .getFullName());
+                                                   .accessLevel());
+    assertEquals(testCase.user.fullName(), authResponse.user()
+                                                       .fullName());
     assertArrayEquals(serverSignature, authResponse.serverSignature());
 
     // Logout
@@ -191,9 +195,13 @@ class SessionIntegrationTest {
 
   record TestCase(User user,
                   String password) {
-    void inject() {
-      UserDB users = new UserDB();
-      users.addUser(user);
+    void inject() throws SQLException {
+      TeamDB teams = mock(TeamDB.class);
+      when(teams.getTeam(user.team())).thenReturn(new Team(user.team(), "Team Name", null));
+      Controller.setTeamDB(teams);
+
+      UserDB users = mock(UserDB.class);
+      when(users.getUser(user.team(), user.username())).thenReturn(user);
       Controller.setUserDB(users);
     }
   }

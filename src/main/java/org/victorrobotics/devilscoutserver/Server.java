@@ -13,7 +13,7 @@ import org.victorrobotics.devilscoutserver.controller.QuestionController;
 import org.victorrobotics.devilscoutserver.controller.SessionController;
 import org.victorrobotics.devilscoutserver.controller.TeamController;
 import org.victorrobotics.devilscoutserver.controller.UserController;
-import org.victorrobotics.devilscoutserver.database.SessionDB;
+import org.victorrobotics.devilscoutserver.database.Database;
 import org.victorrobotics.devilscoutserver.database.TeamDB;
 import org.victorrobotics.devilscoutserver.database.UserDB;
 import org.victorrobotics.devilscoutserver.tba.data.EventInfoCache;
@@ -169,6 +169,11 @@ public class Server {
         ctx.json(new Controller.Error(e.getMessage()));
       }
     });
+    javalin.exception(Exception.class, (e, ctx) -> {
+      ctx.status(500);
+      ctx.json(new Controller.Error(e.getMessage()));
+      e.printStackTrace();
+    });
   }
 
   public void start() {
@@ -181,8 +186,9 @@ public class Server {
 
   @SuppressWarnings("java:S2095") // close the executor
   public static void main(String... args) {
+    Database.initConnectionPool();
+
     Controller.setUserDB(new UserDB());
-    Controller.setSessionDB(new SessionDB());
     Controller.setTeamDB(new TeamDB());
 
     Controller.setEventInfoCache(new EventInfoCache());
