@@ -129,7 +129,7 @@ class SessionControllerTest {
       when(users.getUser(user.team(), user.username())).thenReturn(user);
       Controller.setUserDB(users);
 
-      SessionController.NONCES.add(user.team() + "," + user.username() + "," + base64Encode(nonce));
+      SessionController.NONCES.add(user.username() + "@" + user.team() + ":" + base64Encode(nonce));
     }
   }
 }

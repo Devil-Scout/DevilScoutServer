@@ -116,7 +116,7 @@ public final class SessionController extends Controller {
       return;
     }
 
-    String nonceId = username + "@" + team + ":" + base64Encode(request.nonce());
+    String nonceId = username + "@" + teamNum + ":" + base64Encode(request.nonce());
     if (!NONCES.contains(nonceId)) {
       throw new NotFoundResponse("Invalid nonce");
     }
