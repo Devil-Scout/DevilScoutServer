@@ -10,6 +10,7 @@ import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.devilscoutserver.controller.Controller;
 import org.victorrobotics.devilscoutserver.controller.EventController;
 import org.victorrobotics.devilscoutserver.controller.QuestionController;
+import org.victorrobotics.devilscoutserver.controller.Session;
 import org.victorrobotics.devilscoutserver.controller.SessionController;
 import org.victorrobotics.devilscoutserver.controller.TeamController;
 import org.victorrobotics.devilscoutserver.controller.UserController;
@@ -206,6 +207,11 @@ public class Server {
                 .refresh();
       Controller.eventTeamsCache()
                 .refresh();
+    }, 0, 5, TimeUnit.MINUTES);
+    executor.scheduleAtFixedRate(() -> {
+      Controller.sessions()
+                .values()
+                .removeIf(Session::isExpired);
     }, 0, 5, TimeUnit.MINUTES);
 
     Server server = new Server();

@@ -11,7 +11,7 @@ import org.victorrobotics.devilscoutserver.controller.SessionController.LoginReq
 import org.victorrobotics.devilscoutserver.database.Team;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.User;
-import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
+import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 
 import java.io.IOException;
@@ -152,7 +152,7 @@ class SessionIntegrationTest {
     responseBody = response.body();
     AuthResponse authResponse = json.readValue(responseBody, AuthResponse.class);
 
-    assertEquals(UserAccessLevel.SUDO, authResponse.user()
+    assertEquals(AccessLevel.SUDO, authResponse.user()
                                                    .accessLevel());
     assertEquals(testCase.user.fullName(), authResponse.user()
                                                        .fullName());
@@ -180,7 +180,7 @@ class SessionIntegrationTest {
   static Stream<TestCase> testCases() {
     return Stream.<TestCase>builder()
                  .add(new TestCase(new User(5, 1559, "xander", "Xander Bhalla",
-                                            UserAccessLevel.SUDO, base64Decode("YmFkLXNhbHQ="),
+                                            AccessLevel.SUDO, base64Decode("YmFkLXNhbHQ="),
                                             base64Decode("jMeQaCzoJs81MobCQfcMSq4W298aAnSsF5WRGRf7U1s="),
                                             base64Decode("hsEcMmcap9WWLv+XYoT/gamB6b/P3tgOoOOIgbi26W8=")),
                                    "password"))

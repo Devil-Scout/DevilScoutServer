@@ -1,9 +1,8 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.database.Session;
 import org.victorrobotics.devilscoutserver.database.Team;
 import org.victorrobotics.devilscoutserver.database.User;
-import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
+import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
 import org.victorrobotics.devilscoutserver.tba.data.TeamInfo;
 
 import java.sql.SQLException;
@@ -37,7 +36,7 @@ public final class TeamController extends Controller {
   public static void teamList(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     userDB().getAccessLevel(session.getUser())
-            .verifyAccess(UserAccessLevel.SUDO);
+            .verifyAccess(AccessLevel.SUDO);
     ctx.writeJsonStream(teamDB().allTeams()
                                 .stream());
   }
@@ -57,7 +56,7 @@ public final class TeamController extends Controller {
   public static void registerTeam(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     userDB().getAccessLevel(session.getUser())
-            .verifyAccess(UserAccessLevel.SUDO);
+            .verifyAccess(AccessLevel.SUDO);
 
     TeamRegistration registration = jsonDecode(ctx, TeamRegistration.class);
     int teamNum = registration.number();
@@ -92,7 +91,7 @@ public final class TeamController extends Controller {
 
     if (teamNum != session.getTeam()) {
       userDB().getAccessLevel(session.getUser())
-              .verifyAccess(UserAccessLevel.SUDO);
+              .verifyAccess(AccessLevel.SUDO);
     }
 
     Team team = teamDB().getTeam(teamNum);
@@ -127,10 +126,10 @@ public final class TeamController extends Controller {
 
     if (session.getTeam() == teamNum) {
       userDB().getAccessLevel(session.getUser())
-              .verifyAccess(UserAccessLevel.ADMIN);
+              .verifyAccess(AccessLevel.ADMIN);
     } else {
       userDB().getAccessLevel(session.getUser())
-              .verifyAccess(UserAccessLevel.SUDO);
+              .verifyAccess(AccessLevel.SUDO);
     }
 
     Team team = teamDB().getTeam(teamNum);
@@ -159,7 +158,7 @@ public final class TeamController extends Controller {
   public static void unregisterTeam(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     userDB().getAccessLevel(session.getUser())
-            .verifyAccess(UserAccessLevel.SUDO);
+            .verifyAccess(AccessLevel.SUDO);
 
     int teamNum = ctx.pathParamAsClass("team", Integer.class)
                      .get();
@@ -197,8 +196,13 @@ public final class TeamController extends Controller {
                   .get();
     checkTeamRange(team);
 
-    userDB().getAccessLevel(session.getUser())
-            .verifyAccess(team == session.getTeam() ? UserAccessLevel.ADMIN : UserAccessLevel.SUDO);
+    if (team == session.getTeam()) {
+      userDB().getAccessLevel(session.getUser())
+              .verifyAccess(AccessLevel.ADMIN);
+    } else {
+      userDB().getAccessLevel(session.getUser())
+              .verifyAccess(AccessLevel.SUDO);
+    }
 
     Collection<User> users = userDB().usersOnTeam(team);
     ctx.writeJsonStream(users.stream());

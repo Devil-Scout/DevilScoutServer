@@ -8,11 +8,10 @@ import org.victorrobotics.devilscoutserver.controller.SessionController.AuthRequ
 import org.victorrobotics.devilscoutserver.controller.SessionController.AuthResponse;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginChallenge;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginRequest;
-import org.victorrobotics.devilscoutserver.database.Session;
 import org.victorrobotics.devilscoutserver.database.Team;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.User;
-import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
+import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 
 import java.security.InvalidKeyException;
@@ -101,8 +100,8 @@ class SessionControllerTest {
 
   static Stream<TestCase> testCases() {
     return Stream.<TestCase>builder()
-                 .add(new TestCase(new User(5, 1559, "xander", "Xander Bhalla",
-                                            UserAccessLevel.SUDO, base64Decode("YmFkLXNhbHQ="),
+                 .add(new TestCase(new User(5, 1559, "xander", "Xander Bhalla", AccessLevel.SUDO,
+                                            base64Decode("YmFkLXNhbHQ="),
                                             base64Decode("jMeQaCzoJs81MobCQfcMSq4W298aAnSsF5WRGRf7U1s="),
                                             base64Decode("hsEcMmcap9WWLv+XYoT/gamB6b/P3tgOoOOIgbi26W8=")),
                                    base64Decode("EjRWeJCrze8AAAAAAAAAAA=="),

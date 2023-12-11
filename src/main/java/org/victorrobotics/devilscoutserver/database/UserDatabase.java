@@ -2,6 +2,8 @@ package org.victorrobotics.devilscoutserver.database;
 
 import static org.victorrobotics.devilscoutserver.Base64Util.base64Encode;
 
+import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -28,7 +30,7 @@ public final class UserDatabase extends Database {
 
   public UserDatabase() {}
 
-  public User registerUser(int team, String username, String fullName, UserAccessLevel accessLevel,
+  public User registerUser(int team, String username, String fullName, AccessLevel accessLevel,
                            byte[] salt, byte[] storedKey, byte[] serverKey)
       throws SQLException {
     try (Connection connection = getConnection();
@@ -55,7 +57,7 @@ public final class UserDatabase extends Database {
     }
   }
 
-  public User editUser(long id, String username, String fullName, UserAccessLevel accessLevel,
+  public User editUser(long id, String username, String fullName, AccessLevel accessLevel,
                        byte[][] authInfo)
       throws SQLException {
     List<String> edits = new ArrayList<>();
@@ -146,10 +148,10 @@ public final class UserDatabase extends Database {
     }
   }
 
-  public UserAccessLevel getAccessLevel(long id) throws SQLException {
-    if (id == -1) return UserAccessLevel.SUDO;
-    if (id == -2) return UserAccessLevel.ADMIN;
-    if (id == -3) return UserAccessLevel.USER;
+  public AccessLevel getAccessLevel(long id) throws SQLException {
+    if (id == -1) return AccessLevel.SUDO;
+    if (id == -2) return AccessLevel.ADMIN;
+    if (id == -3) return AccessLevel.USER;
 
     return getUser(id).accessLevel();
   }

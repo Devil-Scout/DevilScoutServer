@@ -16,20 +16,32 @@ public record User(@OpenApiRequired @OpenApiExample("6536270208735686") long id,
                    @OpenApiRequired @OpenApiExample("1559") int team,
                    @OpenApiRequired @OpenApiExample("xander") String username,
                    @OpenApiRequired @OpenApiExample("Xander Bhalla") String fullName,
-                   @OpenApiRequired UserAccessLevel accessLevel,
+                   @OpenApiRequired AccessLevel accessLevel,
                    @JsonIgnore @OpenApiIgnore byte[] salt,
                    @JsonIgnore @OpenApiIgnore byte[] storedKey,
                    @JsonIgnore @OpenApiIgnore byte[] serverKey) {
+  public enum AccessLevel {
+    USER,
+    ADMIN,
+    SUDO;
+
+    public void verifyAccess(AccessLevel required) {
+      if (this.ordinal() < required.ordinal()) {
+        throw new ForbiddenResponse("Resource requires accessLevel " + required);
+      }
+    }
+  }
+
   public static User fromDatabase(ResultSet resultSet) throws SQLException {
     return new User(resultSet.getLong("id"), resultSet.getInt("team"),
                     resultSet.getString("username"), resultSet.getString("full_name"),
-                    UserAccessLevel.valueOf(resultSet.getString("access_level")),
+                    AccessLevel.valueOf(resultSet.getString("access_level")),
                     base64Decode(resultSet.getString("salt")),
                     base64Decode(resultSet.getString("stored_key")),
                     base64Decode(resultSet.getString("server_key")));
   }
 
-  public void verifyAccess(UserAccessLevel accessLevel) {
+  public void verifyAccess(AccessLevel accessLevel) {
     if (accessLevel.ordinal() > this.accessLevel.ordinal()) {
       throw new ForbiddenResponse("Resource requires " + accessLevel + " access");
     }

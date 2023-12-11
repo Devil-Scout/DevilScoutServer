@@ -2,10 +2,9 @@ package org.victorrobotics.devilscoutserver.controller;
 
 import static org.victorrobotics.devilscoutserver.Base64Util.base64Encode;
 
-import org.victorrobotics.devilscoutserver.database.Session;
 import org.victorrobotics.devilscoutserver.database.Team;
 import org.victorrobotics.devilscoutserver.database.User;
-import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
+import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
 
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -42,12 +41,12 @@ public final class SessionController extends Controller {
            summary = "unauthorized ( REMOVE FOR PRODUCTION )",
            description = "Starts a development session with id -1 and the specified accessLevel. "
                + "The session is not specific to a particular user, but it is a member of team 1559.",
-           pathParams = @OpenApiParam(name = "accessLevel", type = UserAccessLevel.class,
+           pathParams = @OpenApiParam(name = "accessLevel", type = AccessLevel.class,
                                       required = true),
            responses = @OpenApiResponse(status = "200",
                                         content = @OpenApiContent(from = Session.class)))
   public static void generateDevSession(Context ctx) {
-    UserAccessLevel accessLevel = UserAccessLevel.valueOf(ctx.pathParam("accessLevel"));
+    AccessLevel accessLevel = AccessLevel.valueOf(ctx.pathParam("accessLevel"));
     Session session = new Session(-1, accessLevel.ordinal() - 3, 1559);
     sessions().put(session.getId(), session);
     ctx.json(session);

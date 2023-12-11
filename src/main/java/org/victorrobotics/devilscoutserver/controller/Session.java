@@ -1,4 +1,4 @@
-package org.victorrobotics.devilscoutserver.database;
+package org.victorrobotics.devilscoutserver.controller;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;

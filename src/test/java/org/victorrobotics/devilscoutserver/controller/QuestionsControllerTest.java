@@ -3,8 +3,7 @@ package org.victorrobotics.devilscoutserver.controller;
 import org.victorrobotics.devilscoutserver.controller.QuestionController.DriveTeamQuestions;
 import org.victorrobotics.devilscoutserver.controller.QuestionController.MatchQuestions;
 import org.victorrobotics.devilscoutserver.controller.QuestionController.PitQuestions;
-import org.victorrobotics.devilscoutserver.database.Session;
-import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
+import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 
 import java.sql.SQLException;
@@ -28,7 +27,7 @@ class QuestionsControllerTest {
               .put(-1L, new Session(-1, -1, 1559));
 
     UserDatabase users = mock(UserDatabase.class);
-    when(users.getAccessLevel(-1)).thenReturn(UserAccessLevel.SUDO);
+    when(users.getAccessLevel(-1)).thenReturn(AccessLevel.SUDO);
     Controller.setUserDB(users);
   }
 

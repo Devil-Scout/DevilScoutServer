@@ -2,8 +2,7 @@ package org.victorrobotics.devilscoutserver.controller;
 
 import static org.victorrobotics.devilscoutserver.Base64Util.base64Encode;
 
-import org.victorrobotics.devilscoutserver.database.Session;
-import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
+import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -120,7 +119,7 @@ public final class QuestionController extends Controller {
   public static void driveTeamQuestions(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     userDB().getAccessLevel(session.getUser())
-            .verifyAccess(UserAccessLevel.ADMIN);
+            .verifyAccess(AccessLevel.ADMIN);
     checkIfNoneMatch(ctx, DRIVE_TEAM_QUESTIONS_HASH);
 
     ctx.json(DRIVE_TEAM_QUESTIONS_JSON);
