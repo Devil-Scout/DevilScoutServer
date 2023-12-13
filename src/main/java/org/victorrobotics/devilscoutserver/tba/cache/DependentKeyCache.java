@@ -48,20 +48,18 @@ public abstract class DependentKeyCache<K, K2, D, D2 extends Cacheable<D>, V ext
 
   @Override
   public void refresh() {
-    long start = System.currentTimeMillis();
     boolean mods = cache.entrySet()
                         .parallelStream()
                         .map(entry -> entry.getValue()
                                            .update(getData(entry.getKey())))
                         .sequential()
                         .reduce(false, Boolean::logicalOr);
+    long time = System.currentTimeMillis();
     boolean removals = cache.values()
-                            .removeIf(value -> start - value.lastAccess() > purgeTime);
+                            .removeIf(value -> time - value.lastAccess() > purgeTime);
     if (mods || removals) {
       timestamp = System.currentTimeMillis();
     }
-    System.out.printf("Refreshed %s (%d) in %dms%n", getClass().getSimpleName(), size(),
-                      System.currentTimeMillis() - start);
   }
 
   @Override

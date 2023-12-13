@@ -39,7 +39,6 @@ public abstract class IndividualCache<K, D, V extends Cacheable<D>> implements C
 
   @Override
   public void refresh() {
-    long start = System.currentTimeMillis();
     boolean mods = cache.entrySet()
                         .parallelStream()
                         .map(entry -> entry.getValue()
@@ -47,13 +46,12 @@ public abstract class IndividualCache<K, D, V extends Cacheable<D>> implements C
                         .map(CompletableFuture::join)
                         .sequential()
                         .reduce(false, Boolean::logicalOr);
+    long time = System.currentTimeMillis();
     boolean removals = cache.values()
-                            .removeIf(value -> start - value.lastAccess() > purgeTime);
+                            .removeIf(value -> time - value.lastAccess() > purgeTime);
     if (mods || removals) {
       timestamp = System.currentTimeMillis();
     }
-    System.out.printf("Refreshed %s (%d) in %dms%n", getClass().getSimpleName(), size(),
-                      System.currentTimeMillis() - start);
   }
 
   @Override

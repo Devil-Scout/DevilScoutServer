@@ -10,19 +10,23 @@ import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.devilscoutserver.controller.Controller;
 import org.victorrobotics.devilscoutserver.controller.EventController;
 import org.victorrobotics.devilscoutserver.controller.QuestionController;
+import org.victorrobotics.devilscoutserver.controller.Session;
 import org.victorrobotics.devilscoutserver.controller.SessionController;
 import org.victorrobotics.devilscoutserver.controller.TeamController;
 import org.victorrobotics.devilscoutserver.controller.UserController;
-import org.victorrobotics.devilscoutserver.database.SessionDB;
-import org.victorrobotics.devilscoutserver.database.TeamDB;
-import org.victorrobotics.devilscoutserver.database.UserDB;
+import org.victorrobotics.devilscoutserver.database.Database;
+import org.victorrobotics.devilscoutserver.database.TeamDatabase;
+import org.victorrobotics.devilscoutserver.database.UserDatabase;
+import org.victorrobotics.devilscoutserver.tba.cache.Cache;
 import org.victorrobotics.devilscoutserver.tba.data.EventInfoCache;
 import org.victorrobotics.devilscoutserver.tba.data.EventTeamsCache;
 import org.victorrobotics.devilscoutserver.tba.data.MatchScheduleCache;
 import org.victorrobotics.devilscoutserver.tba.data.TeamInfoCache;
 
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import io.javalin.Javalin;
@@ -34,8 +38,12 @@ import io.javalin.openapi.plugin.OpenApiPluginConfiguration;
 import io.javalin.openapi.plugin.SecurityComponentConfiguration;
 import io.javalin.openapi.plugin.swagger.SwaggerConfiguration;
 import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Server {
+  private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
+
   private static final Handler UNIMPLEMENTED = ctx -> ctx.result("UNIMPLEMENTED");
 
   private static final String API_DESCRIPTION =
@@ -169,6 +177,13 @@ public class Server {
         ctx.json(new Controller.Error(e.getMessage()));
       }
     });
+    javalin.exception(Exception.class, (e, ctx) -> {
+      ctx.status(500);
+      ctx.json(new Controller.Error(e.getMessage()));
+      LOGGER.warn("{} occurred while executing request {} {} : {}", e.getClass()
+                                                                     .getSimpleName(),
+                  ctx.method(), ctx.fullUrl(), e.getMessage());
+    });
   }
 
   public void start() {
@@ -181,28 +196,61 @@ public class Server {
 
   @SuppressWarnings("java:S2095") // close the executor
   public static void main(String... args) {
-    Controller.setUserDB(new UserDB());
-    Controller.setSessionDB(new SessionDB());
-    Controller.setTeamDB(new TeamDB());
+    LOGGER.info("Connecting to database...");
+    Database.initConnectionPool();
+    Controller.setUserDB(new UserDatabase());
+    Controller.setTeamDB(new TeamDatabase());
+    LOGGER.info("Database connected");
 
+    LOGGER.info("Initializing memory caches...");
     Controller.setEventInfoCache(new EventInfoCache());
     Controller.setTeamInfoCache(new TeamInfoCache());
     Controller.setEventTeamsCache(new EventTeamsCache(Controller.teamInfoCache()));
     Controller.setMatchScheduleCache(new MatchScheduleCache());
+    LOGGER.info("Memory caches ready");
 
-    Endpoint.setExecutor(Executors.newFixedThreadPool(16));
+    LOGGER.info("Starting daemon services...");
+    ThreadFactory blueAllianceThreads = Thread.ofVirtual()
+                                              .name("BlueAlliance-", 0)
+                                              .factory();
+    Endpoint.setExecutor(Executors.newFixedThreadPool(16, blueAllianceThreads));
 
-    ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
-    executor.scheduleAtFixedRate(Controller.eventCache()::refresh, 0, 5, TimeUnit.MINUTES);
-    executor.scheduleAtFixedRate(Controller.matchScheduleCache()::refresh, 0, 1, TimeUnit.MINUTES);
+    ThreadFactory refreshThreads = Thread.ofPlatform()
+                                         .name("Refresh-", 0)
+                                         .factory();
+    ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, refreshThreads);
+    executor.scheduleAtFixedRate(() -> refreshCache(Controller.eventCache()), 0, 5,
+                                 TimeUnit.MINUTES);
+    executor.scheduleAtFixedRate(() -> refreshCache(Controller.matchScheduleCache()), 0, 1,
+                                 TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
-      Controller.teamInfoCache()
-                .refresh();
-      Controller.eventTeamsCache()
-                .refresh();
+      refreshCache(Controller.teamInfoCache());
+      refreshCache(Controller.eventTeamsCache());
     }, 0, 5, TimeUnit.MINUTES);
+    executor.scheduleAtFixedRate(() -> {
+      ConcurrentMap<Long, Session> sessions = Controller.sessions();
+      long start = System.currentTimeMillis();
+      int size = sessions.size();
+      sessions.values()
+              .removeIf(Session::isExpired);
+      LOGGER.info("Purged {} expired sessions in {}ms", size - sessions.size(),
+                  System.currentTimeMillis() - start);
+    }, 0, 5, TimeUnit.MINUTES);
+    LOGGER.info("Daemon services running");
 
+    LOGGER.info("Starting HTTP server...");
     Server server = new Server();
     server.start();
+    LOGGER.info("HTTP server started");
+
+    LOGGER.info("DevilScoutServer startup complete, main thread exiting");
+  }
+
+  private static void refreshCache(Cache<?, ?, ?> cache) {
+    long start = System.currentTimeMillis();
+    cache.refresh();
+    LOGGER.info("Refreshed {} ({}) in {}ms", cache.getClass()
+                                                  .getSimpleName(),
+                cache.size(), System.currentTimeMillis() - start);
   }
 }

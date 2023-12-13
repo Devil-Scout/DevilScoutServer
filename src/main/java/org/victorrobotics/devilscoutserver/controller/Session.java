@@ -1,9 +1,8 @@
-package org.victorrobotics.devilscoutserver.database;
+package org.victorrobotics.devilscoutserver.controller;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.javalin.http.ForbiddenResponse;
 import io.javalin.openapi.OpenApiExample;
 import io.javalin.openapi.OpenApiIgnore;
 
@@ -14,29 +13,22 @@ public class Session {
   private final long user;
   private final int  team;
 
-  private final UserAccessLevel accessLevel;
-
   private long expiration;
 
-  public Session(long id, User user) {
+  public Session(long id, long userId, int team) {
     this.id = id;
-    this.user = user.getId();
-    this.team = user.getTeam();
-    this.accessLevel = user.getAccessLevel();
+    this.user = userId;
+    this.team = team;
 
     expiration = System.currentTimeMillis() + DURATION_MILLIS;
   }
 
-  @JsonCreator
-  public Session(@JsonProperty("id") long id, @JsonProperty("user") long user,
-                 @JsonProperty("team") int team,
-                 @JsonProperty("accessLevel") UserAccessLevel accessLevel) {
+  @JsonCreator // for testing
+  private Session(@JsonProperty("id") long id, @JsonProperty("expiration") long expiration) {
     this.id = id;
-    this.user = user;
-    this.team = team;
-    this.accessLevel = accessLevel;
-
-    expiration = System.currentTimeMillis() + DURATION_MILLIS;
+    this.expiration = expiration;
+    this.user = -1;
+    this.team = -1;
   }
 
   @JsonIgnore
@@ -50,18 +42,16 @@ public class Session {
     return id;
   }
 
-  @OpenApiExample("6536270208735686")
+  @JsonIgnore
+  @OpenApiIgnore
   public long getUser() {
     return user;
   }
 
-  @OpenApiExample("1559")
+  @JsonIgnore
+  @OpenApiIgnore
   public int getTeam() {
     return team;
-  }
-
-  public UserAccessLevel getAccessLevel() {
-    return accessLevel;
   }
 
   @OpenApiExample("1700675366947")
@@ -71,11 +61,5 @@ public class Session {
 
   public void refresh() {
     expiration = System.currentTimeMillis() + DURATION_MILLIS;
-  }
-
-  public void verifyAccess(UserAccessLevel accessLevel) {
-    if (accessLevel.ordinal() > this.accessLevel.ordinal()) {
-      throw new ForbiddenResponse("Resource requires " + accessLevel + " access");
-    }
   }
 }

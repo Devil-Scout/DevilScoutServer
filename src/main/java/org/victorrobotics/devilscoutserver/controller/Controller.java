@@ -1,17 +1,15 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.database.Session;
-import org.victorrobotics.devilscoutserver.database.SessionDB;
-import org.victorrobotics.devilscoutserver.database.TeamDB;
-import org.victorrobotics.devilscoutserver.database.UserAccessLevel;
-import org.victorrobotics.devilscoutserver.database.UserDB;
+import org.victorrobotics.devilscoutserver.database.TeamDatabase;
+import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.tba.data.EventInfoCache;
 import org.victorrobotics.devilscoutserver.tba.data.EventTeamsCache;
 import org.victorrobotics.devilscoutserver.tba.data.MatchScheduleCache;
 import org.victorrobotics.devilscoutserver.tba.data.TeamInfoCache;
 
 import java.security.SecureRandom;
-import java.util.Base64;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
@@ -27,18 +25,16 @@ public sealed class Controller
     permits EventController, QuestionController, SessionController, TeamController, UserController {
   public static final String SESSION_HEADER = "X-DS-SESSION-KEY";
 
+  private static final ConcurrentMap<Long, Session> SESSIONS = new ConcurrentHashMap<>();
+
   protected static final String HASH_ALGORITHM   = "SHA-256";
   protected static final String MAC_ALGORITHM    = "HmacSHA256";
   protected static final String KEYGEN_ALGORITHM = "PBKDF2WithHmacSHA256";
 
   protected static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-  private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
-  private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
-
-  private static UserDB    USERS;
-  private static SessionDB SESSIONS;
-  private static TeamDB    TEAMS;
+  private static UserDatabase USERS;
+  private static TeamDatabase TEAMS;
 
   private static TeamInfoCache      TEAM_INFO_CACHE;
   private static EventInfoCache     EVENT_INFO_CACHE;
@@ -47,15 +43,11 @@ public sealed class Controller
 
   protected Controller() {}
 
-  public static void setUserDB(UserDB users) {
+  public static void setUserDB(UserDatabase users) {
     USERS = users;
   }
 
-  public static void setSessionDB(SessionDB sessions) {
-    SESSIONS = sessions;
-  }
-
-  public static void setTeamDB(TeamDB teams) {
+  public static void setTeamDB(TeamDatabase teams) {
     TEAMS = teams;
   }
 
@@ -75,15 +67,15 @@ public sealed class Controller
     MATCH_SCHEDULE_CACHE = cache;
   }
 
-  public static UserDB userDB() {
-    return USERS;
-  }
-
-  public static SessionDB sessionDB() {
+  public static ConcurrentMap<Long, Session> sessions() {
     return SESSIONS;
   }
 
-  public static TeamDB teamDB() {
+  public static UserDatabase userDB() {
+    return USERS;
+  }
+
+  public static TeamDatabase teamDB() {
     return TEAMS;
   }
 
@@ -125,19 +117,13 @@ public sealed class Controller
       throw new UnauthorizedResponse("Invalid " + SESSION_HEADER + " header");
     }
 
-    Session session = SESSIONS.getSession(sessionId);
+    Session session = SESSIONS.get(sessionId);
 
     if (session == null || session.isExpired()) {
       throw new UnauthorizedResponse("Invalid/Expired " + SESSION_HEADER + " header");
     }
 
     session.refresh();
-    return session;
-  }
-
-  protected static Session getValidSession(Context ctx, UserAccessLevel accessLevel) {
-    Session session = getValidSession(ctx);
-    session.verifyAccess(accessLevel);
     return session;
   }
 
@@ -167,14 +153,6 @@ public sealed class Controller
     ctx.header("etag", Long.toString(timestamp));
   }
 
-  public static String base64Encode(byte[] bytes) {
-    return BASE64_ENCODER.encodeToString(bytes);
-  }
-
-  public static byte[] base64Decode(String base64) {
-    return BASE64_DECODER.decode(base64);
-  }
-
   protected static void checkTeamRange(int team) {
     if (team <= 0 || team > 9999) {
       throw new BadRequestResponse("Team [" + team + "] must be in range 1 to 9999");
@@ -198,7 +176,7 @@ public sealed class Controller
   }
 
   protected static void throwUserNotFound(String username, int team) {
-    throw new NotFoundResponse("User " + username + "@" + team + "not found");
+    throw new NotFoundResponse("User " + username + "@" + team + " not found");
   }
 
   protected static void throwEventNotFound(String eventKey) {
