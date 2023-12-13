@@ -36,7 +36,6 @@ public abstract class ListCache<K, D, V extends Cacheable<D>> implements Cache<K
   @Override
   @SuppressWarnings("java:S1941") // move start further down
   public void refresh() {
-    long start = System.currentTimeMillis();
     List<K> keys = new ArrayList<>();
     boolean mods = endpoints.parallelStream()
                             .map(Endpoint::refresh)
@@ -55,8 +54,6 @@ public abstract class ListCache<K, D, V extends Cacheable<D>> implements Cache<K
     if (mods || removals) {
       timestamp = System.currentTimeMillis();
     }
-    System.out.printf("Refreshed %s (%d) in %dms%n", getClass().getSimpleName(), size(),
-                      System.currentTimeMillis() - start);
   }
 
   @Override

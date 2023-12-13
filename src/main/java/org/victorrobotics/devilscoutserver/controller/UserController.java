@@ -43,7 +43,7 @@ public final class UserController extends Controller {
   public static void allUsers(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     userDB().getAccessLevel(session.getUser())
-            .verifyAccess(AccessLevel.SUDO);
+            .verify(AccessLevel.SUDO);
     ctx.writeJsonStream(userDB().allUsers()
                                 .stream());
   }
@@ -68,26 +68,27 @@ public final class UserController extends Controller {
   public static void registerUser(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     AccessLevel accessLevel = userDB().getAccessLevel(session.getUser());
-    accessLevel.verifyAccess(AccessLevel.ADMIN);
+    accessLevel.verify(AccessLevel.ADMIN);
 
     UserRegistration registration = jsonDecode(ctx, UserRegistration.class);
     int team = registration.team();
-    String username = registration.username();
     checkTeamRange(team);
 
     if (session.getTeam() != team) {
-      accessLevel.verifyAccess(AccessLevel.SUDO);
+      accessLevel.verify(AccessLevel.SUDO);
     }
 
-    if (teamDB().getTeam(team) == null) {
+    if (!teamDB().containsTeam(team)) {
       throwTeamNotFound(team);
+      return;
     }
 
+    String username = registration.username();
     if (userDB().getUser(team, username) != null) {
       throw new ConflictResponse("User " + username + "@" + team + " already exists");
     }
 
-    accessLevel.verifyAccess(registration.accessLevel());
+    accessLevel.verify(registration.accessLevel());
 
     byte[][] auth = computeAuthentication(registration.password());
     byte[] salt = auth[0];
@@ -125,7 +126,7 @@ public final class UserController extends Controller {
     long userId = ctx.pathParamAsClass("id", Long.class)
                      .get();
     if (userId != session.getUser()) {
-      accessLevel.verifyAccess(AccessLevel.ADMIN);
+      accessLevel.verify(AccessLevel.ADMIN);
     }
 
     User user = userDB().getUser(userId);
@@ -135,7 +136,7 @@ public final class UserController extends Controller {
     }
 
     if (user.team() != session.getTeam()) {
-      accessLevel.verifyAccess(AccessLevel.SUDO);
+      accessLevel.verify(AccessLevel.SUDO);
     }
 
     ctx.json(user);
@@ -166,6 +167,10 @@ public final class UserController extends Controller {
 
     long userId = ctx.pathParamAsClass("id", Long.class)
                      .get();
+    if (userId != session.getUser()) {
+      accessLevel.verify(AccessLevel.ADMIN);
+    }
+
     User user = userDB().getUser(userId);
     if (user == null) {
       throwUserNotFound(userId);
@@ -173,13 +178,14 @@ public final class UserController extends Controller {
     }
 
     if (session.getTeam() != user.team()) {
-      accessLevel.verifyAccess(AccessLevel.SUDO);
+      accessLevel.verify(AccessLevel.SUDO);
+    } else {
+      accessLevel.verify(user.accessLevel());
     }
 
     UserEdits edits = jsonDecode(ctx, UserEdits.class);
-
     if (edits.accessLevel() != null) {
-      accessLevel.verifyAccess(edits.accessLevel());
+      accessLevel.verify(edits.accessLevel());
     }
 
     byte[][] authInfo = null;
@@ -212,7 +218,7 @@ public final class UserController extends Controller {
   public static void deleteUser(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     AccessLevel accessLevel = userDB().getAccessLevel(session.getUser());
-    accessLevel.verifyAccess(AccessLevel.ADMIN);
+    accessLevel.verify(AccessLevel.ADMIN);
 
     long userId = ctx.pathParamAsClass("id", Long.class)
                      .get();
@@ -223,9 +229,9 @@ public final class UserController extends Controller {
     }
 
     if (session.getTeam() == user.team()) {
-      accessLevel.verifyAccess(user.accessLevel());
+      accessLevel.verify(user.accessLevel());
     } else {
-      accessLevel.verifyAccess(AccessLevel.SUDO);
+      accessLevel.verify(AccessLevel.SUDO);
     }
 
     userDB().deleteUser(user.id());

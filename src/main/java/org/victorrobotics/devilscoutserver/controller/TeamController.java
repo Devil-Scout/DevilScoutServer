@@ -36,7 +36,7 @@ public final class TeamController extends Controller {
   public static void teamList(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     userDB().getAccessLevel(session.getUser())
-            .verifyAccess(AccessLevel.SUDO);
+            .verify(AccessLevel.SUDO);
     ctx.writeJsonStream(teamDB().allTeams()
                                 .stream());
   }
@@ -56,7 +56,7 @@ public final class TeamController extends Controller {
   public static void registerTeam(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     userDB().getAccessLevel(session.getUser())
-            .verifyAccess(AccessLevel.SUDO);
+            .verify(AccessLevel.SUDO);
 
     TeamRegistration registration = jsonDecode(ctx, TeamRegistration.class);
     int teamNum = registration.number();
@@ -91,7 +91,7 @@ public final class TeamController extends Controller {
 
     if (teamNum != session.getTeam()) {
       userDB().getAccessLevel(session.getUser())
-              .verifyAccess(AccessLevel.SUDO);
+              .verify(AccessLevel.SUDO);
     }
 
     Team team = teamDB().getTeam(teamNum);
@@ -126,10 +126,10 @@ public final class TeamController extends Controller {
 
     if (session.getTeam() == teamNum) {
       userDB().getAccessLevel(session.getUser())
-              .verifyAccess(AccessLevel.ADMIN);
+              .verify(AccessLevel.ADMIN);
     } else {
       userDB().getAccessLevel(session.getUser())
-              .verifyAccess(AccessLevel.SUDO);
+              .verify(AccessLevel.SUDO);
     }
 
     Team team = teamDB().getTeam(teamNum);
@@ -158,7 +158,7 @@ public final class TeamController extends Controller {
   public static void unregisterTeam(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     userDB().getAccessLevel(session.getUser())
-            .verifyAccess(AccessLevel.SUDO);
+            .verify(AccessLevel.SUDO);
 
     int teamNum = ctx.pathParamAsClass("team", Integer.class)
                      .get();
@@ -198,10 +198,15 @@ public final class TeamController extends Controller {
 
     if (team == session.getTeam()) {
       userDB().getAccessLevel(session.getUser())
-              .verifyAccess(AccessLevel.ADMIN);
+              .verify(AccessLevel.ADMIN);
     } else {
       userDB().getAccessLevel(session.getUser())
-              .verifyAccess(AccessLevel.SUDO);
+              .verify(AccessLevel.SUDO);
+    }
+
+    if (!teamDB().containsTeam(team)) {
+      throwTeamNotFound(team);
+      return;
     }
 
     Collection<User> users = userDB().usersOnTeam(team);

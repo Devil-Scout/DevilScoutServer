@@ -8,27 +8,73 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 @SuppressWarnings("java:S2325")
 public final class UserDatabase extends Database {
-  private static final String ADD_USER      = """
-      INSERT INTO users
-      (team, username, full_name, access_level, salt, stored_key, server_key)
-      VALUES (?, ?, ?, ?::user_access_level, ?, ?, ?)
-      RETURNING *;
-      """;
-  private static final String DELETE_USER   = "DELETE FROM users WHERE id = ?;";
-  private static final String USER_BY_KEY   =
-      "SELECT * FROM users WHERE team = ? AND username = ?;";
-  private static final String USER_BY_ID    = "SELECT * FROM users WHERE id = ?;";
-  private static final String USERS_BY_TEAM = "SELECT * FROM users WHERE team = ?;";
-  private static final String ALL_USERS     = "SELECT * FROM users;";
+  private static final String ALL_USERS     = "SELECT * FROM users ORDER BY id";
+  private static final String USERS_ON_TEAM = "SELECT * FROM users WHERE team = ? ORDER BY id";
+  private static final String USER_BY_ID    = "SELECT * FROM users WHERE id = ?";
+  private static final String USER_BY_KEY   = "SELECT * FROM users WHERE team = ? AND username = ?";
+  private static final String CONTAINS_USER = "SELECT COUNT(*) FROM users WHERE id = ?";
+
+  private static final String ADD_USER    = "INSERT INTO users "
+      + "(team, username, full_name, access_level, salt, stored_key, server_key) "
+      + "VALUES (?, ?, ?, ?::user_access_level, ?, ?, ?) RETURNING *";
+  private static final String DELETE_USER = "DELETE FROM users WHERE id = ?";
 
   public UserDatabase() {}
+
+  public Collection<User> allUsers() throws SQLException {
+    try (Connection connection = getConnection();
+         PreparedStatement statement = connection.prepareStatement(ALL_USERS);
+         ResultSet resultSet = statement.executeQuery()) {
+      return listFromDatabase(resultSet, User::fromDatabase);
+    }
+  }
+
+  public Collection<User> usersOnTeam(int team) throws SQLException {
+    try (Connection connection = getConnection();
+         PreparedStatement statement = connection.prepareStatement(USERS_ON_TEAM)) {
+      statement.setShort(1, (short) team);
+      try (ResultSet resultSet = statement.executeQuery()) {
+        return listFromDatabase(resultSet, User::fromDatabase);
+      }
+    }
+  }
+
+  public User getUser(long id) throws SQLException {
+    try (Connection connection = getConnection();
+         PreparedStatement statement = connection.prepareStatement(USER_BY_ID)) {
+      statement.setLong(1, id);
+      try (ResultSet resultSet = statement.executeQuery()) {
+        return resultSet.next() ? User.fromDatabase(resultSet) : null;
+      }
+    }
+  }
+
+  public User getUser(int team, String username) throws SQLException {
+    try (Connection connection = getConnection();
+         PreparedStatement statement = connection.prepareStatement(USER_BY_KEY)) {
+      statement.setShort(1, (short) team);
+      statement.setString(2, username);
+      try (ResultSet resultSet = statement.executeQuery()) {
+        return resultSet.next() ? User.fromDatabase(resultSet) : null;
+      }
+    }
+  }
+
+  public boolean containsUser(long id) throws SQLException {
+    try (Connection connection = getConnection();
+         PreparedStatement statement = connection.prepareStatement(CONTAINS_USER)) {
+      statement.setLong(1, id);
+      try (ResultSet resultSet = statement.executeQuery()) {
+        return resultSet.next() && resultSet.getInt("count") != 0;
+      }
+    }
+  }
 
   public User registerUser(int team, String username, String fullName, AccessLevel accessLevel,
                            byte[] salt, byte[] storedKey, byte[] serverKey)
@@ -42,10 +88,9 @@ public final class UserDatabase extends Database {
       statement.setString(5, base64Encode(salt));
       statement.setString(6, base64Encode(storedKey));
       statement.setString(7, base64Encode(serverKey));
-      statement.execute();
-
-      ResultSet resultSet = statement.getResultSet();
-      return resultSet.next() ? User.fromDatabase(resultSet) : null;
+      try (ResultSet resultSet = statement.executeQuery()) {
+        return resultSet.next() ? User.fromDatabase(resultSet) : null;
+      }
     }
   }
 
@@ -63,88 +108,54 @@ public final class UserDatabase extends Database {
     List<String> edits = new ArrayList<>();
 
     if (username != null) {
-      edits.add("username = '" + username + "'");
+      edits.add("username = ?");
     }
 
     if (fullName != null) {
-      edits.add("full_name = '" + fullName + "'");
+      edits.add("full_name = ?");
     }
 
     if (accessLevel != null) {
-      edits.add("access_level = '" + accessLevel + "'");
+      edits.add("access_level = ?::user_access_level");
     }
 
     if (authInfo != null) {
-      edits.add("salt = '" + base64Encode(authInfo[0]) + "'");
-      edits.add("stored_key = '" + base64Encode(authInfo[1]) + "'");
-      edits.add("server_key = '" + base64Encode(authInfo[2]) + "'");
+      edits.add("salt = ?");
+      edits.add("stored_key = ?");
+      edits.add("server_key = ?");
     }
 
     if (edits.isEmpty()) {
       return getUser(id);
     }
 
-    String query =
-        "UPDATE users SET " + String.join(", ", edits) + "WHERE id = " + id + " RETURNING *;";
+    String query = "UPDATE users SET " + String.join(", ", edits) + " WHERE id = ? RETURNING *";
     try (Connection connection = getConnection();
-         Statement statement = connection.createStatement()) {
-      statement.execute(query);
+         PreparedStatement statement = connection.prepareStatement(query)) {
+      int index = 1;
 
-      ResultSet resultSet = statement.getResultSet();
-      return resultSet.next() ? User.fromDatabase(resultSet) : null;
-    }
-  }
-
-  public User getUser(int team, String username) throws SQLException {
-    try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(USER_BY_KEY)) {
-      statement.setShort(1, (short) team);
-      statement.setString(2, username);
-      statement.execute();
-
-      ResultSet resultSet = statement.getResultSet();
-      return resultSet.next() ? User.fromDatabase(resultSet) : null;
-    }
-  }
-
-  public User getUser(long id) throws SQLException {
-    try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(USER_BY_ID)) {
-      statement.setLong(1, id);
-      statement.execute();
-
-      ResultSet resultSet = statement.getResultSet();
-      return resultSet.next() ? User.fromDatabase(resultSet) : null;
-    }
-  }
-
-  public Collection<User> allUsers() throws SQLException {
-    try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(ALL_USERS)) {
-      statement.execute();
-
-      ResultSet resultSet = statement.getResultSet();
-      List<User> users = new ArrayList<>();
-      while (resultSet.next()) {
-        users.add(User.fromDatabase(resultSet));
-      }
-      return List.copyOf(users);
-    }
-  }
-
-  public Collection<User> usersOnTeam(int team) throws SQLException {
-    try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(USERS_BY_TEAM)) {
-      statement.setShort(1, (short) team);
-      statement.execute();
-
-      ResultSet resultSet = statement.getResultSet();
-      List<User> users = new ArrayList<>();
-      while (resultSet.next()) {
-        users.add(User.fromDatabase(resultSet));
+      if (username != null) {
+        statement.setString(index++, username);
       }
 
-      return List.copyOf(users);
+      if (fullName != null) {
+        statement.setString(index++, fullName);
+      }
+
+      if (accessLevel != null) {
+        statement.setString(index++, accessLevel.toString());
+      }
+
+      if (authInfo != null) {
+        statement.setString(index++, base64Encode(authInfo[0]));
+        statement.setString(index++, base64Encode(authInfo[1]));
+        statement.setString(index++, base64Encode(authInfo[2]));
+      }
+
+      statement.setLong(index, id);
+      try (ResultSet resultSet = statement.executeQuery()) {
+        return resultSet.next() ? User.fromDatabase(resultSet) : null;
+      }
     }
   }
 

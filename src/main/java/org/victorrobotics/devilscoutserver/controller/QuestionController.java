@@ -119,7 +119,7 @@ public final class QuestionController extends Controller {
   public static void driveTeamQuestions(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     userDB().getAccessLevel(session.getUser())
-            .verifyAccess(AccessLevel.ADMIN);
+            .verify(AccessLevel.ADMIN);
     checkIfNoneMatch(ctx, DRIVE_TEAM_QUESTIONS_HASH);
 
     ctx.json(DRIVE_TEAM_QUESTIONS_JSON);

@@ -8,9 +8,11 @@ import io.javalin.openapi.OpenApiRequired;
 
 public record Team(@OpenApiRequired @OpenApiExample("1559") int number,
                    @OpenApiRequired @OpenApiExample("Devil Tech") String name,
-                   @OpenApiExample("2023nyrr") String eventKey) {
+                   @OpenApiRequired @OpenApiExample("2023nyrr") String eventKey) {
   public static Team fromDatabase(ResultSet resultSet) throws SQLException {
-    return new Team(resultSet.getShort("number"), resultSet.getString("name"),
-                    resultSet.getString("event_key"));
+    int number = resultSet.getShort(1);
+    String name = resultSet.getString(2);
+    String eventKey = resultSet.getString(3);
+    return new Team(number, name, eventKey);
   }
 }

@@ -25,25 +25,22 @@ public record User(@OpenApiRequired @OpenApiExample("6536270208735686") long id,
     ADMIN,
     SUDO;
 
-    public void verifyAccess(AccessLevel required) {
+    public void verify(AccessLevel required) {
       if (this.ordinal() < required.ordinal()) {
-        throw new ForbiddenResponse("Resource requires accessLevel " + required);
+        throw new ForbiddenResponse("Resource requires elevated AccessLevel");
       }
     }
   }
 
   public static User fromDatabase(ResultSet resultSet) throws SQLException {
-    return new User(resultSet.getLong("id"), resultSet.getInt("team"),
-                    resultSet.getString("username"), resultSet.getString("full_name"),
-                    AccessLevel.valueOf(resultSet.getString("access_level")),
-                    base64Decode(resultSet.getString("salt")),
-                    base64Decode(resultSet.getString("stored_key")),
-                    base64Decode(resultSet.getString("server_key")));
-  }
-
-  public void verifyAccess(AccessLevel accessLevel) {
-    if (accessLevel.ordinal() > this.accessLevel.ordinal()) {
-      throw new ForbiddenResponse("Resource requires " + accessLevel + " access");
-    }
+    long id = resultSet.getLong(1);
+    int team = resultSet.getInt(2);
+    String username = resultSet.getString(3);
+    String fullName = resultSet.getString(4);
+    AccessLevel accessLevel = AccessLevel.valueOf(resultSet.getString(5));
+    byte[] salt = base64Decode(resultSet.getString(6));
+    byte[] storedKey = base64Decode(resultSet.getString(7));
+    byte[] serverKey = base64Decode(resultSet.getString(8));
+    return new User(id, team, username, fullName, accessLevel, salt, storedKey, serverKey);
   }
 }
