@@ -2,15 +2,18 @@ package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
-import org.victorrobotics.devilscoutserver.tba.data.EventInfoCache;
-import org.victorrobotics.devilscoutserver.tba.data.EventTeamsCache;
+import org.victorrobotics.devilscoutserver.tba.data.EventCache;
+import org.victorrobotics.devilscoutserver.tba.data.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.data.MatchScheduleCache;
-import org.victorrobotics.devilscoutserver.tba.data.TeamInfoCache;
+import org.victorrobotics.devilscoutserver.tba.data.EventTeamCache;
 
 import java.security.SecureRandom;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.CreatedResponse;
@@ -19,6 +22,7 @@ import io.javalin.http.NotFoundResponse;
 import io.javalin.http.NotModifiedResponse;
 import io.javalin.http.UnauthorizedResponse;
 import io.javalin.openapi.OpenApiExample;
+import io.javalin.openapi.OpenApiIgnore;
 import io.javalin.openapi.OpenApiRequired;
 
 public sealed class Controller
@@ -36,9 +40,9 @@ public sealed class Controller
   private static UserDatabase USERS;
   private static TeamDatabase TEAMS;
 
-  private static TeamInfoCache      TEAM_INFO_CACHE;
-  private static EventInfoCache     EVENT_INFO_CACHE;
-  private static EventTeamsCache    EVENT_TEAMS_CACHE;
+  private static EventTeamCache     TEAM_CACHE;
+  private static EventCache         EVENT_CACHE;
+  private static EventTeamListCache EVENT_TEAMS_CACHE;
   private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
 
   protected Controller() {}
@@ -51,15 +55,15 @@ public sealed class Controller
     TEAMS = teams;
   }
 
-  public static void setEventInfoCache(EventInfoCache cache) {
-    EVENT_INFO_CACHE = cache;
+  public static void setEventCache(EventCache cache) {
+    EVENT_CACHE = cache;
   }
 
-  public static void setTeamInfoCache(TeamInfoCache cache) {
-    TEAM_INFO_CACHE = cache;
+  public static void setTeamCache(EventTeamCache cache) {
+    TEAM_CACHE = cache;
   }
 
-  public static void setEventTeamsCache(EventTeamsCache cache) {
+  public static void setEventTeamsCache(EventTeamListCache cache) {
     EVENT_TEAMS_CACHE = cache;
   }
 
@@ -79,15 +83,15 @@ public sealed class Controller
     return TEAMS;
   }
 
-  public static TeamInfoCache teamInfoCache() {
-    return TEAM_INFO_CACHE;
+  public static EventTeamCache teamCache() {
+    return TEAM_CACHE;
   }
 
-  public static EventInfoCache eventCache() {
-    return EVENT_INFO_CACHE;
+  public static EventCache eventCache() {
+    return EVENT_CACHE;
   }
 
-  public static EventTeamsCache eventTeamsCache() {
+  public static EventTeamListCache eventTeamsCache() {
     return EVENT_TEAMS_CACHE;
   }
 
@@ -181,6 +185,64 @@ public sealed class Controller
 
   protected static void throwEventNotFound(String eventKey) {
     throw new NotFoundResponse("Event " + eventKey + " not found");
+  }
+
+  public static class Session {
+    private static final long DURATION_MILLIS = 8 * 60 * 60 * 1000;
+
+    private final long id;
+    private final long user;
+    private final int  team;
+
+    private long expiration;
+
+    public Session(long id, long userId, int team) {
+      this.id = id;
+      this.user = userId;
+      this.team = team;
+
+      expiration = System.currentTimeMillis() + DURATION_MILLIS;
+    }
+
+    @JsonCreator // for testing
+    private Session(@JsonProperty("id") long id, @JsonProperty("expiration") long expiration) {
+      this.id = id;
+      this.expiration = expiration;
+      this.user = -1;
+      this.team = -1;
+    }
+
+    @JsonIgnore
+    @OpenApiIgnore
+    public boolean isExpired() {
+      return System.currentTimeMillis() >= expiration;
+    }
+
+    @OpenApiExample("1572531932698856")
+    public long getId() {
+      return id;
+    }
+
+    @JsonIgnore
+    @OpenApiIgnore
+    public long getUser() {
+      return user;
+    }
+
+    @JsonIgnore
+    @OpenApiIgnore
+    public int getTeam() {
+      return team;
+    }
+
+    @OpenApiExample("1700675366947")
+    public long getExpiration() {
+      return expiration;
+    }
+
+    public void refresh() {
+      expiration = System.currentTimeMillis() + DURATION_MILLIS;
+    }
   }
 
   public static record Error(@OpenApiRequired @OpenApiExample("Error message") String error) {}

@@ -4,6 +4,7 @@ import static org.victorrobotics.devilscoutserver.Base64Util.base64Decode;
 import static org.victorrobotics.devilscoutserver.Base64Util.base64Encode;
 import static org.victorrobotics.devilscoutserver.controller.Controller.SESSION_HEADER;
 
+import org.victorrobotics.devilscoutserver.controller.Controller.Session;
 import org.victorrobotics.devilscoutserver.controller.SessionController.AuthRequest;
 import org.victorrobotics.devilscoutserver.controller.SessionController.AuthResponse;
 import org.victorrobotics.devilscoutserver.controller.SessionController.LoginChallenge;

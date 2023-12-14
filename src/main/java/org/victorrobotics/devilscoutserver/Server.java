@@ -8,9 +8,9 @@ import static io.javalin.apibuilder.ApiBuilder.post;
 
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.devilscoutserver.controller.Controller;
+import org.victorrobotics.devilscoutserver.controller.Controller.Session;
 import org.victorrobotics.devilscoutserver.controller.EventController;
 import org.victorrobotics.devilscoutserver.controller.QuestionController;
-import org.victorrobotics.devilscoutserver.controller.Session;
 import org.victorrobotics.devilscoutserver.controller.SessionController;
 import org.victorrobotics.devilscoutserver.controller.TeamController;
 import org.victorrobotics.devilscoutserver.controller.UserController;
@@ -18,10 +18,10 @@ import org.victorrobotics.devilscoutserver.database.Database;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.tba.cache.Cache;
-import org.victorrobotics.devilscoutserver.tba.data.EventInfoCache;
-import org.victorrobotics.devilscoutserver.tba.data.EventTeamsCache;
+import org.victorrobotics.devilscoutserver.tba.data.EventCache;
+import org.victorrobotics.devilscoutserver.tba.data.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.data.MatchScheduleCache;
-import org.victorrobotics.devilscoutserver.tba.data.TeamInfoCache;
+import org.victorrobotics.devilscoutserver.tba.data.EventTeamCache;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -203,9 +203,9 @@ public class Server {
     LOGGER.info("Database connected");
 
     LOGGER.info("Initializing memory caches...");
-    Controller.setEventInfoCache(new EventInfoCache());
-    Controller.setTeamInfoCache(new TeamInfoCache());
-    Controller.setEventTeamsCache(new EventTeamsCache(Controller.teamInfoCache()));
+    Controller.setEventCache(new EventCache());
+    Controller.setTeamCache(new EventTeamCache());
+    Controller.setEventTeamsCache(new EventTeamListCache(Controller.teamCache()));
     Controller.setMatchScheduleCache(new MatchScheduleCache());
     LOGGER.info("Memory caches ready");
 
@@ -224,7 +224,7 @@ public class Server {
     executor.scheduleAtFixedRate(() -> refreshCache(Controller.matchScheduleCache()), 0, 1,
                                  TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
-      refreshCache(Controller.teamInfoCache());
+      refreshCache(Controller.teamCache());
       refreshCache(Controller.eventTeamsCache());
     }, 0, 5, TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {

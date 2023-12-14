@@ -1,6 +1,7 @@
 package org.victorrobotics.devilscoutserver.tba.data;
 
-import org.victorrobotics.bluealliance.Event;
+import org.victorrobotics.bluealliance.Event.Simple;
+import org.victorrobotics.bluealliance.Event.Date;
 import org.victorrobotics.devilscoutserver.tba.cache.Cacheable;
 
 import java.util.Objects;
@@ -8,20 +9,20 @@ import java.util.Objects;
 import io.javalin.openapi.OpenApiExample;
 import io.javalin.openapi.OpenApiRequired;
 
-public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo> {
+public class Event implements Cacheable<Simple>, Comparable<Event> {
   private final String key;
 
-  private String     name;
-  private String     location;
-  private Event.Date start;
-  private Event.Date end;
+  private String name;
+  private String location;
+  private Date   start;
+  private Date   end;
 
-  public EventInfo(String eventKey) {
+  public Event(String eventKey) {
     this.key = eventKey;
   }
 
   @Override
-  public boolean update(Event.Simple event) {
+  public boolean update(Simple event) {
     if (!Objects.equals(key, event.key)) {
       throw new IllegalArgumentException();
     }
@@ -83,7 +84,7 @@ public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo>
   }
 
   @Override
-  public int compareTo(EventInfo other) {
+  public int compareTo(Event other) {
     if (start.year != other.start.year) {
       return Integer.compare(start.year, other.start.year);
     }
