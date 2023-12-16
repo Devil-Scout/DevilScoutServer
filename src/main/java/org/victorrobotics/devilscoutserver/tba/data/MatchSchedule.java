@@ -21,15 +21,26 @@ import io.javalin.openapi.OpenApiRequired;
 public class MatchSchedule implements Cacheable<List<Match.Simple>> {
   public static class MatchInfo {
     enum MatchLevel {
-      QUAL,
-      QUARTER,
-      SEMI,
-      FINAL,
+      QUAL("Qualification"),
+      QUARTER("Quarterfinal"),
+      SEMI("Semifinal"),
+      FINAL("Final"),
 
       @JsonEnumDefaultValue
-      UNKNOWN;
+      UNKNOWN("Custom");
 
       private static final MatchLevel[] VALUES = values();
+
+      private final String name;
+
+      MatchLevel(String name) {
+        this.name = name;
+      }
+
+      @Override
+      public String toString() {
+        return name;
+      }
 
       static MatchLevel of(Match.Level level) {
         int ordinal = level.ordinal();
@@ -38,9 +49,10 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
     }
 
     private final String     key;
+    private final String     name;
     private final MatchLevel level;
     private final int        set;
-    private final int        match;
+    private final int        number;
 
     private int[]   blue;
     private int[]   red;
@@ -51,7 +63,14 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
       this.key = match.key;
       this.level = MatchLevel.of(match.level);
       this.set = match.setNumber;
-      this.match = match.matchNumber;
+      this.number = match.matchNumber;
+
+      String setStr = key.substring(key.lastIndexOf('_') + 1, key.lastIndexOf('m'));
+      if (Character.isDigit(setStr.charAt(setStr.length() - 1))) {
+        this.name = level + " " + set + "-" + number;
+      } else {
+        this.name = level + " " + number;
+      }
 
       this.blue = parseTeamKeys(match.blueAlliance.teamKeys);
       this.red = parseTeamKeys(match.redAlliance.teamKeys);
@@ -114,6 +133,12 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
     }
 
     @OpenApiRequired
+    @OpenApiExample("Qualification 1")
+    public String getName() {
+      return name;
+    }
+
+    @OpenApiRequired
     public MatchLevel getLevel() {
       return level;
     }
@@ -126,8 +151,8 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
 
     @OpenApiRequired
     @OpenApiExample("1")
-    public int getMatch() {
-      return match;
+    public int getNumber() {
+      return number;
     }
 
     @OpenApiRequired
