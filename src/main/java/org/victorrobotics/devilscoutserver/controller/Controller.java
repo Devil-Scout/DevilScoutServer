@@ -29,7 +29,7 @@ public sealed class Controller
     permits EventController, QuestionController, SessionController, TeamController, UserController {
   public static final String SESSION_HEADER = "X-DS-SESSION-KEY";
 
-  private static final ConcurrentMap<Long, Session> SESSIONS = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, Session> SESSIONS = new ConcurrentHashMap<>();
 
   protected static final String HASH_ALGORITHM   = "SHA-256";
   protected static final String MAC_ALGORITHM    = "HmacSHA256";
@@ -71,7 +71,7 @@ public sealed class Controller
     MATCH_SCHEDULE_CACHE = cache;
   }
 
-  public static ConcurrentMap<Long, Session> sessions() {
+  public static ConcurrentMap<String, Session> sessions() {
     return SESSIONS;
   }
 
@@ -109,20 +109,12 @@ public sealed class Controller
   }
 
   protected static Session getValidSession(Context ctx) {
-    String sessionStr = ctx.header(SESSION_HEADER);
-    if (sessionStr == null) {
+    String sessionKey = ctx.header(SESSION_HEADER);
+    if (sessionKey == null) {
       throw new UnauthorizedResponse("Missing " + SESSION_HEADER + " header");
     }
 
-    long sessionId;
-    try {
-      sessionId = Long.parseLong(sessionStr);
-    } catch (NumberFormatException e) {
-      throw new UnauthorizedResponse("Invalid " + SESSION_HEADER + " header");
-    }
-
-    Session session = SESSIONS.get(sessionId);
-
+    Session session = SESSIONS.get(sessionKey);
     if (session == null || session.isExpired()) {
       throw new UnauthorizedResponse("Invalid/Expired " + SESSION_HEADER + " header");
     }
@@ -190,14 +182,14 @@ public sealed class Controller
   public static class Session {
     private static final long DURATION_MILLIS = 8 * 60 * 60 * 1000;
 
-    private final long id;
+    private final String key;
     private final long user;
     private final int  team;
 
     private long expiration;
 
-    public Session(long id, long userId, int team) {
-      this.id = id;
+    public Session(String key, long userId, int team) {
+      this.key = key;
       this.user = userId;
       this.team = team;
 
@@ -205,8 +197,8 @@ public sealed class Controller
     }
 
     @JsonCreator // for testing
-    private Session(@JsonProperty("id") long id, @JsonProperty("expiration") long expiration) {
-      this.id = id;
+    private Session(@JsonProperty("key") String key, @JsonProperty("expiration") long expiration) {
+      this.key = key;
       this.expiration = expiration;
       this.user = -1;
       this.team = -1;
@@ -219,8 +211,8 @@ public sealed class Controller
     }
 
     @OpenApiExample("1572531932698856")
-    public long getId() {
-      return id;
+    public String getKey() {
+      return key;
     }
 
     @JsonIgnore

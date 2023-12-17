@@ -153,17 +153,17 @@ class SessionIntegrationTest {
     AuthResponse authResponse = json.readValue(responseBody, AuthResponse.class);
 
     assertEquals(AccessLevel.SUDO, authResponse.user()
-                                                   .accessLevel());
+                                               .accessLevel());
     assertEquals(testCase.user.fullName(), authResponse.user()
                                                        .fullName());
     assertArrayEquals(serverSignature, authResponse.serverSignature());
 
     // Logout
-    long sessionId = authResponse.session()
-                                 .getId();
+    String sessionKey = authResponse.session()
+                                    .getKey();
     response = client.send(HttpRequest.newBuilder(URI.create("http://localhost:8000/logout"))
                                       .DELETE()
-                                      .header(Controller.SESSION_HEADER, Long.toString(sessionId))
+                                      .header(Controller.SESSION_HEADER, sessionKey)
                                       .build(),
                            BodyHandlers.ofString());
     assertEquals(204, response.statusCode());
@@ -179,8 +179,8 @@ class SessionIntegrationTest {
 
   static Stream<TestCase> testCases() {
     return Stream.<TestCase>builder()
-                 .add(new TestCase(new User(5, 1559, "xander", "Xander Bhalla",
-                                            AccessLevel.SUDO, base64Decode("YmFkLXNhbHQ="),
+                 .add(new TestCase(new User(5, 1559, "xander", "Xander Bhalla", AccessLevel.SUDO,
+                                            base64Decode("YmFkLXNhbHQ="),
                                             base64Decode("jMeQaCzoJs81MobCQfcMSq4W298aAnSsF5WRGRf7U1s="),
                                             base64Decode("hsEcMmcap9WWLv+XYoT/gamB6b/P3tgOoOOIgbi26W8=")),
                                    "password"))

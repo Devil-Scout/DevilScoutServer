@@ -87,16 +87,16 @@ class SessionControllerTest {
   @Test
   void testLogout() {
     Controller.sessions()
-              .put(-1L, new Session(-1, -1, 1559));
+              .put("test", new Session("test", -1, 1559));
 
     Context ctx = mock(Context.class);
-    when(ctx.header(SESSION_HEADER)).thenReturn("-1");
+    when(ctx.header(SESSION_HEADER)).thenReturn("test");
 
     assertThrows(NoContentResponse.class, () -> SessionController.logout(ctx));
 
     verify(ctx).header(SESSION_HEADER);
     assertNull(Controller.sessions()
-                         .get(-1L));
+                         .get("test"));
   }
 
   static Stream<TestCase> testCases() {

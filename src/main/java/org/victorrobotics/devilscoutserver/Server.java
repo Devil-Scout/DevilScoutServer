@@ -228,7 +228,7 @@ public class Server {
       refreshCache(Controller.eventTeamsCache());
     }, 0, 5, TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
-      ConcurrentMap<Long, Session> sessions = Controller.sessions();
+      ConcurrentMap<String, Session> sessions = Controller.sessions();
       long start = System.currentTimeMillis();
       int size = sessions.size();
       sessions.values()

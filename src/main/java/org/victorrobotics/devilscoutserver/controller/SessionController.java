@@ -47,8 +47,8 @@ public final class SessionController extends Controller {
                                         content = @OpenApiContent(from = Session.class)))
   public static void generateDevSession(Context ctx) {
     AccessLevel accessLevel = AccessLevel.valueOf(ctx.pathParam("accessLevel"));
-    Session session = new Session(-1, accessLevel.ordinal() - 3, 1559);
-    sessions().put(session.getId(), session);
+    Session session = new Session("-1", accessLevel.ordinal() - 3, 1559);
+    sessions().put(session.getKey(), session);
     ctx.json(session);
   }
 
@@ -136,8 +136,11 @@ public final class SessionController extends Controller {
     byte[] serverSignature = hmacFunction.doFinal(userAndNonce);
     NONCES.remove(nonceId);
 
-    Session session = new Session(SECURE_RANDOM.nextLong(1L << 53), user.id(), user.team());
-    sessions().put(session.getId(), session);
+    byte[] sessionKey = new byte[64];
+    SECURE_RANDOM.nextBytes(sessionKey);
+
+    Session session = new Session(base64Encode(sessionKey), user.id(), user.team());
+    sessions().put(session.getKey(), session);
     ctx.json(new AuthResponse(user, team, session, serverSignature));
   }
 
@@ -161,7 +164,7 @@ public final class SessionController extends Controller {
                                           content = @OpenApiContent(from = Error.class)) })
   public static void logout(Context ctx) {
     Session session = getValidSession(ctx);
-    sessions().remove(session.getId());
+    sessions().remove(session.getKey());
     throwNoContent();
   }
 

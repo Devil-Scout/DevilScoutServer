@@ -25,7 +25,7 @@ class QuestionsControllerTest {
   @BeforeAll
   static void injectSession() throws SQLException {
     Controller.sessions()
-              .put(-1L, new Session(-1, -1, 1559));
+              .put("test", new Session("test", -1, 1559));
 
     UserDatabase users = mock(UserDatabase.class);
     when(users.getAccessLevel(-1)).thenReturn(AccessLevel.SUDO);
@@ -35,7 +35,7 @@ class QuestionsControllerTest {
   @Test
   void testMatchQuestions() {
     Context ctx = mock(Context.class);
-    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(Long.toString(-1));
+    when(ctx.header(Controller.SESSION_HEADER)).thenReturn("test");
 
     QuestionController.matchQuestions(ctx);
 
@@ -52,7 +52,7 @@ class QuestionsControllerTest {
   @Test
   void testPitQuestions() {
     Context ctx = mock(Context.class);
-    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(Long.toString(-1));
+    when(ctx.header(Controller.SESSION_HEADER)).thenReturn("test");
 
     QuestionController.pitQuestions(ctx);
 
@@ -69,7 +69,7 @@ class QuestionsControllerTest {
   @Test
   void testDriveTeamQuestions() throws SQLException {
     Context ctx = mock(Context.class);
-    when(ctx.header(Controller.SESSION_HEADER)).thenReturn(Long.toString((long) -1));
+    when(ctx.header(Controller.SESSION_HEADER)).thenReturn("test");
 
     QuestionController.driveTeamQuestions(ctx);
 
