@@ -15,7 +15,7 @@ public final class TeamDatabase extends Database {
   private static final String CONTAINS_TEAM  = "SELECT COUNT(*) FROM teams WHERE number = ?";
 
   private static final String ADD_TEAM    =
-      "INSERT INTO teams (number, name) VALUES (?, ?) RETURNING *";
+      "INSERT INTO teams (number, name, event_key) VALUES (?, ?, '') RETURNING *";
   private static final String DELETE_TEAM = "DELETE FROM teams WHERE number = ?";
 
   public TeamDatabase() {}
