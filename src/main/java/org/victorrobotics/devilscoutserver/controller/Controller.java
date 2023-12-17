@@ -215,14 +215,12 @@ public sealed class Controller
       return key;
     }
 
-    @JsonIgnore
-    @OpenApiIgnore
+    @OpenApiExample("8365930375920455")
     public long getUser() {
       return user;
     }
 
-    @JsonIgnore
-    @OpenApiIgnore
+    @OpenApiExample("1559")
     public int getTeam() {
       return team;
     }
