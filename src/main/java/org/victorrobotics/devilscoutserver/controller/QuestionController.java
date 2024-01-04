@@ -29,7 +29,7 @@ import io.javalin.openapi.OpenApiSecurity;
 public final class QuestionController extends Controller {
   private static final QuestionPage[] MATCH_QUESTIONS;
   private static final QuestionPage[] PIT_QUESTIONS;
-  private static final QuestionPage[] DRIVE_TEAM_QUESTIONS;
+  private static final Question[] DRIVE_TEAM_QUESTIONS;
 
   private static final String MATCH_QUESTIONS_JSON;
   private static final String PIT_QUESTIONS_JSON;
@@ -47,7 +47,7 @@ public final class QuestionController extends Controller {
       MATCH_QUESTIONS = json.readValue(openResource("/match_questions.json"), QuestionPage[].class);
       PIT_QUESTIONS = json.readValue(openResource("/pit_questions.json"), QuestionPage[].class);
       DRIVE_TEAM_QUESTIONS =
-          json.readValue(openResource("/drive_team_questions.json"), QuestionPage[].class);
+          json.readValue(openResource("/drive_team_questions.json"), Question[].class);
 
       MATCH_QUESTIONS_JSON = json.writeValueAsString(MATCH_QUESTIONS);
       PIT_QUESTIONS_JSON = json.writeValueAsString(PIT_QUESTIONS);
@@ -110,7 +110,7 @@ public final class QuestionController extends Controller {
            headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = QuestionPage[].class)),
+                                          content = @OpenApiContent(from = Question[].class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)),

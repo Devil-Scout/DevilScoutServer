@@ -1,52 +1,46 @@
 [
   {
-    "key": "questions",
-    "title": "IGNORE",
-    "questions": [
-      {
-        "prompt": "Communication",
-        "type": "RANGE",
-        "config": {
-          "min": 1,
-          "max": 5
-        }
-      },
-      {
-        "prompt": "Leadership",
-        "type": "RANGE",
-        "config": {
-          "min": 1,
-          "max": 5
-        }
-      },
-      {
-        "prompt": "Planning",
-        "type": "RANGE",
-        "config": {
-          "min": 1,
-          "max": 5
-        }
-      },
-      {
-        "prompt": "Quick Thinking",
-        "type": "RANGE",
-        "config": {
-          "min": 1,
-          "max": 5
-        }
-      },
-      {
-        "prompt": "Gracious Professionalism",
-        "type": "RANGE",
-        "config": {
-          "min": 1,
-          "max": 5
-        }
-      },
-      {
-        "prompt": "Enjoyed working with them?",
-        "type": "BOOLEAN"
-      }
-    ]
+    "prompt": "Communication",
+    "type": "RANGE",
+    "config": {
+      "min": 1,
+      "max": 5
+    }
+  },
+  {
+    "prompt": "Leadership",
+    "type": "RANGE",
+    "config": {
+      "min": 1,
+      "max": 5
+    }
+  },
+  {
+    "prompt": "Planning",
+    "type": "RANGE",
+    "config": {
+      "min": 1,
+      "max": 5
+    }
+  },
+  {
+    "prompt": "Quick Thinking",
+    "type": "RANGE",
+    "config": {
+      "min": 1,
+      "max": 5
+    }
+  },
+  {
+    "prompt": "Gracious Professionalism",
+    "type": "RANGE",
+    "config": {
+      "min": 1,
+      "max": 5
+    }
+  },
+  {
+    "prompt": "Enjoyed working with them?",
+    "type": "BOOLEAN"
   }
 ]
