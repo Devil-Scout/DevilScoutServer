@@ -1,132 +1,152 @@
-{
-  "auto": [
-    {
-      "prompt": "Start Location",
-      "type": "SINGLE",
-      "config": {
-        "options": [
-          "Near substations",
-          "Center",
-          "Near conduit"
-        ]
+[
+  {
+    "key": "auto",
+    "title": "Autonomous",
+    "questions": [
+      {
+        "prompt": "Start Location",
+        "type": "SINGLE",
+        "config": {
+          "options": [
+            "Near substations",
+            "Center",
+            "Near conduit"
+          ]
+        }
+      },
+      {
+        "prompt": "Auto Routine",
+        "type": "SEQUENCE",
+        "config": {
+          "options": [
+            "Score cone",
+            "Score cube",
+            "Pickup cone",
+            "Pickup cube",
+            "Leave community",
+            "Dock charge station",
+            "Engage charge station"
+          ]
+        }
       }
-    },
-    {
-      "prompt": "Auto Routine",
-      "type": "SEQUENCE",
-      "config": {
-        "options": [
-          "Score cone",
-          "Score cube",
-          "Pickup cone",
-          "Pickup cube",
-          "Leave community",
-          "Dock charge station",
-          "Engage charge station"
-        ]
+    ]
+  },
+  {
+    "key": "teleop",
+    "title": "Teleop",
+    "questions": [
+      {
+        "prompt": "Score Locations",
+        "type": "GRID",
+        "config": {
+          "height": 3,
+          "width": 9,
+          "options": [
+            "Cone",
+            "Cube"
+          ]
+        }
+      },
+      {
+        "prompt": "Pickup Locations",
+        "type": "MULTIPLE",
+        "config": {
+          "options": [
+            "Floor",
+            "Single substation",
+            "Double substation"
+          ]
+        }
       }
-    }
-  ],
-  "teleop": [
-    {
-      "prompt": "Score Locations",
-      "type": "GRID",
-      "config": {
-        "height": 3,
-        "width": 9,
-        "options": [
-          "Cone",
-          "Cube"
-        ]
+    ]
+  },
+  {
+    "key": "endgame",
+    "title": "Endgame",
+    "questions": [
+      {
+        "prompt": "Final Status",
+        "type": "SINGLE",
+        "config": {
+          "options": [
+            "Engaged",
+            "Docked",
+            "Fail to dock",
+            "Parked",
+            "None"
+          ]
+        }
+      },
+      {
+        "prompt": "Time to complete",
+        "type": "NUMBER",
+        "config": {
+          "min": 0,
+          "max": 60
+        }
       }
-    },
-    {
-      "prompt": "Pickup Locations",
-      "type": "MULTIPLE",
-      "config": {
-        "options": [
-          "Floor",
-          "Single substation",
-          "Double substation"
-        ]
+    ]
+  },
+  {
+    "key": "general",
+    "title": "General",
+    "questions": [
+      {
+        "prompt": "Speed",
+        "type": "RANGE",
+        "config": {
+          "min": 1,
+          "max": 5
+        }
+      },
+      {
+        "prompt": "Stability",
+        "type": "RANGE",
+        "config": {
+          "min": 1,
+          "max": 5
+        }
+      },
+      {
+        "prompt": "Issues?",
+        "type": "MULTIPLE",
+        "config": {
+          "options": [
+            "Died",
+            "Killed",
+            "Mechanisms"
+          ]
+        }
+      },
+      {
+        "prompt": "Defended by others?",
+        "type": "BOOLEAN"
       }
-    }
-  ],
-  "endgame": [
-    {
-      "prompt": "Final Status",
-      "type": "SINGLE",
-      "config": {
-        "options": [
-          "Engaged",
-          "Docked",
-          "Fail to dock",
-          "Parked",
-          "None"
-        ]
+    ]
+  },
+  {
+    "key": "human",
+    "title": "Human",
+    "questions": [
+      {
+        "prompt": "Driver Skill",
+        "type": "RANGE",
+        "config": {
+          "min": 1,
+          "max": 5
+        }
+      },
+      {
+        "prompt": "Human Player Location",
+        "type": "SINGLE",
+        "config": {
+          "options": [
+            "Double",
+            "Single",
+            "None"
+          ]
+        }
       }
-    },
-    {
-      "prompt": "Time to complete",
-      "type": "NUMBER",
-      "config": {
-        "min": 0,
-        "max": 60
-      }
-    }
-  ],
-  "general": [
-    {
-      "prompt": "Speed",
-      "type": "RANGE",
-      "config": {
-        "min": 1,
-        "max": 5
-      }
-    },
-    {
-      "prompt": "Stability",
-      "type": "RANGE",
-      "config": {
-        "min": 1,
-        "max": 5
-      }
-    },
-    {
-      "prompt": "Issues?",
-      "type": "MULTIPLE",
-      "config": {
-        "options": [
-          "Died",
-          "Killed",
-          "Mechanisms"
-        ]
-      }
-    },
-    {
-      "prompt": "Defended by others?",
-      "type": "BOOLEAN"
-    }
-  ],
-  "human": [
-    {
-      "prompt": "Driver Skill",
-      "type": "RANGE",
-      "config": {
-        "min": 1,
-        "max": 5
-      }
-    },
-    {
-      "prompt": "Human Player Location",
-      "type": "SINGLE",
-      "config": {
-        "options": [
-          "Double",
-          "Single",
-          "None"
-        ]
-      }
-    }
-  ]
-}
+    ]
+  }
+]

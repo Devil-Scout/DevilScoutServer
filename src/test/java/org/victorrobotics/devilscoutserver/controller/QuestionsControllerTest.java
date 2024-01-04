@@ -1,9 +1,7 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.controller.Controller.Session;
-import org.victorrobotics.devilscoutserver.controller.QuestionController.DriveTeamQuestions;
-import org.victorrobotics.devilscoutserver.controller.QuestionController.MatchQuestions;
-import org.victorrobotics.devilscoutserver.controller.QuestionController.PitQuestions;
+import org.victorrobotics.devilscoutserver.controller.QuestionController.QuestionPage;
 import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 
@@ -42,7 +40,7 @@ class QuestionsControllerTest {
     verify(ctx).header(Controller.SESSION_HEADER);
     verify(ctx).json(argThat((String s) -> {
       try {
-        new JsonMapper().readValue(s, MatchQuestions.class);
+        new JsonMapper().readValue(s, QuestionPage[].class);
         return true;
       } catch (JsonProcessingException e) {}
       return false;
@@ -59,7 +57,7 @@ class QuestionsControllerTest {
     verify(ctx).header(Controller.SESSION_HEADER);
     verify(ctx).json(argThat((String s) -> {
       try {
-        new JsonMapper().readValue(s, PitQuestions.class);
+        new JsonMapper().readValue(s, QuestionPage[].class);
         return true;
       } catch (JsonProcessingException e) {}
       return false;
@@ -76,7 +74,7 @@ class QuestionsControllerTest {
     verify(ctx).header(Controller.SESSION_HEADER);
     verify(ctx).json(argThat((String s) -> {
       try {
-        new JsonMapper().readValue(s, DriveTeamQuestions.class);
+        new JsonMapper().readValue(s, QuestionPage[].class);
         return true;
       } catch (JsonProcessingException e) {}
       return false;

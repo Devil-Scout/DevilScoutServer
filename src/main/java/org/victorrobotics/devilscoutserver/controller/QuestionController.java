@@ -27,9 +27,9 @@ import io.javalin.openapi.OpenApiResponse;
 import io.javalin.openapi.OpenApiSecurity;
 
 public final class QuestionController extends Controller {
-  private static final MatchQuestions     MATCH_QUESTIONS;
-  private static final PitQuestions       PIT_QUESTIONS;
-  private static final DriveTeamQuestions DRIVE_TEAM_QUESTIONS;
+  private static final QuestionPage[] MATCH_QUESTIONS;
+  private static final QuestionPage[] PIT_QUESTIONS;
+  private static final QuestionPage[] DRIVE_TEAM_QUESTIONS;
 
   private static final String MATCH_QUESTIONS_JSON;
   private static final String PIT_QUESTIONS_JSON;
@@ -44,10 +44,10 @@ public final class QuestionController extends Controller {
       JsonMapper json = new JsonMapper();
       MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
 
-      MATCH_QUESTIONS = json.readValue(openResource("/match_questions.json"), MatchQuestions.class);
-      PIT_QUESTIONS = json.readValue(openResource("/pit_questions.json"), PitQuestions.class);
+      MATCH_QUESTIONS = json.readValue(openResource("/match_questions.json"), QuestionPage[].class);
+      PIT_QUESTIONS = json.readValue(openResource("/pit_questions.json"), QuestionPage[].class);
       DRIVE_TEAM_QUESTIONS =
-          json.readValue(openResource("/drive_team_questions.json"), DriveTeamQuestions.class);
+          json.readValue(openResource("/drive_team_questions.json"), QuestionPage[].class);
 
       MATCH_QUESTIONS_JSON = json.writeValueAsString(MATCH_QUESTIONS);
       PIT_QUESTIONS_JSON = json.writeValueAsString(PIT_QUESTIONS);
@@ -75,7 +75,7 @@ public final class QuestionController extends Controller {
            headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = MatchQuestions.class)),
+                                          content = @OpenApiContent(from = QuestionPage[].class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)) })
@@ -92,7 +92,7 @@ public final class QuestionController extends Controller {
            headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = PitQuestions.class)),
+                                          content = @OpenApiContent(from = QuestionPage[].class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)) })
@@ -110,7 +110,7 @@ public final class QuestionController extends Controller {
            headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = DriveTeamQuestions.class)),
+                                          content = @OpenApiContent(from = QuestionPage[].class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)),
@@ -139,22 +139,11 @@ public final class QuestionController extends Controller {
 
   public static record Question(@OpenApiRequired @OpenApiExample("Drivetrain Type") String prompt,
                                 @OpenApiRequired QuestionType type,
-                                @OpenApiExample("{}")
+                                @OpenApiExample("drivetrain") @OpenApiRequired String key,
                                 @JsonInclude(Include.NON_NULL) Map<String, Object> config) {}
 
-  public static record MatchQuestions(@OpenApiRequired List<Question> auto,
-                                      @OpenApiRequired @OpenApiExample("[]") List<Question> teleop,
-                                      @OpenApiRequired @OpenApiExample("[]") List<Question> endgame,
-                                      @OpenApiRequired @OpenApiExample("[]") List<Question> general,
-                                      @OpenApiRequired
-                                      @OpenApiExample("[]") List<Question> human) {}
-
-  public static record PitQuestions(@OpenApiRequired List<Question> specs,
-                                    @OpenApiRequired @OpenApiExample("[]") List<Question> auto,
-                                    @OpenApiRequired @OpenApiExample("[]") List<Question> teleop,
-                                    @OpenApiRequired @OpenApiExample("[]") List<Question> endgame,
+  public static record QuestionPage(@OpenApiRequired @OpenApiExample("auto") String key,
+                                    @OpenApiRequired @OpenApiExample("Autonomous") String title,
                                     @OpenApiRequired
-                                    @OpenApiExample("[]") List<Question> general) {}
-
-  public static record DriveTeamQuestions(@OpenApiRequired List<Question> questions) {}
+                                    @OpenApiExample("[]") List<Question> questions) {}
 }
