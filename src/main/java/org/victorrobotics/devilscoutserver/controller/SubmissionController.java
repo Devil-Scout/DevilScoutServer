@@ -2,9 +2,9 @@ package org.victorrobotics.devilscoutserver.controller;
 
 import static org.victorrobotics.devilscoutserver.EncodingUtil.jsonEncode;
 
-import org.victorrobotics.devilscoutserver.controller.QuestionController.QuestionPage;
 import org.victorrobotics.devilscoutserver.database.Team;
 import org.victorrobotics.devilscoutserver.questions.Question;
+import org.victorrobotics.devilscoutserver.questions.QuestionPage;
 import org.victorrobotics.devilscoutserver.questions.Questions;
 
 import java.sql.SQLException;

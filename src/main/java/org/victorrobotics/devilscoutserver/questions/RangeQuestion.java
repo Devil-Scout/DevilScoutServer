@@ -1,7 +1,5 @@
 package org.victorrobotics.devilscoutserver.questions;
 
-import java.util.Map;
-
 public final class RangeQuestion extends Question {
   public final int min;
   public final int max;
@@ -12,11 +10,6 @@ public final class RangeQuestion extends Question {
     this.min = min;
     this.max = max;
     this.increment = increment;
-  }
-
-  @Override
-  public Map<String, Object> getConfig() {
-    return Map.of("min", min, "max", max, "increment", increment);
   }
 
   @Override

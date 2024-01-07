@@ -1,19 +1,14 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.questions.Questions;
-
-import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
 import org.victorrobotics.devilscoutserver.questions.Question;
-
-import java.sql.SQLException;
+import org.victorrobotics.devilscoutserver.questions.QuestionPage;
+import org.victorrobotics.devilscoutserver.questions.Questions;
 
 import io.javalin.http.Context;
 import io.javalin.openapi.HttpMethod;
 import io.javalin.openapi.OpenApi;
 import io.javalin.openapi.OpenApiContent;
-import io.javalin.openapi.OpenApiExample;
 import io.javalin.openapi.OpenApiParam;
-import io.javalin.openapi.OpenApiRequired;
 import io.javalin.openapi.OpenApiResponse;
 import io.javalin.openapi.OpenApiSecurity;
 
@@ -21,7 +16,7 @@ public final class QuestionController extends Controller {
   private QuestionController() {}
 
   @OpenApi(path = "/questions/match", methods = HttpMethod.GET, tags = "Questions",
-           summary = "USER", description = "Get the match scouting questions users should answer.",
+           summary = "USER", description = "Get the match scouting questions.",
            headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
@@ -38,7 +33,7 @@ public final class QuestionController extends Controller {
   }
 
   @OpenApi(path = "/questions/pit", methods = HttpMethod.GET, tags = "Questions", summary = "USER",
-           description = "Get the pit scouting questions users should answer.",
+           description = "Get the pit scouting questions.",
            headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
@@ -55,8 +50,8 @@ public final class QuestionController extends Controller {
   }
 
   @OpenApi(path = "/questions/drive-team", methods = HttpMethod.GET, tags = "Questions",
-           summary = "ADMIN",
-           description = "Get the scouting questions drive teams should answer. Requires ADMIN access.",
+           summary = "USER",
+           description = "Get the drive team feedback questions.",
            headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
@@ -66,18 +61,11 @@ public final class QuestionController extends Controller {
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "403",
                                           content = @OpenApiContent(from = Error.class)) })
-  public static void driveTeamQuestions(Context ctx) throws SQLException {
-    Session session = getValidSession(ctx);
-    userDB().getAccessLevel(session.getUser())
-            .verify(AccessLevel.ADMIN);
+  public static void driveTeamQuestions(Context ctx) {
+    getValidSession(ctx);
     checkIfNoneMatch(ctx, Questions.DRIVE_TEAM_QUESTIONS_HASH);
 
     ctx.json(Questions.DRIVE_TEAM_QUESTIONS_JSON);
     setResponseEtag(ctx, Questions.DRIVE_TEAM_QUESTIONS_HASH);
   }
-
-  @SuppressWarnings("java:S6218") // consider array content
-  public static record QuestionPage(@OpenApiRequired @OpenApiExample("auto") String key,
-                                    @OpenApiRequired @OpenApiExample("Autonomous") String title,
-                                    @OpenApiRequired @OpenApiExample("[]") Question[] questions) {}
 }

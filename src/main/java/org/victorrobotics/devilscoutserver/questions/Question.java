@@ -1,9 +1,5 @@
 package org.victorrobotics.devilscoutserver.questions;
 
-import java.util.Map;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.javalin.openapi.OpenApiExample;
 import io.javalin.openapi.OpenApiRequired;
@@ -21,9 +17,6 @@ public abstract sealed class Question
     this.prompt = prompt;
     this.key = key;
   }
-
-  @JsonInclude(Include.NON_EMPTY)
-  public abstract Map<String, Object> getConfig();
 
   public abstract boolean isValidResponse(Object response);
 

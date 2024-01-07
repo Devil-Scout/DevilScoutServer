@@ -16,7 +16,7 @@ public final class MatchEntryDatabase extends Database {
 
   private static final String INSERT_ENTRY = "INSERT INTO match_entries "
       + "(event_key, match_key, submitting_user, submitting_team, scouted_team, data) "
-      + "VALUES (?, ?, ?, ?, ?, ?, ?::JSON)";
+      + "VALUES (?, ?, ?, ?, ?, ?::JSON)";
 
   public MatchEntryDatabase() {}
 

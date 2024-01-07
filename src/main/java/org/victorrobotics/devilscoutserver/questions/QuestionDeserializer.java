@@ -17,8 +17,7 @@ public class QuestionDeserializer extends StdDeserializer<Question> {
 
   @Override
   public Question deserialize(JsonParser parser, DeserializationContext ctxt) throws IOException {
-    JsonNode node = parser.getCodec()
-                          .readTree(parser);
+    JsonNode node = parser.readValueAsTree();
 
     String prompt = node.get("prompt")
                         .textValue();
@@ -40,7 +39,7 @@ public class QuestionDeserializer extends StdDeserializer<Question> {
           case MULTIPLE -> new MultipleChoiceQuestion(prompt, key, options);
           case SEQUENCE -> new SequenceQuestion(prompt, key, options);
           case SINGLE -> new SingleChoiceQuestion(prompt, key, options);
-          default -> throw new AssertionError();
+          default -> throw new IllegalStateException();
         };
       }
       case NUMBER -> {
@@ -54,9 +53,9 @@ public class QuestionDeserializer extends StdDeserializer<Question> {
                         .intValue();
         int max = config.get("max")
                         .intValue();
-        int increment = config.get("increment")
-                              .asInt(1);
-        yield new RangeQuestion(prompt, key, min, max, increment);
+        JsonNode increment = config.get("increment");
+        yield new RangeQuestion(prompt, key, min, max,
+                                increment == null ? 1 : increment.intValue());
       }
     };
   }

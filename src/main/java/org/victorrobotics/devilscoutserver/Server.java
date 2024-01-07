@@ -17,6 +17,7 @@ import org.victorrobotics.devilscoutserver.controller.SubmissionController;
 import org.victorrobotics.devilscoutserver.controller.TeamController;
 import org.victorrobotics.devilscoutserver.controller.UserController;
 import org.victorrobotics.devilscoutserver.database.Database;
+import org.victorrobotics.devilscoutserver.database.MatchEntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.tba.EventCache;
@@ -201,6 +202,7 @@ public class Server {
     Database.initConnectionPool();
     Controller.setUserDB(new UserDatabase());
     Controller.setTeamDB(new TeamDatabase());
+    Controller.setMatchEntryDB(new MatchEntryDatabase());
     LOGGER.info("Database connected");
 
     LOGGER.info("Initializing memory caches...");
