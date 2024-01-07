@@ -1,11 +1,10 @@
-package org.victorrobotics.devilscoutserver.tba.data;
+package org.victorrobotics.devilscoutserver.tba;
 
 import org.victorrobotics.bluealliance.Team.Simple;
-import org.victorrobotics.devilscoutserver.tba.cache.ListCache;
 
 import java.util.stream.IntStream;
 
-public class EventTeamCache extends ListCache<String, Simple, EventTeam> {
+public class EventTeamCache extends BlueAllianceListCache<String, Simple, EventTeam> {
   public EventTeamCache() {
     super(IntStream.range(0, 20)
                    .mapToObj(Simple::endpointForPage)

@@ -1,19 +1,22 @@
-package org.victorrobotics.devilscoutserver.tba.cache;
+package org.victorrobotics.devilscoutserver.tba;
 
 import org.victorrobotics.bluealliance.Endpoint;
+import org.victorrobotics.devilscoutserver.cache.Cache;
+import org.victorrobotics.devilscoutserver.cache.CacheValue;
+import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public abstract class IndividualCache<K, D, V extends Cacheable<D>> implements Cache<K, D, V> {
+public abstract class BlueAllianceCache<K, D, V extends Cacheable<D>> implements Cache<K, D, V> {
   private final ConcurrentMap<K, CacheValue<D, V>> cache;
 
   private final long purgeTime;
 
   private volatile long timestamp;
 
-  protected IndividualCache(long purgeTime) {
+  protected BlueAllianceCache(long purgeTime) {
     cache = new ConcurrentHashMap<>();
     this.purgeTime = purgeTime;
   }
@@ -26,7 +29,7 @@ public abstract class IndividualCache<K, D, V extends Cacheable<D>> implements C
   public CacheValue<D, V> get(K key) {
     return cache.computeIfAbsent(key, k -> {
       CacheValue<D, V> entry = new CacheValue<>(createValue(k));
-      entry.refresh(getEndpoint(k));
+      entry.update(getEndpoint(k).refresh());
       timestamp = System.currentTimeMillis();
       return entry;
     });
@@ -41,8 +44,8 @@ public abstract class IndividualCache<K, D, V extends Cacheable<D>> implements C
   public void refresh() {
     boolean mods = cache.entrySet()
                         .parallelStream()
-                        .map(entry -> entry.getValue()
-                                           .startRefresh(getEndpoint(entry.getKey())))
+                        .map(entry -> getEndpoint(entry.getKey()).refreshAsync()
+                                                                 .thenApply(entry.getValue()::update))
                         .map(CompletableFuture::join)
                         .sequential()
                         .reduce(false, Boolean::logicalOr);

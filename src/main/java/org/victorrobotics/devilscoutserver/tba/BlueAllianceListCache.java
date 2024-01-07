@@ -1,6 +1,9 @@
-package org.victorrobotics.devilscoutserver.tba.cache;
+package org.victorrobotics.devilscoutserver.tba;
 
 import org.victorrobotics.bluealliance.Endpoint;
+import org.victorrobotics.devilscoutserver.cache.Cache;
+import org.victorrobotics.devilscoutserver.cache.CacheValue;
+import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,13 +11,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
-public abstract class ListCache<K, D, V extends Cacheable<D>> implements Cache<K, D, V> {
+public abstract class BlueAllianceListCache<K, D, V extends Cacheable<D>> implements Cache<K, D, V> {
   private final ConcurrentMap<K, CacheValue<D, V>> cache;
   private final List<Endpoint<List<D>>>            endpoints;
 
   private volatile long timestamp;
 
-  protected ListCache(List<Endpoint<List<D>>> endpointList) {
+  protected BlueAllianceListCache(List<Endpoint<List<D>>> endpointList) {
     cache = new ConcurrentHashMap<>();
     endpoints = List.copyOf(endpointList);
   }

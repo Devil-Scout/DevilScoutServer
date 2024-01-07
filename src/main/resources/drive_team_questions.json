@@ -1,6 +1,8 @@
+
 [
   {
     "prompt": "Communication",
+    "key": "communication",
     "type": "RANGE",
     "config": {
       "min": 1,
@@ -9,6 +11,7 @@
   },
   {
     "prompt": "Leadership",
+    "key": "leadership",
     "type": "RANGE",
     "config": {
       "min": 1,
@@ -17,6 +20,7 @@
   },
   {
     "prompt": "Planning",
+    "key": "planning",
     "type": "RANGE",
     "config": {
       "min": 1,
@@ -25,6 +29,7 @@
   },
   {
     "prompt": "Quick Thinking",
+    "key": "thinking",
     "type": "RANGE",
     "config": {
       "min": 1,
@@ -33,6 +38,7 @@
   },
   {
     "prompt": "Gracious Professionalism",
+    "key": "professionalism",
     "type": "RANGE",
     "config": {
       "min": 1,
@@ -41,6 +47,7 @@
   },
   {
     "prompt": "Enjoyed working with them?",
+    "key": "enjoy",
     "type": "BOOLEAN"
   }
 ]

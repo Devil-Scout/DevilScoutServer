@@ -1,6 +1,7 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.controller.Controller.Session;
+import org.victorrobotics.devilscoutserver.controller.QuestionController.Question;
 import org.victorrobotics.devilscoutserver.controller.QuestionController.QuestionPage;
 import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
@@ -74,7 +75,7 @@ class QuestionsControllerTest {
     verify(ctx).header(Controller.SESSION_HEADER);
     verify(ctx).json(argThat((String s) -> {
       try {
-        new JsonMapper().readValue(s, QuestionPage[].class);
+        new JsonMapper().readValue(s, Question[].class);
         return true;
       } catch (JsonProcessingException e) {}
       return false;

@@ -7,6 +7,7 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.post;
 
 import org.victorrobotics.bluealliance.Endpoint;
+import org.victorrobotics.devilscoutserver.cache.Cache;
 import org.victorrobotics.devilscoutserver.controller.Controller;
 import org.victorrobotics.devilscoutserver.controller.Controller.Session;
 import org.victorrobotics.devilscoutserver.controller.EventController;
@@ -17,11 +18,10 @@ import org.victorrobotics.devilscoutserver.controller.UserController;
 import org.victorrobotics.devilscoutserver.database.Database;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
-import org.victorrobotics.devilscoutserver.tba.cache.Cache;
-import org.victorrobotics.devilscoutserver.tba.data.EventCache;
-import org.victorrobotics.devilscoutserver.tba.data.EventTeamListCache;
-import org.victorrobotics.devilscoutserver.tba.data.MatchScheduleCache;
-import org.victorrobotics.devilscoutserver.tba.data.EventTeamCache;
+import org.victorrobotics.devilscoutserver.tba.EventCache;
+import org.victorrobotics.devilscoutserver.tba.EventTeamCache;
+import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
+import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;

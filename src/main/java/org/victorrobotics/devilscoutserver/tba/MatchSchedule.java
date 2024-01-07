@@ -1,7 +1,7 @@
-package org.victorrobotics.devilscoutserver.tba.data;
+package org.victorrobotics.devilscoutserver.tba;
 
 import org.victorrobotics.bluealliance.Match;
-import org.victorrobotics.devilscoutserver.tba.cache.Cacheable;
+import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -235,6 +235,12 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
   @JsonValue
   public Collection<MatchInfo> matches() {
     return matches;
+  }
+
+  public boolean containsMatch(String key) {
+    return matchMap.values()
+                   .stream()
+                   .anyMatch(e -> e.key.equals(key));
   }
 
   private static String matchKey(Match.Simple match) {

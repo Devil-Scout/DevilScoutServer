@@ -5,6 +5,7 @@
     "questions": [
       {
         "prompt": "Chassis size (smallest)",
+        "key": "key",
         "type": "RANGE",
         "config": {
           "min": 20,
@@ -14,6 +15,7 @@
       },
       {
         "prompt": "Weight (no battery/bumpers)",
+        "key": "weight",
         "type": "RANGE",
         "config": {
           "min": 90,
@@ -23,6 +25,7 @@
       },
       {
         "prompt": "Drivetrain",
+        "key": "drivetrain",
         "type": "SINGLE",
         "config": {
           "options": [
@@ -41,6 +44,7 @@
     "questions": [
       {
         "prompt": "Start Locations",
+        "key": "start",
         "type": "MULTIPLE",
         "config": {
           "options": [
@@ -52,6 +56,7 @@
       },
       {
         "prompt": "Best Routine",
+        "key": "routine",
         "type": "SEQUENCE",
         "config": {
           "options": [
@@ -73,6 +78,7 @@
     "questions": [
       {
         "prompt": "Game Piece Types",
+        "key": "pieces",
         "type": "MULTIPLE",
         "config": {
           "options": [
@@ -83,6 +89,7 @@
       },
       {
         "prompt": "Score Locations",
+        "key": "score",
         "type": "MULTIPLE",
         "config": {
           "options": [
@@ -94,6 +101,7 @@
       },
       {
         "prompt": "Pickup Locations",
+        "key": "pickup",
         "type": "MULTIPLE",
         "config": {
           "options": [
@@ -111,10 +119,12 @@
     "questions": [
       {
         "prompt": "Triple Balance",
+        "key": "triple",
         "type": "BOOLEAN"
       },
       {
         "prompt": "Time to Balance",
+        "key": "time",
         "type": "RANGE",
         "config": {
           "min": 5,
@@ -130,6 +140,7 @@
     "questions": [
       {
         "prompt": "Driver Skill",
+        "key": "driver",
         "type": "RANGE",
         "config": {
           "min": 1,
@@ -138,6 +149,7 @@
       },
       {
         "prompt": "Human Player Location",
+        "key": "hp_location",
         "type": "SINGLE",
         "config": {
           "options": [
@@ -149,6 +161,7 @@
       },
       {
         "prompt": "Gracious Professionalism (do NOT ask)",
+        "key": "professionalism",
         "type": "RANGE",
         "config": {
           "min": 1,

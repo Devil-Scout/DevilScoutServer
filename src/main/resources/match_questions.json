@@ -5,6 +5,7 @@
     "questions": [
       {
         "prompt": "Start Location",
+        "key": "start",
         "type": "SINGLE",
         "config": {
           "options": [
@@ -16,6 +17,7 @@
       },
       {
         "prompt": "Auto Routine",
+        "key": "routine",
         "type": "SEQUENCE",
         "config": {
           "options": [
@@ -37,6 +39,7 @@
     "questions": [
       {
         "prompt": "Score Locations",
+        "key": "grid",
         "type": "GRID",
         "config": {
           "height": 3,
@@ -49,6 +52,7 @@
       },
       {
         "prompt": "Pickup Locations",
+        "key": "pickup",
         "type": "MULTIPLE",
         "config": {
           "options": [
@@ -66,6 +70,7 @@
     "questions": [
       {
         "prompt": "Final Status",
+        "key": "status",
         "type": "SINGLE",
         "config": {
           "options": [
@@ -79,6 +84,7 @@
       },
       {
         "prompt": "Time to complete",
+        "key": "time",
         "type": "NUMBER",
         "config": {
           "min": 0,
@@ -93,6 +99,7 @@
     "questions": [
       {
         "prompt": "Speed",
+        "key": "speed",
         "type": "RANGE",
         "config": {
           "min": 1,
@@ -101,6 +108,7 @@
       },
       {
         "prompt": "Stability",
+        "key": "stability",
         "type": "RANGE",
         "config": {
           "min": 1,
@@ -109,6 +117,7 @@
       },
       {
         "prompt": "Issues?",
+        "key": "issues",
         "type": "MULTIPLE",
         "config": {
           "options": [
@@ -120,6 +129,7 @@
       },
       {
         "prompt": "Defended by others?",
+        "key": "defended",
         "type": "BOOLEAN"
       }
     ]
@@ -130,6 +140,7 @@
     "questions": [
       {
         "prompt": "Driver Skill",
+        "key": "driver",
         "type": "RANGE",
         "config": {
           "min": 1,
@@ -138,6 +149,7 @@
       },
       {
         "prompt": "Human Player Location",
+        "key": "hp_location",
         "type": "SINGLE",
         "config": {
           "options": [

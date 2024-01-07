@@ -1,7 +1,7 @@
-package org.victorrobotics.devilscoutserver.tba.data;
+package org.victorrobotics.devilscoutserver.tba;
 
 import org.victorrobotics.bluealliance.Team.Simple;
-import org.victorrobotics.devilscoutserver.tba.cache.Cacheable;
+import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
 import java.util.Objects;
 

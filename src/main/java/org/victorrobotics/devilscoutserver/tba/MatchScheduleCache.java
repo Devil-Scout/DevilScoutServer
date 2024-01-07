@@ -1,14 +1,13 @@
-package org.victorrobotics.devilscoutserver.tba.data;
+package org.victorrobotics.devilscoutserver.tba;
 
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.bluealliance.Match;
 import org.victorrobotics.bluealliance.Match.Simple;
-import org.victorrobotics.devilscoutserver.tba.cache.IndividualCache;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class MatchScheduleCache extends IndividualCache<String, List<Match.Simple>, MatchSchedule> {
+public class MatchScheduleCache extends BlueAllianceCache<String, List<Match.Simple>, MatchSchedule> {
   public MatchScheduleCache() {
     super(TimeUnit.HOURS.toMillis(8));
   }

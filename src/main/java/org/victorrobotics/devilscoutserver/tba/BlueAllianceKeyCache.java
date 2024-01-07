@@ -1,13 +1,16 @@
-package org.victorrobotics.devilscoutserver.tba.cache;
+package org.victorrobotics.devilscoutserver.tba;
 
 import org.victorrobotics.bluealliance.Endpoint;
+import org.victorrobotics.devilscoutserver.cache.Cache;
+import org.victorrobotics.devilscoutserver.cache.CacheValue;
+import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public abstract class DependentKeyCache<K, K2, D, D2 extends Cacheable<D>, V extends Cacheable<Collection<D2>>>
+public abstract class BlueAllianceKeyCache<K, K2, D, D2 extends Cacheable<D>, V extends Cacheable<Collection<D2>>>
     implements Cache<K, Collection<D2>, V> {
   private final ConcurrentMap<K, CacheValue<Collection<D2>, V>> cache;
 
@@ -16,7 +19,7 @@ public abstract class DependentKeyCache<K, K2, D, D2 extends Cacheable<D>, V ext
 
   private volatile long timestamp;
 
-  protected DependentKeyCache(Cache<K2, D, D2> source, long purgeTime) {
+  protected BlueAllianceKeyCache(Cache<K2, D, D2> source, long purgeTime) {
     cache = new ConcurrentHashMap<>();
     this.source = source;
     this.purgeTime = purgeTime;

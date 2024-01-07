@@ -1,8 +1,4 @@
-package org.victorrobotics.devilscoutserver.tba.cache;
-
-import org.victorrobotics.bluealliance.Endpoint;
-
-import java.util.concurrent.CompletableFuture;
+package org.victorrobotics.devilscoutserver.cache;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -20,34 +16,15 @@ public class CacheValue<D, V extends Cacheable<D>> implements Comparable<CacheVa
 
   public CacheValue(V value) {
     this.value = value;
-    try {
-      jsonCache = JSON.writeValueAsString(value);
-    } catch (JsonProcessingException e) {}
-  }
-
-  public boolean refresh(Endpoint<D> endpoint) {
-    return update(endpoint.refresh());
-  }
-
-  public CompletableFuture<Boolean> startRefresh(Endpoint<D> endpoint) {
-    return endpoint.refreshAsync()
-                   .thenApply(this::update);
   }
 
   public boolean update(D data) {
     if (data == null) return false;
+    if (!value.update(data)) return false;
 
-    if (value.update(data)) {
-      lastRefresh = System.currentTimeMillis();
-      try {
-        jsonCache = JSON.writeValueAsString(value);
-      } catch (JsonProcessingException e) {
-        e.printStackTrace();
-      }
-      return true;
-    }
-
-    return false;
+    lastRefresh = System.currentTimeMillis();
+    jsonCache = null;
+    return true;
   }
 
   public V value() {
