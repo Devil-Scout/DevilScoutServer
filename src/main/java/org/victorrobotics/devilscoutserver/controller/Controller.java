@@ -1,6 +1,8 @@
 package org.victorrobotics.devilscoutserver.controller;
 
+import org.victorrobotics.devilscoutserver.database.DriveTeamEntryDatabase;
 import org.victorrobotics.devilscoutserver.database.MatchEntryDatabase;
+import org.victorrobotics.devilscoutserver.database.PitEntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.tba.EventCache;
@@ -47,7 +49,9 @@ public sealed class Controller
   private static EventTeamListCache EVENT_TEAMS_CACHE;
   private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
 
-  private static MatchEntryDatabase MATCH_ENTRIES;
+  private static MatchEntryDatabase     MATCH_ENTRIES;
+  private static PitEntryDatabase       PIT_ENTRIES;
+  private static DriveTeamEntryDatabase DRIVE_TEAM_ENTRIES;
 
   protected Controller() {}
 
@@ -77,6 +81,14 @@ public sealed class Controller
 
   public static void setMatchEntryDB(MatchEntryDatabase matchEntries) {
     MATCH_ENTRIES = matchEntries;
+  }
+
+  public static void setPitEntryDB(PitEntryDatabase pitEntries) {
+    PIT_ENTRIES = pitEntries;
+  }
+
+  public static void setDriveTeamEntryDB(DriveTeamEntryDatabase driveTeamEntries) {
+    DRIVE_TEAM_ENTRIES = driveTeamEntries;
   }
 
   public static ConcurrentMap<String, Session> sessions() {
@@ -109,6 +121,14 @@ public sealed class Controller
 
   public static MatchEntryDatabase matchEntryDB() {
     return MATCH_ENTRIES;
+  }
+
+  public static PitEntryDatabase pitEntryDB() {
+    return PIT_ENTRIES;
+  }
+
+  public static DriveTeamEntryDatabase driveTeamEntryDB() {
+    return DRIVE_TEAM_ENTRIES;
   }
 
   @SuppressWarnings("java:S2221") // catch generic exception

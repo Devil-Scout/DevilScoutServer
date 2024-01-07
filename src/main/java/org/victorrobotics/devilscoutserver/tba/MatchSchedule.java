@@ -237,10 +237,12 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
     return matches;
   }
 
-  public boolean containsMatch(String key) {
+  public MatchInfo getMatch(String key) {
     return matchMap.values()
                    .stream()
-                   .anyMatch(e -> e.key.equals(key));
+                   .filter(e -> e.key.equals(key))
+                   .findFirst()
+                   .orElseGet(() -> null);
   }
 
   private static String matchKey(Match.Simple match) {

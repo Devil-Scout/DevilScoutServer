@@ -2,10 +2,12 @@ package org.victorrobotics.devilscoutserver.controller;
 
 import static org.victorrobotics.devilscoutserver.EncodingUtil.jsonEncode;
 
+import org.victorrobotics.bluealliance.Match.Alliance;
 import org.victorrobotics.devilscoutserver.database.Team;
 import org.victorrobotics.devilscoutserver.questions.Question;
 import org.victorrobotics.devilscoutserver.questions.QuestionPage;
 import org.victorrobotics.devilscoutserver.questions.Questions;
+import org.victorrobotics.devilscoutserver.tba.MatchSchedule.MatchInfo;
 
 import java.sql.SQLException;
 import java.util.Map;
@@ -25,16 +27,16 @@ import io.javalin.openapi.OpenApiSecurity;
 public final class SubmissionController extends Controller {
   private SubmissionController() {}
 
-  @OpenApi(path = "/submissions/match", methods = HttpMethod.POST, tags = "Uploads",
+  @OpenApi(path = "/submissions/match_scouting", methods = HttpMethod.POST, tags = "Uploads",
            summary = "USER",
-           description = "Submit match data to the pool. "
+           description = "Submit match scouting data to the pool. "
                + "The current user's team must be attending the corresponding event.",
            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = MatchSubmission.class)),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "204"),
                          @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)) })
-  public static void submitMatch(Context ctx) throws SQLException {
+  public static void submitMatchScouting(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     Team team = teamDB().getTeam(session.getTeam());
 
@@ -50,11 +52,15 @@ public final class SubmissionController extends Controller {
       throw new BadRequestResponse("Invalid match key for event");
     }
 
-    if (!matchScheduleCache().get(payload.event())
-                             .value()
-                             .containsMatch(payload.match())) {
+    MatchInfo match = matchScheduleCache().get(payload.event())
+                                          .value()
+                                          .getMatch(payload.match());
+    if (match == null) {
       throw new BadRequestResponse("Match not found at event");
-    }
+    } else if (!teamOnAlliance(payload.team(), match.getBlue())
+        && !teamOnAlliance(payload.team(), match.getRed())) {
+          throw new BadRequestResponse("Scouted team not in match");
+        }
 
     if (!matchesSchema(payload.data(), Questions.MATCH_QUESTIONS)) {
       throw new BadRequestResponse("Invalid/expired submission format");
@@ -63,6 +69,117 @@ public final class SubmissionController extends Controller {
     matchEntryDB().createEntry(payload.event(), payload.match(), session.getUser(),
                                session.getTeam(), payload.team(), jsonEncode(payload.data()));
     throw new NoContentResponse();
+  }
+
+  @OpenApi(path = "/submissions/pit_scouting", methods = HttpMethod.POST, tags = "Uploads",
+           summary = "USER",
+           description = "Submit pit scouting data to the pool. "
+               + "The current user's team must be attending the corresponding event.",
+           requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = PitSubmission.class)),
+           security = @OpenApiSecurity(name = "Session"),
+           responses = { @OpenApiResponse(status = "204"),
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)) })
+  public static void submitPitScouting(Context ctx) throws SQLException {
+    Session session = getValidSession(ctx);
+    Team team = teamDB().getTeam(session.getTeam());
+
+    PitSubmission payload = jsonDecode(ctx, PitSubmission.class);
+
+    if (!team.eventKey()
+             .equals(payload.event())) {
+      throw new BadRequestResponse("Cannot submit match if not attending event");
+    }
+
+    if (!matchesSchema(payload.data(), Questions.PIT_QUESTIONS)) {
+      throw new BadRequestResponse("Invalid/expired submission format");
+    }
+
+    pitEntryDB().createEntry(payload.event(), session.getUser(), session.getTeam(), payload.team(),
+                             jsonEncode(payload.data()));
+    throw new NoContentResponse();
+  }
+
+  @OpenApi(path = "/submissions/drive_team_scouting", methods = HttpMethod.POST, tags = "Uploads",
+           summary = "USER",
+           description = "Submit drive team scouting data to the pool. "
+               + "The current user's team must be attending the corresponding event.",
+           requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = DriveTeamSubmission.class)),
+           security = @OpenApiSecurity(name = "Session"),
+           responses = { @OpenApiResponse(status = "204"),
+                         @OpenApiResponse(status = "401",
+                                          content = @OpenApiContent(from = Error.class)) })
+  public static void submitDriveTeamScouting(Context ctx) throws SQLException {
+    Session session = getValidSession(ctx);
+    Team team = teamDB().getTeam(session.getTeam());
+
+    DriveTeamSubmission payload = jsonDecode(ctx, DriveTeamSubmission.class);
+
+    if (!team.eventKey()
+             .equals(payload.event())) {
+      throw new BadRequestResponse("Cannot submit match if not attending event");
+    }
+
+    if (!payload.match()
+                .startsWith(payload.event())) {
+      throw new BadRequestResponse("Invalid match key for event");
+    }
+
+    MatchInfo match = matchScheduleCache().get(payload.event())
+                                          .value()
+                                          .getMatch(payload.match());
+    if (match == null) {
+      throw new BadRequestResponse("Match not found at event");
+    }
+
+    Alliance.Color alliance;
+    if (teamOnAlliance(session.getTeam(), match.getBlue())) {
+      alliance = Alliance.Color.BLUE;
+    } else if (teamOnAlliance(session.getTeam(), match.getRed())) {
+      alliance = Alliance.Color.RED;
+    } else {
+      throw new BadRequestResponse("Scouting team not in match");
+    }
+
+    if (!teamOnAlliance(session.getTeam(), match.getBlue())
+        && !teamOnAlliance(session.getTeam(), match.getRed())) {
+      throw new BadRequestResponse("Scouting team not in match");
+    }
+
+    for (Map.Entry<String, Map<String, Object>> entry : payload.partners()
+                                                               .entrySet()) {
+      int scoutedTeam;
+      try {
+        scoutedTeam = Integer.parseInt(entry.getKey());
+      } catch (NumberFormatException e) {
+        throw new BadRequestResponse("Invalid team number " + entry.getKey());
+      }
+
+      if ((alliance == Alliance.Color.BLUE && !teamOnAlliance(scoutedTeam, match.getBlue()))
+          || (alliance == Alliance.Color.RED && !teamOnAlliance(scoutedTeam, match.getRed()))) {
+        throw new BadRequestResponse("Team " + scoutedTeam + " not on same alliance in match");
+      }
+
+      if (!matchesQuestions(entry.getValue(), Questions.DRIVE_TEAM_QUESTIONS)) {
+        throw new BadRequestResponse("Invalid/expired submission format");
+      }
+    }
+
+    for (Map.Entry<String, Map<String, Object>> entry : payload.partners()
+                                                               .entrySet()) {
+      driveTeamEntryDB().createEntry(payload.event(), payload.match(), session.getUser(),
+                                     session.getTeam(), Integer.parseInt(entry.getKey()),
+                                     jsonEncode(entry.getValue()));
+    }
+
+    throw new NoContentResponse();
+  }
+
+  private static boolean teamOnAlliance(int team, int[] alliance) {
+    for (int t : alliance) {
+      if (team == t) return true;
+    }
+    return false;
   }
 
   private static boolean matchesSchema(Map<String, Map<String, Object>> data,
@@ -103,10 +220,6 @@ public final class SubmissionController extends Controller {
 
   static record DriveTeamSubmission(@OpenApiRequired @OpenApiExample("2023nyrr") String event,
                                     @OpenApiRequired @OpenApiExample("2023nyrr_qm1") String match,
-                                    @OpenApiRequired @OpenApiExample("5740") int partner1,
                                     @OpenApiRequired
-                                    @OpenApiExample("{}") Map<String, Object> data1,
-                                    @OpenApiRequired @OpenApiExample("9996") int partner2,
-                                    @OpenApiRequired
-                                    @OpenApiExample("{}") Map<String, Object> data2) {}
+                                    @OpenApiExample("{}") Map<String, Map<String, Object>> partners) {}
 }
