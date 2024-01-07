@@ -4,37 +4,31 @@
     "title": "Specs",
     "questions": [
       {
-        "prompt": "Chassis size (smallest)",
-        "key": "key",
+        "prompt": "Chassis width (in)",
+        "key": "width",
         "type": "RANGE",
-        "config": {
-          "min": 20,
-          "max": 30,
-          "increment": 2
-        }
+        "min": 24,
+        "max": 30,
+        "increment": 2
       },
       {
         "prompt": "Weight (no battery/bumpers)",
         "key": "weight",
         "type": "RANGE",
-        "config": {
-          "min": 90,
-          "max": 130,
-          "increment": 10
-        }
+        "min": 90,
+        "max": 125,
+        "increment": 5
       },
       {
         "prompt": "Drivetrain",
         "key": "drivetrain",
         "type": "SINGLE",
-        "config": {
-          "options": [
-            "Swerve",
-            "Tank",
-            "Mecanum",
-            "Other"
-          ]
-        }
+        "options": [
+          "Swerve",
+          "Tank",
+          "Mecanum",
+          "Other"
+        ]
       }
     ]
   },
@@ -43,32 +37,27 @@
     "title": "Autonomous",
     "questions": [
       {
-        "prompt": "Start Locations",
+        "prompt": "Preferred Start Locations",
         "key": "start",
         "type": "MULTIPLE",
-        "config": {
-          "options": [
-            "Near substations",
-            "Center",
-            "Near conduit"
-          ]
-        }
+        "options": [
+          "Next to amp",
+          "Front of speaker",
+          "Next to speaker",
+          "Next to source"
+        ]
       },
       {
         "prompt": "Best Routine",
         "key": "routine",
         "type": "SEQUENCE",
-        "config": {
-          "options": [
-            "Score cone",
-            "Score cube",
-            "Pickup cone",
-            "Pickup cube",
-            "Leave community",
-            "Dock charge station",
-            "Engage charge station"
-          ]
-        }
+        "options": [
+          "Leave starting zone",
+          "Score note in speaker",
+          "Score note in amp",
+          "Pickup note from floor (near)",
+          "Pickup note from floor (center)"
+        ]
       }
     ]
   },
@@ -77,39 +66,22 @@
     "title": "Teleop",
     "questions": [
       {
-        "prompt": "Game Piece Types",
-        "key": "pieces",
+        "prompt": "Pickup Locations",
+        "key": "pickup",
         "type": "MULTIPLE",
-        "config": {
-          "options": [
-            "Cone",
-            "Cube"
-          ]
-        }
+        "options": [
+          "Ground",
+          "Source"
+        ]
       },
       {
         "prompt": "Score Locations",
         "key": "score",
         "type": "MULTIPLE",
-        "config": {
-          "options": [
-            "High",
-            "Mid",
-            "Hybrid"
-          ]
-        }
-      },
-      {
-        "prompt": "Pickup Locations",
-        "key": "pickup",
-        "type": "MULTIPLE",
-        "config": {
-          "options": [
-            "Floor",
-            "Single substation",
-            "Double substation"
-          ]
-        }
+        "options": [
+          "Speaker",
+          "Amp"
+        ]
       }
     ]
   },
@@ -118,19 +90,19 @@
     "title": "Endgame",
     "questions": [
       {
-        "prompt": "Triple Balance",
-        "key": "triple",
+        "prompt": "Climb onstage?",
+        "key": "onstage",
         "type": "BOOLEAN"
       },
       {
-        "prompt": "Time to Balance",
-        "key": "time",
-        "type": "RANGE",
-        "config": {
-          "min": 5,
-          "max": 30,
-          "increment": 5
-        }
+        "prompt": "Climb onstage with another robot?",
+        "key": "harmony",
+        "type": "BOOLEAN"
+      },
+      {
+        "prompt": "Score in trap?",
+        "key": "trap",
+        "type": "BOOLEAN"
       }
     ]
   },
@@ -140,33 +112,27 @@
     "questions": [
       {
         "prompt": "Driver Skill",
-        "key": "driver",
+        "key": "driver_skill",
         "type": "RANGE",
-        "config": {
-          "min": 1,
-          "max": 5
-        }
+        "min": 1,
+        "max": 5
       },
       {
         "prompt": "Human Player Location",
-        "key": "hp_location",
+        "key": "player_location",
         "type": "SINGLE",
-        "config": {
-          "options": [
-            "Double",
-            "Single",
-            "None"
-          ]
-        }
+        "options": [
+          "Source",
+          "Amp",
+          "No preference"
+        ]
       },
       {
         "prompt": "Gracious Professionalism (do NOT ask)",
         "key": "professionalism",
         "type": "RANGE",
-        "config": {
-          "min": 1,
-          "max": 5
-        }
+        "min": 1,
+        "max": 5
       }
     ]
   }

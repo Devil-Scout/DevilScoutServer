@@ -1,49 +1,38 @@
-
 [
   {
     "prompt": "Communication",
     "key": "communication",
     "type": "RANGE",
-    "config": {
-      "min": 1,
-      "max": 5
-    }
+    "min": 1,
+    "max": 5
   },
   {
     "prompt": "Leadership",
     "key": "leadership",
     "type": "RANGE",
-    "config": {
-      "min": 1,
-      "max": 5
-    }
+    "min": 1,
+    "max": 5
   },
   {
     "prompt": "Planning",
     "key": "planning",
     "type": "RANGE",
-    "config": {
-      "min": 1,
-      "max": 5
-    }
+    "min": 1,
+    "max": 5
   },
   {
     "prompt": "Quick Thinking",
     "key": "thinking",
     "type": "RANGE",
-    "config": {
-      "min": 1,
-      "max": 5
-    }
+    "min": 1,
+    "max": 5
   },
   {
     "prompt": "Gracious Professionalism",
     "key": "professionalism",
     "type": "RANGE",
-    "config": {
-      "min": 1,
-      "max": 5
-    }
+    "min": 1,
+    "max": 5
   },
   {
     "prompt": "Enjoyed working with them?",
