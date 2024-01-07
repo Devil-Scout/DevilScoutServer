@@ -1,10 +1,10 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.tba.cache.CacheValue;
-import org.victorrobotics.devilscoutserver.tba.data.Event;
-import org.victorrobotics.devilscoutserver.tba.data.EventTeamList;
-import org.victorrobotics.devilscoutserver.tba.data.MatchSchedule;
-import org.victorrobotics.devilscoutserver.tba.data.EventTeam;
+import org.victorrobotics.devilscoutserver.cache.CacheValue;
+import org.victorrobotics.devilscoutserver.tba.Event;
+import org.victorrobotics.devilscoutserver.tba.EventTeam;
+import org.victorrobotics.devilscoutserver.tba.EventTeamList;
+import org.victorrobotics.devilscoutserver.tba.MatchSchedule;
 
 import io.javalin.http.Context;
 import io.javalin.openapi.HttpMethod;

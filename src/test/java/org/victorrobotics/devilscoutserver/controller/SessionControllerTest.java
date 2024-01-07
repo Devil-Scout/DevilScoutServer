@@ -1,7 +1,7 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import static org.victorrobotics.devilscoutserver.Base64Util.base64Decode;
-import static org.victorrobotics.devilscoutserver.Base64Util.base64Encode;
+import static org.victorrobotics.devilscoutserver.EncodingUtil.base64Decode;
+import static org.victorrobotics.devilscoutserver.EncodingUtil.base64Encode;
 import static org.victorrobotics.devilscoutserver.controller.Controller.SESSION_HEADER;
 
 import org.victorrobotics.devilscoutserver.controller.Controller.Session;

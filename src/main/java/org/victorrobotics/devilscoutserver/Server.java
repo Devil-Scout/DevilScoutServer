@@ -13,6 +13,7 @@ import org.victorrobotics.devilscoutserver.controller.Controller.Session;
 import org.victorrobotics.devilscoutserver.controller.EventController;
 import org.victorrobotics.devilscoutserver.controller.QuestionController;
 import org.victorrobotics.devilscoutserver.controller.SessionController;
+import org.victorrobotics.devilscoutserver.controller.SubmissionController;
 import org.victorrobotics.devilscoutserver.controller.TeamController;
 import org.victorrobotics.devilscoutserver.controller.UserController;
 import org.victorrobotics.devilscoutserver.database.Database;
@@ -132,8 +133,8 @@ public class Server {
         get("drive-team", QuestionController::driveTeamQuestions);
       });
 
-      path("scout", () -> {
-        post("match", UNIMPLEMENTED); // upload a match scouting record
+      path("submissions", () -> {
+        post("match", SubmissionController::submitMatch);
         post("pit", UNIMPLEMENTED); // upload a pit scouting record
         post("drive-team", UNIMPLEMENTED); // upload a post-match record (ADMIN)
       });

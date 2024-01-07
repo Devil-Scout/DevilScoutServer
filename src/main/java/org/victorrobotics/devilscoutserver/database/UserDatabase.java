@@ -1,6 +1,7 @@
 package org.victorrobotics.devilscoutserver.database;
 
-import static org.victorrobotics.devilscoutserver.Base64Util.base64Encode;
+import static org.victorrobotics.devilscoutserver.EncodingUtil.base64Decode;
+import static org.victorrobotics.devilscoutserver.EncodingUtil.base64Encode;
 
 import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
 
@@ -8,28 +9,38 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 @SuppressWarnings("java:S2325")
 public final class UserDatabase extends Database {
-  private static final String ALL_USERS     = "SELECT * FROM users ORDER BY id";
-  private static final String USERS_ON_TEAM = "SELECT * FROM users WHERE team = ? ORDER BY id";
-  private static final String USER_BY_ID    = "SELECT * FROM users WHERE id = ?";
-  private static final String USER_BY_KEY   = "SELECT * FROM users WHERE team = ? AND username = ?";
-  private static final String CONTAINS_USER = "SELECT COUNT(*) FROM users WHERE id = ?";
+  private static final String SELECT_ALL_USERS     = "SELECT * FROM users ORDER BY id";
+  private static final String SELECT_USERS_BY_TEAM =
+      "SELECT * FROM users WHERE team = ? ORDER BY id";
 
-  private static final String ADD_USER    = "INSERT INTO users "
+  private static final String SELECT_USER_BY_ID                = "SELECT * FROM users WHERE id = ?";
+  private static final String SELECT_USER_BY_TEAM_AND_USERNAME =
+      "SELECT * FROM users WHERE team = ? AND username = ?";
+
+  private static final String SELECT_SALT_BY_TEAM_AND_USERNAME =
+      "SELECT salt FROM users WHERE team = ? AND username = ?";
+  private static final String SELECT_ACCESS_LEVEL_BY_ID        =
+      "SELECT access_level FROM users WHERE id = ?";
+
+  private static final String COUNT_USER_BY_ID = "SELECT COUNT(*) FROM users WHERE id = ?";
+
+  private static final String INSERT_USER = "INSERT INTO users "
       + "(team, username, full_name, access_level, salt, stored_key, server_key) "
-      + "VALUES (?, ?, ?, ?::user_access_level, ?, ?, ?) RETURNING *";
+      + "VALUES (?, ?, ?, ?::user_access_level, ?, ?, ?)";
   private static final String DELETE_USER = "DELETE FROM users WHERE id = ?";
 
   public UserDatabase() {}
 
   public Collection<User> allUsers() throws SQLException {
     try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(ALL_USERS);
+         PreparedStatement statement = connection.prepareStatement(SELECT_ALL_USERS);
          ResultSet resultSet = statement.executeQuery()) {
       return listFromDatabase(resultSet, User::fromDatabase);
     }
@@ -37,7 +48,7 @@ public final class UserDatabase extends Database {
 
   public Collection<User> usersOnTeam(int team) throws SQLException {
     try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(USERS_ON_TEAM)) {
+         PreparedStatement statement = connection.prepareStatement(SELECT_USERS_BY_TEAM)) {
       statement.setShort(1, (short) team);
       try (ResultSet resultSet = statement.executeQuery()) {
         return listFromDatabase(resultSet, User::fromDatabase);
@@ -47,7 +58,7 @@ public final class UserDatabase extends Database {
 
   public User getUser(long id) throws SQLException {
     try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(USER_BY_ID)) {
+         PreparedStatement statement = connection.prepareStatement(SELECT_USER_BY_ID)) {
       statement.setLong(1, id);
       try (ResultSet resultSet = statement.executeQuery()) {
         return resultSet.next() ? User.fromDatabase(resultSet) : null;
@@ -57,7 +68,8 @@ public final class UserDatabase extends Database {
 
   public User getUser(int team, String username) throws SQLException {
     try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(USER_BY_KEY)) {
+         PreparedStatement statement =
+             connection.prepareStatement(SELECT_USER_BY_TEAM_AND_USERNAME)) {
       statement.setShort(1, (short) team);
       statement.setString(2, username);
       try (ResultSet resultSet = statement.executeQuery()) {
@@ -68,10 +80,10 @@ public final class UserDatabase extends Database {
 
   public boolean containsUser(long id) throws SQLException {
     try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(CONTAINS_USER)) {
+         PreparedStatement statement = connection.prepareStatement(COUNT_USER_BY_ID)) {
       statement.setLong(1, id);
       try (ResultSet resultSet = statement.executeQuery()) {
-        return resultSet.next() && resultSet.getInt("count") != 0;
+        return resultSet.next() && resultSet.getInt(1) != 0;
       }
     }
   }
@@ -80,7 +92,8 @@ public final class UserDatabase extends Database {
                            byte[] salt, byte[] storedKey, byte[] serverKey)
       throws SQLException {
     try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(ADD_USER)) {
+         PreparedStatement statement =
+             connection.prepareStatement(INSERT_USER, Statement.RETURN_GENERATED_KEYS)) {
       statement.setShort(1, (short) team);
       statement.setString(2, username);
       statement.setString(3, fullName);
@@ -89,7 +102,8 @@ public final class UserDatabase extends Database {
       statement.setString(6, base64Encode(storedKey));
       statement.setString(7, base64Encode(serverKey));
       try (ResultSet resultSet = statement.executeQuery()) {
-        return resultSet.next() ? User.fromDatabase(resultSet) : null;
+        return !resultSet.next() ? null : new User(resultSet.getLong(1), team, username, fullName,
+                                                   accessLevel, salt, storedKey, serverKey);
       }
     }
   }
@@ -159,11 +173,29 @@ public final class UserDatabase extends Database {
     }
   }
 
+  public byte[] getSalt(int team, String username) throws SQLException {
+    try (Connection connection = getConnection();
+         PreparedStatement statement =
+             connection.prepareStatement(SELECT_SALT_BY_TEAM_AND_USERNAME)) {
+      statement.setShort(1, (short) team);
+      statement.setString(2, username);
+      try (ResultSet resultSet = statement.executeQuery()) {
+        return resultSet.next() ? base64Decode(resultSet.getString(1)) : null;
+      }
+    }
+  }
+
   public AccessLevel getAccessLevel(long id) throws SQLException {
     if (id == -1) return AccessLevel.SUDO;
     if (id == -2) return AccessLevel.ADMIN;
     if (id == -3) return AccessLevel.USER;
 
-    return getUser(id).accessLevel();
+    try (Connection connection = getConnection();
+         PreparedStatement statement = connection.prepareStatement(SELECT_ACCESS_LEVEL_BY_ID)) {
+      statement.setLong(1, id);
+      try (ResultSet resultSet = statement.executeQuery()) {
+        return resultSet.next() ? AccessLevel.valueOf(resultSet.getString(1)) : null;
+      }
+    }
   }
 }

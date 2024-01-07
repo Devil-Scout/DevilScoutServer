@@ -1,11 +1,12 @@
 package org.victorrobotics.devilscoutserver.controller;
 
+import org.victorrobotics.devilscoutserver.database.MatchEntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
-import org.victorrobotics.devilscoutserver.tba.data.EventCache;
-import org.victorrobotics.devilscoutserver.tba.data.EventTeamListCache;
-import org.victorrobotics.devilscoutserver.tba.data.MatchScheduleCache;
-import org.victorrobotics.devilscoutserver.tba.data.EventTeamCache;
+import org.victorrobotics.devilscoutserver.tba.EventCache;
+import org.victorrobotics.devilscoutserver.tba.EventTeamCache;
+import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
+import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 
 import java.security.SecureRandom;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,7 +27,8 @@ import io.javalin.openapi.OpenApiIgnore;
 import io.javalin.openapi.OpenApiRequired;
 
 public sealed class Controller
-    permits EventController, QuestionController, SessionController, TeamController, UserController {
+    permits EventController, QuestionController, SessionController, SubmissionController,
+    TeamController, UserController {
   public static final String SESSION_HEADER = "X-DS-SESSION-KEY";
 
   private static final ConcurrentMap<String, Session> SESSIONS = new ConcurrentHashMap<>();
@@ -44,6 +46,8 @@ public sealed class Controller
   private static EventCache         EVENT_CACHE;
   private static EventTeamListCache EVENT_TEAMS_CACHE;
   private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
+
+  private static MatchEntryDatabase MATCH_ENTRIES;
 
   protected Controller() {}
 
@@ -69,6 +73,10 @@ public sealed class Controller
 
   public static void setMatchScheduleCache(MatchScheduleCache cache) {
     MATCH_SCHEDULE_CACHE = cache;
+  }
+
+  public static void setMatchEntryDB(MatchEntryDatabase matchEntries) {
+    MATCH_ENTRIES = matchEntries;
   }
 
   public static ConcurrentMap<String, Session> sessions() {
@@ -97,6 +105,10 @@ public sealed class Controller
 
   public static MatchScheduleCache matchScheduleCache() {
     return MATCH_SCHEDULE_CACHE;
+  }
+
+  public static MatchEntryDatabase matchEntryDB() {
+    return MATCH_ENTRIES;
   }
 
   @SuppressWarnings("java:S2221") // catch generic exception
@@ -183,8 +195,8 @@ public sealed class Controller
     private static final long DURATION_MILLIS = 8 * 60 * 60 * 1000;
 
     private final String key;
-    private final long user;
-    private final int  team;
+    private final long   user;
+    private final int    team;
 
     private long expiration;
 

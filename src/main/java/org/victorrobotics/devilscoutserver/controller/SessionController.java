@@ -1,6 +1,6 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import static org.victorrobotics.devilscoutserver.Base64Util.base64Encode;
+import static org.victorrobotics.devilscoutserver.EncodingUtil.base64Encode;
 
 import org.victorrobotics.devilscoutserver.database.Team;
 import org.victorrobotics.devilscoutserver.database.User;
@@ -68,8 +68,8 @@ public final class SessionController extends Controller {
     int team = request.team();
     String username = request.username();
 
-    User user = userDB().getUser(team, username);
-    if (user == null) {
+    byte[] salt = userDB().getSalt(team, username);
+    if (salt == null) {
       throwUserNotFound(username, team);
       return;
     }
@@ -81,7 +81,7 @@ public final class SessionController extends Controller {
     String nonceId = username + "@" + team + ":" + base64Encode(nonce);
     NONCES.add(nonceId);
 
-    ctx.json(new LoginChallenge(user.salt(), nonce));
+    ctx.json(new LoginChallenge(salt, nonce));
   }
 
   @OpenApi(path = "/auth", methods = HttpMethod.POST, tags = "Authentication",

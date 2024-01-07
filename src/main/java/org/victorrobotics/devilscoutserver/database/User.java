@@ -1,6 +1,6 @@
 package org.victorrobotics.devilscoutserver.database;
 
-import static org.victorrobotics.devilscoutserver.Base64Util.base64Decode;
+import static org.victorrobotics.devilscoutserver.EncodingUtil.base64Decode;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

@@ -38,19 +38,6 @@
     "title": "Teleop",
     "questions": [
       {
-        "prompt": "Score Locations",
-        "key": "grid",
-        "type": "GRID",
-        "config": {
-          "height": 3,
-          "width": 9,
-          "options": [
-            "Cone",
-            "Cube"
-          ]
-        }
-      },
-      {
         "prompt": "Pickup Locations",
         "key": "pickup",
         "type": "MULTIPLE",

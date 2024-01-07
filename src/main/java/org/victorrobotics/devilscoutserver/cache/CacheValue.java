@@ -1,13 +1,11 @@
 package org.victorrobotics.devilscoutserver.cache;
 
+import static org.victorrobotics.devilscoutserver.EncodingUtil.jsonEncode;
+
 import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class CacheValue<D, V extends Cacheable<D>> implements Comparable<CacheValue<?, V>> {
-  private static final ObjectMapper JSON = new ObjectMapper();
-
   private final V value;
 
   private volatile long   lastRefresh;
@@ -44,11 +42,7 @@ public class CacheValue<D, V extends Cacheable<D>> implements Comparable<CacheVa
   @JsonRawValue
   public String toJson() {
     if (jsonCache == null) {
-      try {
-        jsonCache = JSON.writeValueAsString(value);
-      } catch (JsonProcessingException e) {
-        e.printStackTrace();
-      }
+      jsonCache = jsonEncode(value);
     }
 
     lastAccess = System.currentTimeMillis();

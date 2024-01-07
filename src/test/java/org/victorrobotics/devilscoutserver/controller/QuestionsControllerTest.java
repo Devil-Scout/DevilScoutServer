@@ -1,10 +1,10 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.controller.Controller.Session;
-import org.victorrobotics.devilscoutserver.controller.QuestionController.Question;
 import org.victorrobotics.devilscoutserver.controller.QuestionController.QuestionPage;
 import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
+import org.victorrobotics.devilscoutserver.questions.Question;
 
 import java.sql.SQLException;
 
