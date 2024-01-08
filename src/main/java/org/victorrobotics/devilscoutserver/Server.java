@@ -132,9 +132,9 @@ public class Server {
       });
 
       path("submissions", () -> {
-        post("match_scouting", SubmissionController::submitMatchScouting);
-        post("pit_scouting", SubmissionController::submitPitScouting);
-        post("drive-team_scouting", SubmissionController::submitDriveTeamScouting);
+        post("match-scouting", SubmissionController::submitMatchScouting);
+        post("pit-scouting", SubmissionController::submitPitScouting);
+        post("drive-team-scouting", SubmissionController::submitDriveTeamScouting);
       });
 
       path("analysis", () -> {

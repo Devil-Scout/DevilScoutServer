@@ -6,11 +6,6 @@ public final class CounterQuestion extends Question {
   }
 
   @Override
-  public QuestionType getType() {
-    return QuestionType.BOOLEAN;
-  }
-
-  @Override
   public boolean isValidResponse(Object response) {
     return response instanceof Integer i && i >= 0;
   }
