@@ -31,17 +31,6 @@ dependencies {
   implementation 'org.victorrobotics.bluealliance:blue-alliance-api:2023-beta-2'
 
   annotationProcessor 'io.javalin.community.openapi:openapi-annotation-processor:5.6.3'
-
-  testImplementation 'org.mockito:mockito-core:5.7.0'
-  testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
-}
-
-testing {
-  suites {
-    test {
-      useJUnitJupiter()
-    }
-  }
 }
 
 jar {
@@ -55,9 +44,9 @@ jar {
 }
 
 tasks.withType(Tar) {
-   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 tasks.withType(Zip) {
-   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
