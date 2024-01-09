@@ -1,10 +1,10 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.tba.cache.CacheValue;
-import org.victorrobotics.devilscoutserver.tba.data.EventInfo;
-import org.victorrobotics.devilscoutserver.tba.data.EventTeams;
-import org.victorrobotics.devilscoutserver.tba.data.MatchSchedule;
-import org.victorrobotics.devilscoutserver.tba.data.TeamInfo;
+import org.victorrobotics.devilscoutserver.cache.CacheValue;
+import org.victorrobotics.devilscoutserver.tba.Event;
+import org.victorrobotics.devilscoutserver.tba.EventTeam;
+import org.victorrobotics.devilscoutserver.tba.EventTeamList;
+import org.victorrobotics.devilscoutserver.tba.MatchSchedule;
 
 import io.javalin.http.Context;
 import io.javalin.openapi.HttpMethod;
@@ -19,12 +19,12 @@ public final class EventController extends Controller {
 
   private EventController() {}
 
-  @OpenApi(path = "/events", methods = HttpMethod.GET, tags = "Event Data", summary = "USER",
+  @OpenApi(path = "/events", methods = HttpMethod.GET, tags = "Event Info", summary = "USER",
            description = "Get information on all current-year events.",
            headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = EventInfo[].class)),
+                                          content = @OpenApiContent(from = Event[].class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)) })
@@ -38,14 +38,14 @@ public final class EventController extends Controller {
     ctx.writeJsonStream(eventCache().values());
   }
 
-  @OpenApi(path = "/events/{event}", methods = HttpMethod.GET, tags = "Event Data",
+  @OpenApi(path = "/events/{event}", methods = HttpMethod.GET, tags = "Event Info",
            summary = "USER", description = "Get information on an event.",
            pathParams = @OpenApiParam(name = EVENT_PATH_PARAM, type = String.class,
                                       required = true),
            headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = EventInfo.class)),
+                                          content = @OpenApiContent(from = Event.class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)),
@@ -55,7 +55,7 @@ public final class EventController extends Controller {
     getValidSession(ctx);
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
 
-    CacheValue<?, EventInfo> entry = eventCache().get(eventKey);
+    CacheValue<?, Event> entry = eventCache().get(eventKey);
     if (entry == null) {
       throwEventNotFound(eventKey);
       return;
@@ -68,14 +68,14 @@ public final class EventController extends Controller {
     ctx.json(entry);
   }
 
-  @OpenApi(path = "/events/{event}/teams", methods = HttpMethod.GET, tags = "Event Data",
+  @OpenApi(path = "/events/{event}/teams", methods = HttpMethod.GET, tags = "Event Info",
            summary = "USER", description = "Get the list of teams attending an event.",
            pathParams = @OpenApiParam(name = EVENT_PATH_PARAM, type = String.class,
                                       required = true),
            headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = TeamInfo[].class)),
+                                          content = @OpenApiContent(from = EventTeam[].class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)),
@@ -90,7 +90,7 @@ public final class EventController extends Controller {
       return;
     }
 
-    CacheValue<?, EventTeams> entry = eventTeamsCache().get(eventKey);
+    CacheValue<?, EventTeamList> entry = eventTeamsCache().get(eventKey);
     long timestamp = entry.lastRefresh();
     checkIfNoneMatch(ctx, timestamp);
 
@@ -98,7 +98,7 @@ public final class EventController extends Controller {
     ctx.json(entry);
   }
 
-  @OpenApi(path = "/events/{event}/match-schedule", methods = HttpMethod.GET, tags = "Event Data",
+  @OpenApi(path = "/events/{event}/match-schedule", methods = HttpMethod.GET, tags = "Event Info",
            summary = "USER", description = "Get the match schedule at an event.",
            pathParams = @OpenApiParam(name = EVENT_PATH_PARAM, type = String.class,
                                       required = true),

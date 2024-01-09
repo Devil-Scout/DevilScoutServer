@@ -3,7 +3,6 @@ package org.victorrobotics.devilscoutserver.controller;
 import org.victorrobotics.devilscoutserver.database.Team;
 import org.victorrobotics.devilscoutserver.database.User;
 import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
-import org.victorrobotics.devilscoutserver.tba.data.TeamInfo;
 
 import java.sql.SQLException;
 import java.util.Collection;
@@ -76,7 +75,7 @@ public final class TeamController extends Controller {
            pathParams = @OpenApiParam(name = "team", type = Integer.class, required = true),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = TeamInfo.class)),
+                                          content = @OpenApiContent(from = Team.class)),
                          @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)),
                          @OpenApiResponse(status = "403",
@@ -139,8 +138,14 @@ public final class TeamController extends Controller {
     }
 
     TeamEdits edits = jsonDecode(ctx, TeamEdits.class);
-    team = teamDB().editTeam(teamNum, edits.name(), edits.eventKey());
 
+    String eventKey = edits.eventKey();
+    if (eventKey != null && !"".equals(eventKey) && !eventCache().containsKey(eventKey)) {
+      throwEventNotFound(eventKey);
+      return;
+    }
+
+    team = teamDB().editTeam(teamNum, edits.name(), eventKey);
     ctx.json(team);
   }
 

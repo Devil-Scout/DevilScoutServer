@@ -1,6 +1,6 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import static org.victorrobotics.devilscoutserver.Base64Util.base64Encode;
+import static org.victorrobotics.devilscoutserver.EncodingUtil.base64Encode;
 
 import org.victorrobotics.devilscoutserver.database.Team;
 import org.victorrobotics.devilscoutserver.database.User;
@@ -47,8 +47,8 @@ public final class SessionController extends Controller {
                                         content = @OpenApiContent(from = Session.class)))
   public static void generateDevSession(Context ctx) {
     AccessLevel accessLevel = AccessLevel.valueOf(ctx.pathParam("accessLevel"));
-    Session session = new Session(-1, accessLevel.ordinal() - 3, 1559);
-    sessions().put(session.getId(), session);
+    Session session = new Session("-1", accessLevel.ordinal() - 3, 1559);
+    sessions().put(session.getKey(), session);
     ctx.json(session);
   }
 
@@ -68,8 +68,8 @@ public final class SessionController extends Controller {
     int team = request.team();
     String username = request.username();
 
-    User user = userDB().getUser(team, username);
-    if (user == null) {
+    byte[] salt = userDB().getSalt(team, username);
+    if (salt == null) {
       throwUserNotFound(username, team);
       return;
     }
@@ -81,7 +81,7 @@ public final class SessionController extends Controller {
     String nonceId = username + "@" + team + ":" + base64Encode(nonce);
     NONCES.add(nonceId);
 
-    ctx.json(new LoginChallenge(user.salt(), nonce));
+    ctx.json(new LoginChallenge(salt, nonce));
   }
 
   @OpenApi(path = "/auth", methods = HttpMethod.POST, tags = "Authentication",
@@ -136,8 +136,11 @@ public final class SessionController extends Controller {
     byte[] serverSignature = hmacFunction.doFinal(userAndNonce);
     NONCES.remove(nonceId);
 
-    Session session = new Session(SECURE_RANDOM.nextLong(1L << 53), user.id(), user.team());
-    sessions().put(session.getId(), session);
+    byte[] sessionKey = new byte[64];
+    SECURE_RANDOM.nextBytes(sessionKey);
+
+    Session session = new Session(base64Encode(sessionKey), user.id(), user.team());
+    sessions().put(session.getKey(), session);
     ctx.json(new AuthResponse(user, team, session, serverSignature));
   }
 
@@ -161,7 +164,7 @@ public final class SessionController extends Controller {
                                           content = @OpenApiContent(from = Error.class)) })
   public static void logout(Context ctx) {
     Session session = getValidSession(ctx);
-    sessions().remove(session.getId());
+    sessions().remove(session.getKey());
     throwNoContent();
   }
 

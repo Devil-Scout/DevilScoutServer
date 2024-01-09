@@ -200,10 +200,10 @@ public final class UserController extends Controller {
   }
 
   @OpenApi(path = "/users/{id}", methods = HttpMethod.DELETE, tags = "Users",
-           summary = "ADMIN, SUDO",
+           summary = "USER, ADMIN, SUDO",
            pathParams = @OpenApiParam(name = "id", type = Long.class, required = true),
-           description = "Delete a user. USERs may not delete themselves. "
-               + "Requires ADMIN if from the same team, or SUDO if from a different team.",
+           description = "Delete a user. USERs may delete themselves. "
+               + "Otherwise, requires ADMIN if from the same team, or SUDO if from a different team.",
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "204"),
                          @OpenApiResponse(status = "400",
@@ -218,10 +218,13 @@ public final class UserController extends Controller {
   public static void deleteUser(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     AccessLevel accessLevel = userDB().getAccessLevel(session.getUser());
-    accessLevel.verify(AccessLevel.ADMIN);
 
     long userId = ctx.pathParamAsClass("id", Long.class)
                      .get();
+    if (userId != session.getUser()) {
+      accessLevel.verify(AccessLevel.ADMIN);
+    }
+
     User user = userDB().getUser(userId);
     if (user == null) {
       throwUserNotFound(userId);

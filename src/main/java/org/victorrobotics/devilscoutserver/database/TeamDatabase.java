@@ -10,19 +10,18 @@ import java.util.List;
 
 @SuppressWarnings("java:S2325")
 public final class TeamDatabase extends Database {
-  private static final String ALL_TEAMS      = "SELECT * FROM teams ORDER BY number";
-  private static final String TEAM_BY_NUMBER = "SELECT * FROM teams WHERE number = ?";
-  private static final String CONTAINS_TEAM  = "SELECT COUNT(*) FROM teams WHERE number = ?";
+  private static final String SELECT_ALL_TEAMS = "SELECT * FROM teams ORDER BY number";
+  private static final String SELECT_TEAM_BY_NUMBER = "SELECT * FROM teams WHERE number = ?";
+  private static final String COUNT_TEAM_BY_NUMBER = "SELECT COUNT(*) FROM teams WHERE number = ?";
 
-  private static final String ADD_TEAM    =
-      "INSERT INTO teams (number, name) VALUES (?, ?) RETURNING *";
+  private static final String INSERT_TEAM = "INSERT INTO teams (number, name) VALUES (?, ?)";
   private static final String DELETE_TEAM = "DELETE FROM teams WHERE number = ?";
 
   public TeamDatabase() {}
 
   public Collection<Team> allTeams() throws SQLException {
     try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(ALL_TEAMS);
+         PreparedStatement statement = connection.prepareStatement(SELECT_ALL_TEAMS);
          ResultSet resultSet = statement.executeQuery()) {
       return listFromDatabase(resultSet, Team::fromDatabase);
     }
@@ -30,7 +29,7 @@ public final class TeamDatabase extends Database {
 
   public Team getTeam(int number) throws SQLException {
     try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(TEAM_BY_NUMBER)) {
+         PreparedStatement statement = connection.prepareStatement(SELECT_TEAM_BY_NUMBER)) {
       statement.setShort(1, (short) number);
       try (ResultSet resultSet = statement.executeQuery()) {
         return resultSet.next() ? Team.fromDatabase(resultSet) : null;
@@ -40,7 +39,7 @@ public final class TeamDatabase extends Database {
 
   public boolean containsTeam(int number) throws SQLException {
     try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(CONTAINS_TEAM)) {
+         PreparedStatement statement = connection.prepareStatement(COUNT_TEAM_BY_NUMBER)) {
       statement.setShort(1, (short) number);
       try (ResultSet resultSet = statement.executeQuery()) {
         return resultSet.next() && resultSet.getInt("count") != 0;
@@ -50,11 +49,11 @@ public final class TeamDatabase extends Database {
 
   public Team registerTeam(int number, String name) throws SQLException {
     try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(ADD_TEAM)) {
+         PreparedStatement statement = connection.prepareStatement(INSERT_TEAM)) {
       statement.setShort(1, (short) number);
       statement.setString(2, name);
       try (ResultSet resultSet = statement.executeQuery()) {
-        return resultSet.next() ? Team.fromDatabase(resultSet) : null;
+        return resultSet.next() ? new Team(number, name, "") : null;
       }
     }
   }

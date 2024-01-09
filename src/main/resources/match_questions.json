@@ -1,132 +1,130 @@
-{
-  "auto": [
-    {
-      "prompt": "Start Location",
-      "type": "SINGLE",
-      "config": {
+[
+  {
+    "key": "auto",
+    "title": "Autonomous",
+    "questions": [
+      {
+        "prompt": "Start Location",
+        "key": "start_pos",
+        "type": "SINGLE",
         "options": [
-          "Near substations",
-          "Center",
-          "Near conduit"
+          "Next to amp",
+          "Front of speaker",
+          "Next to speaker",
+          "Next to source"
+        ]
+      },
+      {
+        "prompt": "Auto Routine",
+        "key": "routine",
+        "type": "SEQUENCE",
+        "options": [
+          "Leave starting zone",
+          "Score note in speaker",
+          "Score note in amp",
+          "Pickup note from floor (near)",
+          "Pickup note from floor (center)"
         ]
       }
-    },
-    {
-      "prompt": "Auto Routine",
-      "type": "SEQUENCE",
-      "config": {
-        "options": [
-          "Score cone",
-          "Score cube",
-          "Pickup cone",
-          "Pickup cube",
-          "Leave community",
-          "Dock charge station",
-          "Engage charge station"
-        ]
+    ]
+  },
+  {
+    "key": "teleop",
+    "title": "Teleop",
+    "questions": [
+      {
+        "prompt": "Pickups from ground",
+        "key": "pickup_ground",
+        "type": "COUNTER"
+      },
+      {
+        "prompt": "Pickups from source",
+        "key": "pickup_source",
+        "type": "COUNTER"
+      },
+      {
+        "prompt": "Scores in speaker",
+        "key": "score_speaker",
+        "type": "COUNTER"
+      },
+      {
+        "prompt": "Scores in amp",
+        "key": "score_amp",
+        "type": "COUNTER"
       }
-    }
-  ],
-  "teleop": [
-    {
-      "prompt": "Score Locations",
-      "type": "GRID",
-      "config": {
-        "height": 3,
-        "width": 9,
+    ]
+  },
+  {
+    "key": "endgame",
+    "title": "Endgame",
+    "questions": [
+      {
+        "prompt": "Final Status",
+        "key": "status",
+        "type": "SINGLE",
         "options": [
-          "Cone",
-          "Cube"
-        ]
-      }
-    },
-    {
-      "prompt": "Pickup Locations",
-      "type": "MULTIPLE",
-      "config": {
-        "options": [
-          "Floor",
-          "Single substation",
-          "Double substation"
-        ]
-      }
-    }
-  ],
-  "endgame": [
-    {
-      "prompt": "Final Status",
-      "type": "SINGLE",
-      "config": {
-        "options": [
-          "Engaged",
-          "Docked",
-          "Fail to dock",
+          "None",
           "Parked",
-          "None"
+          "Onstage",
+          "Harmony"
         ]
+      },
+      {
+        "prompt": "Scored in trap?",
+        "key": "trap",
+        "type": "BOOLEAN"
       }
-    },
-    {
-      "prompt": "Time to complete",
-      "type": "NUMBER",
-      "config": {
-        "min": 0,
-        "max": 60
-      }
-    }
-  ],
-  "general": [
-    {
-      "prompt": "Speed",
-      "type": "RANGE",
-      "config": {
+    ]
+  },
+  {
+    "key": "general",
+    "title": "General",
+    "questions": [
+      {
+        "prompt": "Speed",
+        "key": "speed",
+        "type": "RANGE",
         "min": 1,
         "max": 5
-      }
-    },
-    {
-      "prompt": "Stability",
-      "type": "RANGE",
-      "config": {
-        "min": 1,
-        "max": 5
-      }
-    },
-    {
-      "prompt": "Issues?",
-      "type": "MULTIPLE",
-      "config": {
+      },
+      {
+        "prompt": "Issues?",
+        "key": "issues",
+        "type": "MULTIPLE",
         "options": [
           "Died",
           "Killed",
           "Mechanisms"
         ]
+      },
+      {
+        "prompt": "Defended by others?",
+        "key": "defended",
+        "type": "BOOLEAN"
       }
-    },
-    {
-      "prompt": "Defended by others?",
-      "type": "BOOLEAN"
-    }
-  ],
-  "human": [
-    {
-      "prompt": "Driver Skill",
-      "type": "RANGE",
-      "config": {
+    ]
+  },
+  {
+    "key": "human",
+    "title": "Human",
+    "questions": [
+      {
+        "prompt": "Driver Skill",
+        "key": "driver_skill",
+        "type": "RANGE",
         "min": 1,
         "max": 5
-      }
-    },
-    {
-      "prompt": "Human Player Location",
-      "type": "SINGLE",
-      "config": {
+      },
+      {
+        "prompt": "Human Player Location",
+        "key": "player_location",
+        "type": "SINGLE",
         "options": [
-          "Double",
-          "Single",
+          "Amp",
+          "Source",
           "None"
         ]
       }
-    }
-  ]
-}
+    ]
+  }
+]

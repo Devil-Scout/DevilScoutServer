@@ -1,27 +1,28 @@
-{
-  "specs": [
-    {
-      "prompt": "Chassis size (smallest)",
-      "type": "RANGE",
-      "config": {
-        "min": 20,
+[
+  {
+    "key": "specs",
+    "title": "Specs",
+    "questions": [
+      {
+        "prompt": "Chassis width (in)",
+        "key": "width",
+        "type": "RANGE",
+        "min": 24,
         "max": 30,
         "increment": 2
-      }
-    },
-    {
-      "prompt": "Weight (no battery/bumpers)",
-      "type": "RANGE",
-      "config": {
+      },
+      {
+        "prompt": "Weight (no battery/bumpers)",
+        "key": "weight",
+        "type": "RANGE",
         "min": 90,
-        "max": 130,
-        "increment": 10
-      }
-    },
-    {
-      "prompt": "Drivetrain",
-      "type": "SINGLE",
-      "config": {
+        "max": 125,
+        "increment": 5
+      },
+      {
+        "prompt": "Drivetrain",
+        "key": "drivetrain",
+        "type": "SINGLE",
         "options": [
           "Swerve",
           "Tank",
@@ -29,112 +30,110 @@
           "Other"
         ]
       }
-    }
-  ],
-  "auto": [
-    {
-      "prompt": "Start Locations",
-      "type": "MULTIPLE",
-      "config": {
+    ]
+  },
+  {
+    "key": "auto",
+    "title": "Autonomous",
+    "questions": [
+      {
+        "prompt": "Preferred Start Locations",
+        "key": "start",
+        "type": "MULTIPLE",
         "options": [
-          "Near substations",
-          "Center",
-          "Near conduit"
+          "Next to amp",
+          "Front of speaker",
+          "Next to speaker",
+          "Next to source"
+        ]
+      },
+      {
+        "prompt": "Best Routine",
+        "key": "routine",
+        "type": "SEQUENCE",
+        "options": [
+          "Leave starting zone",
+          "Score note in speaker",
+          "Score note in amp",
+          "Pickup note from floor (near)",
+          "Pickup note from floor (center)"
         ]
       }
-    },
-    {
-      "prompt": "Best Routine",
-      "type": "SEQUENCE",
-      "config": {
+    ]
+  },
+  {
+    "key": "teleop",
+    "title": "Teleop",
+    "questions": [
+      {
+        "prompt": "Pickup Locations",
+        "key": "pickup",
+        "type": "MULTIPLE",
         "options": [
-          "Score cone",
-          "Score cube",
-          "Pickup cone",
-          "Pickup cube",
-          "Leave community",
-          "Dock charge station",
-          "Engage charge station"
+          "Ground",
+          "Source"
+        ]
+      },
+      {
+        "prompt": "Score Locations",
+        "key": "score",
+        "type": "MULTIPLE",
+        "options": [
+          "Speaker",
+          "Amp"
         ]
       }
-    }
-  ],
-  "teleop": [
-    {
-      "prompt": "Game Piece Types",
-      "type": "MULTIPLE",
-      "config": {
+    ]
+  },
+  {
+    "key": "endgame",
+    "title": "Endgame",
+    "questions": [
+      {
+        "prompt": "Climb onstage?",
+        "key": "onstage",
+        "type": "BOOLEAN"
+      },
+      {
+        "prompt": "Climb onstage with another robot?",
+        "key": "harmony",
+        "type": "BOOLEAN"
+      },
+      {
+        "prompt": "Score in trap?",
+        "key": "trap",
+        "type": "BOOLEAN"
+      }
+    ]
+  },
+  {
+    "key": "general",
+    "title": "General",
+    "questions": [
+      {
+        "prompt": "Driver Skill",
+        "key": "driver_skill",
+        "type": "RANGE",
+        "min": 1,
+        "max": 5
+      },
+      {
+        "prompt": "Human Player Location",
+        "key": "player_location",
+        "type": "SINGLE",
         "options": [
-          "Cone",
-          "Cube"
+          "Source",
+          "Amp",
+          "No preference"
         ]
-      }
-    },
-    {
-      "prompt": "Score Locations",
-      "type": "MULTIPLE",
-      "config": {
-        "options": [
-          "High",
-          "Mid",
-          "Hybrid"
-        ]
-      }
-    },
-    {
-      "prompt": "Pickup Locations",
-      "type": "MULTIPLE",
-      "config": {
-        "options": [
-          "Floor",
-          "Single substation",
-          "Double substation"
-        ]
-      }
-    }
-  ],
-  "endgame": [
-    {
-      "prompt": "Triple Balance",
-      "type": "BOOLEAN"
-    },
-    {
-      "prompt": "Time to Balance",
-      "type": "RANGE",
-      "config": {
-        "min": 5,
-        "max": 30,
-        "increment": 5
-      }
-    }
-  ],
-  "general": [
-    {
-      "prompt": "Driver Skill",
-      "type": "RANGE",
-      "config": {
+      },
+      {
+        "prompt": "Gracious Professionalism (do NOT ask)",
+        "key": "professionalism",
+        "type": "RANGE",
         "min": 1,
         "max": 5
       }
-    },
-    {
-      "prompt": "Human Player Location",
-      "type": "SINGLE",
-      "config": {
-        "options": [
-          "Double",
-          "Single",
-          "None"
-        ]
-      }
-    },
-    {
-      "prompt": "Gracious Professionalism (do NOT ask)",
-      "type": "RANGE",
-      "config": {
-        "min": 1,
-        "max": 5
-      }
-    }
-  ]
-}
+    ]
+  }
+]

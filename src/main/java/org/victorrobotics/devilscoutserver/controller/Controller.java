@@ -1,16 +1,23 @@
 package org.victorrobotics.devilscoutserver.controller;
 
+import org.victorrobotics.devilscoutserver.analysis.TeamAnalysisCache;
+import org.victorrobotics.devilscoutserver.database.DriveTeamEntryDatabase;
+import org.victorrobotics.devilscoutserver.database.MatchEntryDatabase;
+import org.victorrobotics.devilscoutserver.database.PitEntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
-import org.victorrobotics.devilscoutserver.tba.data.EventInfoCache;
-import org.victorrobotics.devilscoutserver.tba.data.EventTeamsCache;
-import org.victorrobotics.devilscoutserver.tba.data.MatchScheduleCache;
-import org.victorrobotics.devilscoutserver.tba.data.TeamInfoCache;
+import org.victorrobotics.devilscoutserver.tba.EventCache;
+import org.victorrobotics.devilscoutserver.tba.EventTeamCache;
+import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
+import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 
 import java.security.SecureRandom;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.CreatedResponse;
@@ -19,13 +26,15 @@ import io.javalin.http.NotFoundResponse;
 import io.javalin.http.NotModifiedResponse;
 import io.javalin.http.UnauthorizedResponse;
 import io.javalin.openapi.OpenApiExample;
+import io.javalin.openapi.OpenApiIgnore;
 import io.javalin.openapi.OpenApiRequired;
 
 public sealed class Controller
-    permits EventController, QuestionController, SessionController, TeamController, UserController {
+    permits EventController, QuestionController, SessionController, SubmissionController,
+    TeamController, UserController, AnalysisController {
   public static final String SESSION_HEADER = "X-DS-SESSION-KEY";
 
-  private static final ConcurrentMap<Long, Session> SESSIONS = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, Session> SESSIONS = new ConcurrentHashMap<>();
 
   protected static final String HASH_ALGORITHM   = "SHA-256";
   protected static final String MAC_ALGORITHM    = "HmacSHA256";
@@ -36,10 +45,16 @@ public sealed class Controller
   private static UserDatabase USERS;
   private static TeamDatabase TEAMS;
 
-  private static TeamInfoCache      TEAM_INFO_CACHE;
-  private static EventInfoCache     EVENT_INFO_CACHE;
-  private static EventTeamsCache    EVENT_TEAMS_CACHE;
+  private static EventTeamCache     TEAM_CACHE;
+  private static EventCache         EVENT_CACHE;
+  private static EventTeamListCache EVENT_TEAMS_CACHE;
   private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
+
+  private static MatchEntryDatabase     MATCH_ENTRIES;
+  private static PitEntryDatabase       PIT_ENTRIES;
+  private static DriveTeamEntryDatabase DRIVE_TEAM_ENTRIES;
+
+  private static TeamAnalysisCache TEAM_ANALYSIS_CACHE;
 
   protected Controller() {}
 
@@ -51,15 +66,15 @@ public sealed class Controller
     TEAMS = teams;
   }
 
-  public static void setEventInfoCache(EventInfoCache cache) {
-    EVENT_INFO_CACHE = cache;
+  public static void setEventCache(EventCache cache) {
+    EVENT_CACHE = cache;
   }
 
-  public static void setTeamInfoCache(TeamInfoCache cache) {
-    TEAM_INFO_CACHE = cache;
+  public static void setTeamCache(EventTeamCache cache) {
+    TEAM_CACHE = cache;
   }
 
-  public static void setEventTeamsCache(EventTeamsCache cache) {
+  public static void setEventTeamsCache(EventTeamListCache cache) {
     EVENT_TEAMS_CACHE = cache;
   }
 
@@ -67,7 +82,23 @@ public sealed class Controller
     MATCH_SCHEDULE_CACHE = cache;
   }
 
-  public static ConcurrentMap<Long, Session> sessions() {
+  public static void setMatchEntryDB(MatchEntryDatabase matchEntries) {
+    MATCH_ENTRIES = matchEntries;
+  }
+
+  public static void setPitEntryDB(PitEntryDatabase pitEntries) {
+    PIT_ENTRIES = pitEntries;
+  }
+
+  public static void setDriveTeamEntryDB(DriveTeamEntryDatabase driveTeamEntries) {
+    DRIVE_TEAM_ENTRIES = driveTeamEntries;
+  }
+
+  public static void setTeamAnalysisCache(TeamAnalysisCache teamAnalysisCache) {
+    TEAM_ANALYSIS_CACHE = teamAnalysisCache;
+  }
+
+  public static ConcurrentMap<String, Session> sessions() {
     return SESSIONS;
   }
 
@@ -79,20 +110,36 @@ public sealed class Controller
     return TEAMS;
   }
 
-  public static TeamInfoCache teamInfoCache() {
-    return TEAM_INFO_CACHE;
+  public static EventTeamCache teamCache() {
+    return TEAM_CACHE;
   }
 
-  public static EventInfoCache eventCache() {
-    return EVENT_INFO_CACHE;
+  public static EventCache eventCache() {
+    return EVENT_CACHE;
   }
 
-  public static EventTeamsCache eventTeamsCache() {
+  public static EventTeamListCache eventTeamsCache() {
     return EVENT_TEAMS_CACHE;
   }
 
   public static MatchScheduleCache matchScheduleCache() {
     return MATCH_SCHEDULE_CACHE;
+  }
+
+  public static MatchEntryDatabase matchEntryDB() {
+    return MATCH_ENTRIES;
+  }
+
+  public static PitEntryDatabase pitEntryDB() {
+    return PIT_ENTRIES;
+  }
+
+  public static DriveTeamEntryDatabase driveTeamEntryDB() {
+    return DRIVE_TEAM_ENTRIES;
+  }
+
+  public static TeamAnalysisCache teamAnalysisCache() {
+    return TEAM_ANALYSIS_CACHE;
   }
 
   @SuppressWarnings("java:S2221") // catch generic exception
@@ -105,20 +152,12 @@ public sealed class Controller
   }
 
   protected static Session getValidSession(Context ctx) {
-    String sessionStr = ctx.header(SESSION_HEADER);
-    if (sessionStr == null) {
+    String sessionKey = ctx.header(SESSION_HEADER);
+    if (sessionKey == null) {
       throw new UnauthorizedResponse("Missing " + SESSION_HEADER + " header");
     }
 
-    long sessionId;
-    try {
-      sessionId = Long.parseLong(sessionStr);
-    } catch (NumberFormatException e) {
-      throw new UnauthorizedResponse("Invalid " + SESSION_HEADER + " header");
-    }
-
-    Session session = SESSIONS.get(sessionId);
-
+    Session session = SESSIONS.get(sessionKey);
     if (session == null || session.isExpired()) {
       throw new UnauthorizedResponse("Invalid/Expired " + SESSION_HEADER + " header");
     }
@@ -181,6 +220,62 @@ public sealed class Controller
 
   protected static void throwEventNotFound(String eventKey) {
     throw new NotFoundResponse("Event " + eventKey + " not found");
+  }
+
+  public static class Session {
+    private static final long DURATION_MILLIS = 8 * 60 * 60 * 1000;
+
+    private final String key;
+    private final long   user;
+    private final int    team;
+
+    private long expiration;
+
+    public Session(String key, long userId, int team) {
+      this.key = key;
+      this.user = userId;
+      this.team = team;
+
+      expiration = System.currentTimeMillis() + DURATION_MILLIS;
+    }
+
+    @JsonCreator // for testing
+    private Session(@JsonProperty("key") String key, @JsonProperty("expiration") long expiration) {
+      this.key = key;
+      this.expiration = expiration;
+      this.user = -1;
+      this.team = -1;
+    }
+
+    @JsonIgnore
+    @OpenApiIgnore
+    public boolean isExpired() {
+      return System.currentTimeMillis() >= expiration;
+    }
+
+    @OpenApiExample("1572531932698856")
+    public String getKey() {
+      return key;
+    }
+
+    @OpenApiExample("8365930375920455")
+    public long getUser() {
+      return user;
+    }
+
+    @OpenApiExample("1559")
+    public int getTeam() {
+      return team;
+    }
+
+    @OpenApiExample("1700675366947")
+    public long getExpiration() {
+      return expiration;
+    }
+
+    public void refresh() {
+      expiration = System.currentTimeMillis() + DURATION_MILLIS;
+    }
   }
 
   public static record Error(@OpenApiRequired @OpenApiExample("Error message") String error) {}
