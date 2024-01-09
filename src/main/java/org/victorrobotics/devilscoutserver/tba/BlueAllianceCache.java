@@ -29,7 +29,7 @@ public abstract class BlueAllianceCache<K, D, V extends Cacheable<D>> implements
   public CacheValue<D, V> get(K key) {
     return cache.computeIfAbsent(key, k -> {
       CacheValue<D, V> entry = new CacheValue<>(createValue(k));
-      entry.update(getEndpoint(k).refresh());
+      entry.refresh(getEndpoint(k).refresh());
       timestamp = System.currentTimeMillis();
       return entry;
     });
@@ -45,7 +45,7 @@ public abstract class BlueAllianceCache<K, D, V extends Cacheable<D>> implements
     boolean mods = cache.entrySet()
                         .parallelStream()
                         .map(entry -> getEndpoint(entry.getKey()).refreshAsync()
-                                                                 .thenApply(entry.getValue()::update))
+                                                                 .thenApply(entry.getValue()::refresh))
                         .map(CompletableFuture::join)
                         .sequential()
                         .reduce(false, Boolean::logicalOr);

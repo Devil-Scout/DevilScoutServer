@@ -16,7 +16,7 @@ public class CacheValue<D, V extends Cacheable<D>> implements Comparable<CacheVa
     this.value = value;
   }
 
-  public boolean update(D data) {
+  public boolean refresh(D data) {
     if (data == null) return false;
     if (!value.update(data)) return false;
 

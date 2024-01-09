@@ -33,7 +33,7 @@ public abstract class BlueAllianceKeyCache<K, K2, D, D2 extends Cacheable<D>, V 
   public CacheValue<Collection<D2>, V> get(K key) {
     return cache.computeIfAbsent(key, k -> {
       CacheValue<Collection<D2>, V> entry = new CacheValue<>(createValue(k));
-      entry.update(getData(k));
+      entry.refresh(getData(k));
       timestamp = System.currentTimeMillis();
       return entry;
     });
@@ -54,7 +54,7 @@ public abstract class BlueAllianceKeyCache<K, K2, D, D2 extends Cacheable<D>, V 
     boolean mods = cache.entrySet()
                         .parallelStream()
                         .map(entry -> entry.getValue()
-                                           .update(getData(entry.getKey())))
+                                           .refresh(getData(entry.getKey())))
                         .sequential()
                         .reduce(false, Boolean::logicalOr);
     long time = System.currentTimeMillis();

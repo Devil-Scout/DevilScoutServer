@@ -1,6 +1,5 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
-import org.victorrobotics.devilscoutserver.analysis.statistics.Statistic;
 import org.victorrobotics.devilscoutserver.database.DriveTeamEntryDatabase;
 import org.victorrobotics.devilscoutserver.database.MatchEntryDatabase;
 import org.victorrobotics.devilscoutserver.database.PitEntryDatabase;
@@ -8,8 +7,10 @@ import org.victorrobotics.devilscoutserver.database.PitEntryDatabase;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,15 +18,32 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public abstract sealed class Analyzer permits CrescendoAnalyzer {
   private static final ObjectMapper JSON = new ObjectMapper();
 
+  private final MatchEntryDatabase     matchEntryDB;
+  private final PitEntryDatabase       pitEntryDB;
+  private final DriveTeamEntryDatabase driveTeamEntryDB;
+
+  protected Analyzer(MatchEntryDatabase matchEntryDB, PitEntryDatabase pitEntryDB,
+                     DriveTeamEntryDatabase driveTeamEntryDB) {
+    this.matchEntryDB = matchEntryDB;
+    this.pitEntryDB = pitEntryDB;
+    this.driveTeamEntryDB = driveTeamEntryDB;
+  }
+
   protected abstract List<Statistic>
       computeStatistics(Map<String, List<Object>> matchSubmissions,
                         Map<String, List<Object>> pitSubmissions,
                         Map<String, List<Object>> driveTeamSubmissions);
 
-  public List<Statistic> processTeam(int team, MatchEntryDatabase matchEntryDB,
-                                     PitEntryDatabase pitEntryDB,
-                                     DriveTeamEntryDatabase driveTeamEntryDB)
-      throws SQLException, JsonProcessingException {
+  public Set<Integer> getTeamsToUpdate(long lastUpdate) throws SQLException {
+    Set<Integer> teams = new LinkedHashSet<>();
+    teams.addAll(matchEntryDB.getTeamsSince(lastUpdate));
+    teams.addAll(pitEntryDB.getTeamsSince(lastUpdate));
+    teams.addAll(driveTeamEntryDB.getTeamsSince(lastUpdate));
+    return teams;
+  }
+
+  @SuppressWarnings("unchecked")
+  public List<Statistic> processTeam(int team) throws SQLException, JsonProcessingException {
     List<String> matchJsons = matchEntryDB.getEntries(team);
     List<String> pitJsons = pitEntryDB.getEntries(team);
     List<String> driveTeamJsons = driveTeamEntryDB.getEntries(team);

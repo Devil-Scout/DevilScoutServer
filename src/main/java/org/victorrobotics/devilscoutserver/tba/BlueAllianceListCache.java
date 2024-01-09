@@ -11,7 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
-public abstract class BlueAllianceListCache<K, D, V extends Cacheable<D>> implements Cache<K, D, V> {
+public abstract class BlueAllianceListCache<K, D, V extends Cacheable<D>>
+    implements Cache<K, D, V> {
   private final ConcurrentMap<K, CacheValue<D, V>> cache;
   private final List<Endpoint<List<D>>>            endpoints;
 
@@ -48,7 +49,7 @@ public abstract class BlueAllianceListCache<K, D, V extends Cacheable<D>> implem
                               keys.add(key);
                               return cache.computeIfAbsent(key,
                                                            k -> new CacheValue<>(createValue(k)))
-                                          .update(data);
+                                          .refresh(data);
                             })
                             .sequential()
                             .reduce(false, Boolean::logicalOr);

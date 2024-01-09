@@ -1,5 +1,6 @@
 package org.victorrobotics.devilscoutserver.controller;
 
+import org.victorrobotics.devilscoutserver.analysis.TeamAnalysisCache;
 import org.victorrobotics.devilscoutserver.database.DriveTeamEntryDatabase;
 import org.victorrobotics.devilscoutserver.database.MatchEntryDatabase;
 import org.victorrobotics.devilscoutserver.database.PitEntryDatabase;
@@ -30,7 +31,7 @@ import io.javalin.openapi.OpenApiRequired;
 
 public sealed class Controller
     permits EventController, QuestionController, SessionController, SubmissionController,
-    TeamController, UserController {
+    TeamController, UserController, AnalysisController {
   public static final String SESSION_HEADER = "X-DS-SESSION-KEY";
 
   private static final ConcurrentMap<String, Session> SESSIONS = new ConcurrentHashMap<>();
@@ -52,6 +53,8 @@ public sealed class Controller
   private static MatchEntryDatabase     MATCH_ENTRIES;
   private static PitEntryDatabase       PIT_ENTRIES;
   private static DriveTeamEntryDatabase DRIVE_TEAM_ENTRIES;
+
+  private static TeamAnalysisCache TEAM_ANALYSIS_CACHE;
 
   protected Controller() {}
 
@@ -89,6 +92,10 @@ public sealed class Controller
 
   public static void setDriveTeamEntryDB(DriveTeamEntryDatabase driveTeamEntries) {
     DRIVE_TEAM_ENTRIES = driveTeamEntries;
+  }
+
+  public static void setTeamAnalysisCache(TeamAnalysisCache teamAnalysisCache) {
+    TEAM_ANALYSIS_CACHE = teamAnalysisCache;
   }
 
   public static ConcurrentMap<String, Session> sessions() {
@@ -129,6 +136,10 @@ public sealed class Controller
 
   public static DriveTeamEntryDatabase driveTeamEntryDB() {
     return DRIVE_TEAM_ENTRIES;
+  }
+
+  public static TeamAnalysisCache teamAnalysisCache() {
+    return TEAM_ANALYSIS_CACHE;
   }
 
   @SuppressWarnings("java:S2221") // catch generic exception

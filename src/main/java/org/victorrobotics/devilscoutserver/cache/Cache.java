@@ -5,7 +5,7 @@ public interface Cache<K, D, V extends Cacheable<D>> {
 
   boolean containsKey(K key);
 
-  void refresh();
+  void refresh() throws Exception;
 
   int size();
 

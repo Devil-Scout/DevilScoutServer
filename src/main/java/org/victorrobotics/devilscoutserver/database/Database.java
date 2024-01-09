@@ -10,9 +10,7 @@ import java.util.List;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-public sealed class Database
-    permits UserDatabase, TeamDatabase, MatchEntryDatabase, PitEntryDatabase,
-    DriveTeamEntryDatabase {
+public sealed class Database permits UserDatabase, TeamDatabase, EntryDatabase {
   private static HikariDataSource CONNECTION_POOL;
 
   protected Database() {}

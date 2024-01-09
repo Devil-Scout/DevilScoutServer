@@ -19,7 +19,7 @@ public final class EventController extends Controller {
 
   private EventController() {}
 
-  @OpenApi(path = "/events", methods = HttpMethod.GET, tags = "Event Data", summary = "USER",
+  @OpenApi(path = "/events", methods = HttpMethod.GET, tags = "Event Info", summary = "USER",
            description = "Get information on all current-year events.",
            headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
@@ -38,7 +38,7 @@ public final class EventController extends Controller {
     ctx.writeJsonStream(eventCache().values());
   }
 
-  @OpenApi(path = "/events/{event}", methods = HttpMethod.GET, tags = "Event Data",
+  @OpenApi(path = "/events/{event}", methods = HttpMethod.GET, tags = "Event Info",
            summary = "USER", description = "Get information on an event.",
            pathParams = @OpenApiParam(name = EVENT_PATH_PARAM, type = String.class,
                                       required = true),
@@ -68,7 +68,7 @@ public final class EventController extends Controller {
     ctx.json(entry);
   }
 
-  @OpenApi(path = "/events/{event}/teams", methods = HttpMethod.GET, tags = "Event Data",
+  @OpenApi(path = "/events/{event}/teams", methods = HttpMethod.GET, tags = "Event Info",
            summary = "USER", description = "Get the list of teams attending an event.",
            pathParams = @OpenApiParam(name = EVENT_PATH_PARAM, type = String.class,
                                       required = true),
@@ -98,7 +98,7 @@ public final class EventController extends Controller {
     ctx.json(entry);
   }
 
-  @OpenApi(path = "/events/{event}/match-schedule", methods = HttpMethod.GET, tags = "Event Data",
+  @OpenApi(path = "/events/{event}/match-schedule", methods = HttpMethod.GET, tags = "Event Info",
            summary = "USER", description = "Get the match schedule at an event.",
            pathParams = @OpenApiParam(name = EVENT_PATH_PARAM, type = String.class,
                                       required = true),
