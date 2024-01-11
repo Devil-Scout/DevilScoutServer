@@ -15,9 +15,7 @@ import java.security.SecureRandom;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.CreatedResponse;
@@ -210,7 +208,7 @@ public sealed class Controller
     throw new NotFoundResponse("Team " + team + " not found");
   }
 
-  protected static void throwUserNotFound(long userId) {
+  protected static void throwUserNotFound(String userId) {
     throw new NotFoundResponse("User #" + userId + " not found");
   }
 
@@ -226,25 +224,17 @@ public sealed class Controller
     private static final long DURATION_MILLIS = 8 * 60 * 60 * 1000;
 
     private final String key;
-    private final long   user;
+    private final String user;
     private final int    team;
 
     private long expiration;
 
-    public Session(String key, long userId, int team) {
+    public Session(String key, String userId, int team) {
       this.key = key;
       this.user = userId;
       this.team = team;
 
       expiration = System.currentTimeMillis() + DURATION_MILLIS;
-    }
-
-    @JsonCreator // for testing
-    private Session(@JsonProperty("key") String key, @JsonProperty("expiration") long expiration) {
-      this.key = key;
-      this.expiration = expiration;
-      this.user = -1;
-      this.team = -1;
     }
 
     @JsonIgnore
@@ -253,13 +243,13 @@ public sealed class Controller
       return System.currentTimeMillis() >= expiration;
     }
 
-    @OpenApiExample("1572531932698856")
+    @OpenApiExample("ffffffff-ffff-ffff-ffff-ffffffffffff")
     public String getKey() {
       return key;
     }
 
-    @OpenApiExample("8365930375920455")
-    public long getUser() {
+    @OpenApiExample("ffffffff-ffff-ffff-ffff-ffffffffffff")
+    public String getUser() {
       return user;
     }
 

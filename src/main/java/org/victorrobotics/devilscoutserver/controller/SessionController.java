@@ -4,7 +4,6 @@ import static org.victorrobotics.devilscoutserver.EncodingUtil.base64Encode;
 
 import org.victorrobotics.devilscoutserver.database.Team;
 import org.victorrobotics.devilscoutserver.database.User;
-import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
 
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -12,6 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.crypto.Mac;
@@ -36,21 +36,6 @@ public final class SessionController extends Controller {
   static final Set<String> NONCES = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   private SessionController() {}
-
-  @OpenApi(path = "/dev_session/{accessLevel}", methods = HttpMethod.GET,
-           summary = "unauthorized ( REMOVE FOR PRODUCTION )",
-           description = "Starts a development session with id -1 and the specified accessLevel. "
-               + "The session is not specific to a particular user, but it is a member of team 1559.",
-           pathParams = @OpenApiParam(name = "accessLevel", type = AccessLevel.class,
-                                      required = true),
-           responses = @OpenApiResponse(status = "200",
-                                        content = @OpenApiContent(from = Session.class)))
-  public static void generateDevSession(Context ctx) {
-    AccessLevel accessLevel = AccessLevel.valueOf(ctx.pathParam("accessLevel"));
-    Session session = new Session("-1", accessLevel.ordinal() - 3, 1559);
-    sessions().put(session.getKey(), session);
-    ctx.json(session);
-  }
 
   @OpenApi(path = "/login", methods = HttpMethod.POST, tags = "Authentication",
            summary = "unauthorized",
@@ -136,23 +121,28 @@ public final class SessionController extends Controller {
     byte[] serverSignature = hmacFunction.doFinal(userAndNonce);
     NONCES.remove(nonceId);
 
-    byte[] sessionKey = new byte[64];
-    SECURE_RANDOM.nextBytes(sessionKey);
-
-    Session session = new Session(base64Encode(sessionKey), user.id(), user.team());
-    sessions().put(session.getKey(), session);
+    String sessionKey = UUID.randomUUID()
+                            .toString();
+    Session session = new Session(sessionKey, user.id(), user.team());
+    sessions().put(sessionKey, session);
     ctx.json(new AuthResponse(user, team, session, serverSignature));
   }
 
-  @OpenApi(path = "/session", methods = HttpMethod.GET, tags = "Authentication", summary = "USER",
+  @OpenApi(path = "/session/{session_id}", methods = HttpMethod.GET, tags = "Authentication",
            description = "Get the current status of your session.",
-           security = @OpenApiSecurity(name = "Session"),
+           pathParams = @OpenApiParam(name = "session_id", type = String.class),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = Session.class)),
                          @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)) })
   public static void getSession(Context ctx) {
-    Session session = getValidSession(ctx);
+    String sessionId = ctx.pathParam("session_id");
+
+    Session session = sessions().get(sessionId);
+    if (session == null) {
+      throw new NotFoundResponse("Session not found");
+    }
+
     ctx.json(session);
   }
 
