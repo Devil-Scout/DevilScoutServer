@@ -123,9 +123,8 @@ public final class UserController extends Controller {
     Session session = getValidSession(ctx);
     AccessLevel accessLevel = userDB().getAccessLevel(session.getUser());
 
-    long userId = ctx.pathParamAsClass("id", Long.class)
-                     .get();
-    if (userId != session.getUser()) {
+    String userId = ctx.pathParam("id");
+    if (!userId.equals(session.getUser())) {
       accessLevel.verify(AccessLevel.ADMIN);
     }
 
@@ -165,9 +164,8 @@ public final class UserController extends Controller {
     Session session = getValidSession(ctx);
     AccessLevel accessLevel = userDB().getAccessLevel(session.getUser());
 
-    long userId = ctx.pathParamAsClass("id", Long.class)
-                     .get();
-    if (userId != session.getUser()) {
+    String userId = ctx.pathParam("id");
+    if (!userId.equals(session.getUser())) {
       accessLevel.verify(AccessLevel.ADMIN);
     }
 
@@ -219,9 +217,8 @@ public final class UserController extends Controller {
     Session session = getValidSession(ctx);
     AccessLevel accessLevel = userDB().getAccessLevel(session.getUser());
 
-    long userId = ctx.pathParamAsClass("id", Long.class)
-                     .get();
-    if (userId != session.getUser()) {
+    String userId = ctx.pathParam("id");
+    if (!userId.equals(session.getUser())) {
       accessLevel.verify(AccessLevel.ADMIN);
     }
 

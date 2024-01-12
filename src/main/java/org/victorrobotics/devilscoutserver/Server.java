@@ -118,8 +118,9 @@ public class Server {
     javalin.routes(() -> {
       post("login", SessionController::login);
       post("auth", SessionController::auth);
-      get("session", SessionController::getSession);
       delete("logout", SessionController::logout);
+
+      get("session/{session_id}", SessionController::getSession);
 
       path("events", () -> {
         get(EventController::getAllEvents);
@@ -171,8 +172,6 @@ public class Server {
           patch(UserController::editUser);
         });
       });
-
-      get("dev_session/{accessLevel}", SessionController::generateDevSession);
     });
 
     javalin.exception(HttpResponseException.class, (e, ctx) -> {

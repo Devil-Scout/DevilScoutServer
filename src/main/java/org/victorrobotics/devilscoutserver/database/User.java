@@ -12,7 +12,8 @@ import io.javalin.openapi.OpenApiIgnore;
 import io.javalin.openapi.OpenApiRequired;
 
 @SuppressWarnings("java:S6218") // arrays in equals
-public record User(@OpenApiRequired @OpenApiExample("6536270208735686") long id,
+public record User(@OpenApiRequired
+@OpenApiExample("ffffffff-ffff-ffff-ffff-ffffffffffff") String id,
                    @OpenApiRequired @OpenApiExample("1559") int team,
                    @OpenApiRequired @OpenApiExample("xander") String username,
                    @OpenApiRequired @OpenApiExample("Xander Bhalla") String fullName,
@@ -33,7 +34,7 @@ public record User(@OpenApiRequired @OpenApiExample("6536270208735686") long id,
   }
 
   public static User fromDatabase(ResultSet resultSet) throws SQLException {
-    long id = resultSet.getLong(1);
+    String id = resultSet.getString(1);
     int team = resultSet.getInt(2);
     String username = resultSet.getString(3);
     String fullName = resultSet.getString(4);

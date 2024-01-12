@@ -14,13 +14,13 @@ public final class PitEntryDatabase extends EntryDatabase {
     super("pit_entries");
   }
 
-  public void createEntry(String eventKey, long submittingUser, int submittingTeam, int scoutedTeam,
+  public void createEntry(String eventKey, String submittingUser, int submittingTeam, int scoutedTeam,
                           String data)
       throws SQLException {
     try (Connection connection = getConnection();
          PreparedStatement statement = connection.prepareStatement(INSERT_ENTRY)) {
       statement.setString(1, eventKey);
-      statement.setLong(2, submittingUser);
+      statement.setString(2, submittingUser);
       statement.setShort(3, (short) submittingTeam);
       statement.setShort(4, (short) scoutedTeam);
       statement.setObject(5, data);
