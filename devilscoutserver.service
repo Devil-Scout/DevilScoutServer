@@ -1,0 +1,22 @@
+[Unit]
+Description=Devil Scout Server (Java)
+Documentation=https://github.com/Team1559/DevilScoutServer
+
+After=syslog.target network.target postgresql.service
+Requires=network.target postgresql.service
+
+[Service]
+User=team1559
+Type=simple
+Restart=always
+RestartSec=30
+
+Environment=TBA_API_KEY="NE6o6UL7rNrdpjbw23nnOWsS0uRyZWczDtzCyDy7PfEd2vZXCvZNn7hyS5t0t2Df"
+Environment=POSTGRESQL_PASSWORD="Devil-Tech0617"
+
+ExecStart=/usr/bin/java -jar /home/team1559/DevilScoutServer/build/libs/DevilScoutServer.jar
+ExecStop=/bin/kill -15 $MAINPID
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target
