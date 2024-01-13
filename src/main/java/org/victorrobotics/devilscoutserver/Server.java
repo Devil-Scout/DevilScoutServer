@@ -191,7 +191,7 @@ public class Server {
   }
 
   public void start() {
-    javalin.start(8000);
+    javalin.start(80);
   }
 
   public void stop() {
