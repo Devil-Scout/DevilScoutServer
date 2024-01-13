@@ -112,7 +112,7 @@ public class Server {
       post("auth", SessionController::auth);
       delete("logout", SessionController::logout);
 
-      get("session/{session_id}", SessionController::getSession);
+      get("sessions/{session_id}", SessionController::getSession);
 
       path("events", () -> {
         get(EventController::getAllEvents);
