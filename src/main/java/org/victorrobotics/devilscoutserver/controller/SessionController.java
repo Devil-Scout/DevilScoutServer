@@ -130,7 +130,7 @@ public final class SessionController extends Controller {
 
   @OpenApi(path = "/session/{session_id}", methods = HttpMethod.GET, tags = "Authentication",
            description = "Get the current status of your session.",
-           pathParams = @OpenApiParam(name = "session_id", type = String.class),
+           pathParams = @OpenApiParam(name = "session_id", type = String.class, required = true),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = Session.class)),
                          @OpenApiResponse(status = "401",
@@ -146,7 +146,7 @@ public final class SessionController extends Controller {
     ctx.json(session);
   }
 
-  @OpenApi(path = "/logout", methods = HttpMethod.DELETE, tags = "Authentication", summary = "USER",
+  @OpenApi(path = "/logout", methods = HttpMethod.DELETE, tags = "Authentication",
            description = "Invalidates a session, logging a client out.",
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "204"),

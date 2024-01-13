@@ -3,8 +3,6 @@ package org.victorrobotics.devilscoutserver.database;
 import static org.victorrobotics.devilscoutserver.EncodingUtil.base64Decode;
 import static org.victorrobotics.devilscoutserver.EncodingUtil.base64Encode;
 
-import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,7 +25,7 @@ public final class UserDatabase extends Database {
   private static final String SELECT_SALT_BY_TEAM_AND_USERNAME =
       "SELECT salt FROM users WHERE team = ? AND username = ?";
   private static final String SELECT_ACCESS_LEVEL_BY_ID        =
-      "SELECT access_level FROM users WHERE id = ?";
+      "SELECT admin FROM users WHERE id = ?";
 
   private static final String COUNT_USER_BY_ID = "SELECT COUNT(*) FROM users WHERE id = ?";
 
@@ -88,8 +86,8 @@ public final class UserDatabase extends Database {
     }
   }
 
-  public User registerUser(int team, String username, String fullName, AccessLevel accessLevel,
-                           byte[] salt, byte[] storedKey, byte[] serverKey)
+  public User registerUser(int team, String username, String fullName, boolean admin, byte[] salt,
+                           byte[] storedKey, byte[] serverKey)
       throws SQLException {
     try (Connection connection = getConnection();
          PreparedStatement statement =
@@ -97,7 +95,7 @@ public final class UserDatabase extends Database {
       statement.setShort(1, (short) team);
       statement.setString(2, username);
       statement.setString(3, fullName);
-      statement.setString(4, accessLevel.toString());
+      statement.setBoolean(4, admin);
       statement.setString(5, base64Encode(salt));
       statement.setString(6, base64Encode(storedKey));
       statement.setString(7, base64Encode(serverKey));
@@ -105,7 +103,7 @@ public final class UserDatabase extends Database {
       statement.execute();
       try (ResultSet resultSet = statement.getGeneratedKeys()) {
         return !resultSet.next() ? null : new User(resultSet.getString(1), team, username, fullName,
-                                                   accessLevel, salt, storedKey, serverKey);
+                                                   admin, salt, storedKey, serverKey);
       }
     }
   }
@@ -118,7 +116,7 @@ public final class UserDatabase extends Database {
     }
   }
 
-  public User editUser(String id, String username, String fullName, AccessLevel accessLevel,
+  public User editUser(String id, String username, String fullName, Boolean admin,
                        byte[][] authInfo)
       throws SQLException {
     List<String> edits = new ArrayList<>();
@@ -131,8 +129,8 @@ public final class UserDatabase extends Database {
       edits.add("full_name = ?");
     }
 
-    if (accessLevel != null) {
-      edits.add("access_level = ?::user_access_level");
+    if (admin != null) {
+      edits.add("admin = ?");
     }
 
     if (authInfo != null) {
@@ -158,8 +156,8 @@ public final class UserDatabase extends Database {
         statement.setString(index++, fullName);
       }
 
-      if (accessLevel != null) {
-        statement.setString(index++, accessLevel.toString());
+      if (admin != null) {
+        statement.setBoolean(index++, admin);
       }
 
       if (authInfo != null) {
@@ -187,12 +185,12 @@ public final class UserDatabase extends Database {
     }
   }
 
-  public AccessLevel getAccessLevel(String id) throws SQLException {
+  public boolean isAdmin(String id) throws SQLException {
     try (Connection connection = getConnection();
          PreparedStatement statement = connection.prepareStatement(SELECT_ACCESS_LEVEL_BY_ID)) {
       statement.setString(1, id);
       try (ResultSet resultSet = statement.executeQuery()) {
-        return resultSet.next() ? AccessLevel.valueOf(resultSet.getString(1)) : null;
+        return resultSet.next() && resultSet.getBoolean(1);
       }
     }
   }

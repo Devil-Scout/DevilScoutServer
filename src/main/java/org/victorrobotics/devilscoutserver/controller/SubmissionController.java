@@ -28,7 +28,6 @@ public final class SubmissionController extends Controller {
   private SubmissionController() {}
 
   @OpenApi(path = "/submissions/match_scouting", methods = HttpMethod.POST, tags = "Submissions",
-           summary = "USER",
            description = "Submit match scouting data to the pool. "
                + "The current user's team must be attending the corresponding event.",
            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = MatchSubmission.class)),
@@ -72,7 +71,6 @@ public final class SubmissionController extends Controller {
   }
 
   @OpenApi(path = "/submissions/pit_scouting", methods = HttpMethod.POST, tags = "Submissions",
-           summary = "USER",
            description = "Submit pit scouting data to the pool. "
                + "The current user's team must be attending the corresponding event.",
            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = PitSubmission.class)),
@@ -101,7 +99,7 @@ public final class SubmissionController extends Controller {
   }
 
   @OpenApi(path = "/submissions/drive_team_scouting", methods = HttpMethod.POST,
-           tags = "Submissions", summary = "USER",
+           tags = "Submissions",
            description = "Submit drive team scouting data to the pool. "
                + "The current user's team must be attending the corresponding event.",
            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = DriveTeamSubmission.class)),

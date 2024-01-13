@@ -12,6 +12,7 @@ import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 
 import java.security.SecureRandom;
+import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.CreatedResponse;
+import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.NoContentResponse;
 import io.javalin.http.NotFoundResponse;
 import io.javalin.http.NotModifiedResponse;
@@ -196,6 +198,10 @@ public sealed class Controller
     }
   }
 
+  protected static void throwForbidden() {
+    throw new ForbiddenResponse("User not permitted to access this resource");
+  }
+
   protected static void throwNoContent() {
     throw new NoContentResponse();
   }
@@ -258,13 +264,14 @@ public sealed class Controller
       return team;
     }
 
-    @OpenApiExample("1700675366947")
-    public long getExpiration() {
-      return expiration;
-    }
-
     public void refresh() {
       expiration = System.currentTimeMillis() + DURATION_MILLIS;
+    }
+
+    public void verifyAdmin() throws SQLException {
+      if (!userDB().isAdmin(getUser())) {
+        throwForbidden();
+      }
     }
   }
 
