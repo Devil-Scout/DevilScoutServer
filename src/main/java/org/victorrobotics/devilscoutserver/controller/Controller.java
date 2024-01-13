@@ -258,11 +258,6 @@ public sealed class Controller
       return team;
     }
 
-    @OpenApiExample("1700675366947")
-    public long getExpiration() {
-      return expiration;
-    }
-
     public void refresh() {
       expiration = System.currentTimeMillis() + DURATION_MILLIS;
     }
