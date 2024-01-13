@@ -1,7 +1,6 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.database.User;
-import org.victorrobotics.devilscoutserver.database.User.AccessLevel;
 
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -31,26 +30,9 @@ import io.javalin.openapi.OpenApiSecurity;
 public final class UserController extends Controller {
   private UserController() {}
 
-  @OpenApi(path = "/users", methods = HttpMethod.GET, tags = "Users", summary = "SUDO",
-           description = "Get all registered users. Requires SUDO.",
-           security = @OpenApiSecurity(name = "Session"),
-           responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = User[].class)),
-                         @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = Error.class)),
-                         @OpenApiResponse(status = "403",
-                                          content = @OpenApiContent(from = Error.class)) })
-  public static void allUsers(Context ctx) throws SQLException {
-    Session session = getValidSession(ctx);
-    userDB().getAccessLevel(session.getUser())
-            .verify(AccessLevel.SUDO);
-    ctx.writeJsonStream(userDB().allUsers()
-                                .stream());
-  }
-
-  @OpenApi(path = "/users", methods = HttpMethod.POST, tags = "Users", summary = "ADMIN, SUDO",
+  @OpenApi(path = "/users", methods = HttpMethod.POST, tags = "Users", summary = "ADMIN",
            description = "Register a new user. The new user's access level may not exceed client's. "
-               + "Requires ADMIN if from the same team, or SUDO if from a different team.",
+               + "Requires ADMIN, and new user must be on the same team.",
            security = @OpenApiSecurity(name = "Session"),
            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = UserRegistration.class)),
            responses = { @OpenApiResponse(status = "201",
@@ -67,15 +49,14 @@ public final class UserController extends Controller {
                                           content = @OpenApiContent(from = Error.class)) })
   public static void registerUser(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
-    AccessLevel accessLevel = userDB().getAccessLevel(session.getUser());
-    accessLevel.verify(AccessLevel.ADMIN);
+    session.verifyAdmin();
 
     UserRegistration registration = jsonDecode(ctx, UserRegistration.class);
     int team = registration.team();
-    checkTeamRange(team);
 
     if (session.getTeam() != team) {
-      accessLevel.verify(AccessLevel.SUDO);
+      throwForbidden();
+      return;
     }
 
     if (!teamDB().containsTeam(team)) {
@@ -88,25 +69,23 @@ public final class UserController extends Controller {
       throw new ConflictResponse("User " + username + "@" + team + " already exists");
     }
 
-    accessLevel.verify(registration.accessLevel());
-
     byte[][] auth = computeAuthentication(registration.password());
     byte[] salt = auth[0];
     byte[] storedKey = auth[1];
     byte[] serverKey = auth[2];
 
-    User user = userDB().registerUser(team, username, registration.fullName(),
-                                      registration.accessLevel(), salt, storedKey, serverKey);
+    User user = userDB().registerUser(team, username, registration.fullName(), registration.admin(),
+                                      salt, storedKey, serverKey);
     ctx.json(user);
     throwCreated();
   }
 
   @OpenApi(path = "/users/{id}", methods = HttpMethod.GET, tags = "Users",
            pathParams = @OpenApiParam(name = "id", type = Long.class, required = true),
-           summary = "USER, ADMIN, SUDO",
-           description = "Get user information. USERs may access themselves. "
-               + "Accessing other users requires ADMIN if from the same team, "
-               + "or SUDO if from a different team.",
+           summary = "ADMIN?",
+           description = "Get user information. All users may access themselves. "
+               + "Accessing other users on the same team requires ADMIN."
+               + "Accessing users from other teams is forbidden.",
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = User.class)),
@@ -121,11 +100,11 @@ public final class UserController extends Controller {
   @SuppressWarnings("java:S1941") // move session closer to code that uses it
   public static void getUser(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
-    AccessLevel accessLevel = userDB().getAccessLevel(session.getUser());
+    session.verifyAdmin();
 
     String userId = ctx.pathParam("id");
     if (!userId.equals(session.getUser())) {
-      accessLevel.verify(AccessLevel.ADMIN);
+      session.verifyAdmin();
     }
 
     User user = userDB().getUser(userId);
@@ -135,17 +114,17 @@ public final class UserController extends Controller {
     }
 
     if (user.team() != session.getTeam()) {
-      accessLevel.verify(AccessLevel.SUDO);
+      throwForbidden();
+      return;
     }
 
     ctx.json(user);
   }
 
-  @OpenApi(path = "/users/{id}", methods = HttpMethod.PATCH, tags = "Users",
-           summary = "USER, ADMIN, SUDO",
-           description = "Edit a user's information. The user's accessLevel may not be elevated beyond the client's. "
-               + "USERs may edit themselves. Editing other users requires ADMIN if from the same team, "
-               + "or SUDO if from a different team.",
+  @OpenApi(path = "/users/{id}", methods = HttpMethod.PATCH, tags = "Users", summary = "ADMIN?",
+           description = "Edit a user's information. All users may edit themselves. "
+               + "Editing other users on the same team requires ADMIN. "
+               + "If changing the user's admin status, the client must be an admin.",
            pathParams = @OpenApiParam(name = "id", type = Long.class, required = true),
            security = @OpenApiSecurity(name = "Session"),
            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = UserEdits.class)),
@@ -162,11 +141,10 @@ public final class UserController extends Controller {
   @SuppressWarnings("java:S1941") // move session closer to code that uses it
   public static void editUser(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
-    AccessLevel accessLevel = userDB().getAccessLevel(session.getUser());
 
     String userId = ctx.pathParam("id");
     if (!userId.equals(session.getUser())) {
-      accessLevel.verify(AccessLevel.ADMIN);
+      session.verifyAdmin();
     }
 
     User user = userDB().getUser(userId);
@@ -176,14 +154,13 @@ public final class UserController extends Controller {
     }
 
     if (session.getTeam() != user.team()) {
-      accessLevel.verify(AccessLevel.SUDO);
-    } else {
-      accessLevel.verify(user.accessLevel());
+      throwForbidden();
+      return;
     }
 
     UserEdits edits = jsonDecode(ctx, UserEdits.class);
-    if (edits.accessLevel() != null) {
-      accessLevel.verify(edits.accessLevel());
+    if (edits.admin() != null) {
+      session.verifyAdmin();
     }
 
     byte[][] authInfo = null;
@@ -191,17 +168,15 @@ public final class UserController extends Controller {
       authInfo = computeAuthentication(edits.password());
     }
 
-    user = userDB().editUser(userId, edits.username(), edits.fullName(), edits.accessLevel(),
-                             authInfo);
+    user = userDB().editUser(userId, edits.username(), edits.fullName(), edits.admin(), authInfo);
 
     ctx.json(user);
   }
 
-  @OpenApi(path = "/users/{id}", methods = HttpMethod.DELETE, tags = "Users",
-           summary = "USER, ADMIN, SUDO",
+  @OpenApi(path = "/users/{id}", methods = HttpMethod.DELETE, tags = "Users", summary = "ADMIN?",
            pathParams = @OpenApiParam(name = "id", type = Long.class, required = true),
-           description = "Delete a user. USERs may delete themselves. "
-               + "Otherwise, requires ADMIN if from the same team, or SUDO if from a different team.",
+           description = "Delete a user. All users may delete themselves. "
+               + "Deleting another user on your team requires ADMIN. Deleting users on other teams is forbidden.",
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "204"),
                          @OpenApiResponse(status = "400",
@@ -215,11 +190,10 @@ public final class UserController extends Controller {
   @SuppressWarnings("java:S1941") // move session closer to code that uses it
   public static void deleteUser(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
-    AccessLevel accessLevel = userDB().getAccessLevel(session.getUser());
 
     String userId = ctx.pathParam("id");
     if (!userId.equals(session.getUser())) {
-      accessLevel.verify(AccessLevel.ADMIN);
+      session.verifyAdmin();
     }
 
     User user = userDB().getUser(userId);
@@ -228,10 +202,9 @@ public final class UserController extends Controller {
       return;
     }
 
-    if (session.getTeam() == user.team()) {
-      accessLevel.verify(user.accessLevel());
-    } else {
-      accessLevel.verify(AccessLevel.SUDO);
+    if (session.getTeam() != user.team()) {
+      throwForbidden();
+      return;
     }
 
     userDB().deleteUser(user.id());
@@ -266,13 +239,12 @@ public final class UserController extends Controller {
                                  @JsonProperty(required = true) String username,
                                  @OpenApiRequired @OpenApiExample("Xander Bhalla")
                                  @JsonProperty(required = true) String fullName,
-                                 @OpenApiRequired
-                                 @JsonProperty(required = true) AccessLevel accessLevel,
+                                 @OpenApiRequired @JsonProperty(required = true) boolean admin,
                                  @OpenApiRequired @OpenApiExample("password")
                                  @JsonProperty(required = true) String password) {}
 
   static record UserEdits(@OpenApiExample("xander") String username,
                           @OpenApiExample("Xander Bhalla") String fullName,
-                          AccessLevel accessLevel,
+                          @OpenApiExample("false") Boolean admin,
                           @OpenApiExample("password") String password) {}
 }

@@ -146,7 +146,7 @@ public final class SessionController extends Controller {
     ctx.json(session);
   }
 
-  @OpenApi(path = "/logout", methods = HttpMethod.DELETE, tags = "Authentication", summary = "USER",
+  @OpenApi(path = "/logout", methods = HttpMethod.DELETE, tags = "Authentication",
            description = "Invalidates a session, logging a client out.",
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "204"),

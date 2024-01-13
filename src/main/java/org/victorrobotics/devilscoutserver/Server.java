@@ -150,20 +150,13 @@ public class Server {
         post("optimization", UNIMPLEMENTED); // request alliance optimization
       });
 
-      path("teams", () -> {
-        get(TeamController::teamList);
-        post(TeamController::registerTeam);
-
-        path("{team}", () -> {
-          get(TeamController::getTeam);
-          delete(TeamController::unregisterTeam);
-          patch(TeamController::editTeam);
-          get("users", TeamController::usersOnTeam);
-        });
+      path("teams/{team}", () -> {
+        get(TeamController::getTeam);
+        patch(TeamController::editTeam);
+        get("users", TeamController::usersOnTeam);
       });
 
       path("users", () -> {
-        get(UserController::allUsers);
         post(UserController::registerUser);
 
         path("{id}", () -> {

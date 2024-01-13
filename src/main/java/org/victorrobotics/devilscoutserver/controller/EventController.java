@@ -19,7 +19,7 @@ public final class EventController extends Controller {
 
   private EventController() {}
 
-  @OpenApi(path = "/events", methods = HttpMethod.GET, tags = "Event Info", summary = "USER",
+  @OpenApi(path = "/events", methods = HttpMethod.GET, tags = "Event Info",
            description = "Get information on all current-year events.",
            headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
@@ -39,7 +39,7 @@ public final class EventController extends Controller {
   }
 
   @OpenApi(path = "/events/{event}", methods = HttpMethod.GET, tags = "Event Info",
-           summary = "USER", description = "Get information on an event.",
+           description = "Get information on an event.",
            pathParams = @OpenApiParam(name = EVENT_PATH_PARAM, type = String.class,
                                       required = true),
            headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
@@ -69,7 +69,7 @@ public final class EventController extends Controller {
   }
 
   @OpenApi(path = "/events/{event}/teams", methods = HttpMethod.GET, tags = "Event Info",
-           summary = "USER", description = "Get the list of teams attending an event.",
+           description = "Get the list of teams attending an event.",
            pathParams = @OpenApiParam(name = EVENT_PATH_PARAM, type = String.class,
                                       required = true),
            headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
@@ -99,7 +99,7 @@ public final class EventController extends Controller {
   }
 
   @OpenApi(path = "/events/{event}/match-schedule", methods = HttpMethod.GET, tags = "Event Info",
-           summary = "USER", description = "Get the match schedule at an event.",
+           description = "Get the match schedule at an event.",
            pathParams = @OpenApiParam(name = EVENT_PATH_PARAM, type = String.class,
                                       required = true),
            headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),

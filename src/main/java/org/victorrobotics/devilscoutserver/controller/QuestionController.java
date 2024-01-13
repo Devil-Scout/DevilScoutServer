@@ -16,7 +16,7 @@ public final class QuestionController extends Controller {
   private QuestionController() {}
 
   @OpenApi(path = "/questions/match", methods = HttpMethod.GET, tags = "Questions",
-           summary = "USER", description = "Get the match scouting questions.",
+           description = "Get the match scouting questions.",
            headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
@@ -32,7 +32,7 @@ public final class QuestionController extends Controller {
     setResponseEtag(ctx, Questions.MATCH_QUESTIONS_HASH);
   }
 
-  @OpenApi(path = "/questions/pit", methods = HttpMethod.GET, tags = "Questions", summary = "USER",
+  @OpenApi(path = "/questions/pit", methods = HttpMethod.GET, tags = "Questions",
            description = "Get the pit scouting questions.",
            headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
@@ -50,7 +50,6 @@ public final class QuestionController extends Controller {
   }
 
   @OpenApi(path = "/questions/drive-team", methods = HttpMethod.GET, tags = "Questions",
-           summary = "USER",
            description = "Get the drive team feedback questions.",
            headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
            security = @OpenApiSecurity(name = "Session"),

@@ -19,7 +19,7 @@ import io.javalin.openapi.OpenApiSecurity;
 public final class AnalysisController extends Controller {
   private AnalysisController() {}
 
-  @OpenApi(path = "/analysis/teams", methods = HttpMethod.GET, tags = "Analysis", summary = "USER",
+  @OpenApi(path = "/analysis/teams", methods = HttpMethod.GET, tags = "Analysis",
            description = "Get the server-generated analysis of the teams at the current event.",
            headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
