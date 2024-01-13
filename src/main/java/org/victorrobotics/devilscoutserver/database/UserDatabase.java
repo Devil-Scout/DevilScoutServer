@@ -56,10 +56,10 @@ public final class UserDatabase extends Database {
     }
   }
 
-  public User getUser(long id) throws SQLException {
+  public User getUser(String id) throws SQLException {
     try (Connection connection = getConnection();
          PreparedStatement statement = connection.prepareStatement(SELECT_USER_BY_ID)) {
-      statement.setLong(1, id);
+      statement.setString(1, id);
       try (ResultSet resultSet = statement.executeQuery()) {
         return resultSet.next() ? User.fromDatabase(resultSet) : null;
       }
@@ -78,10 +78,10 @@ public final class UserDatabase extends Database {
     }
   }
 
-  public boolean containsUser(long id) throws SQLException {
+  public boolean containsUser(String id) throws SQLException {
     try (Connection connection = getConnection();
          PreparedStatement statement = connection.prepareStatement(COUNT_USER_BY_ID)) {
-      statement.setLong(1, id);
+      statement.setString(1, id);
       try (ResultSet resultSet = statement.executeQuery()) {
         return resultSet.next() && resultSet.getInt(1) != 0;
       }
@@ -101,22 +101,24 @@ public final class UserDatabase extends Database {
       statement.setString(5, base64Encode(salt));
       statement.setString(6, base64Encode(storedKey));
       statement.setString(7, base64Encode(serverKey));
-      try (ResultSet resultSet = statement.executeQuery()) {
-        return !resultSet.next() ? null : new User(resultSet.getLong(1), team, username, fullName,
+
+      statement.execute();
+      try (ResultSet resultSet = statement.getGeneratedKeys()) {
+        return !resultSet.next() ? null : new User(resultSet.getString(1), team, username, fullName,
                                                    accessLevel, salt, storedKey, serverKey);
       }
     }
   }
 
-  public void deleteUser(long id) throws SQLException {
+  public void deleteUser(String id) throws SQLException {
     try (Connection connection = getConnection();
          PreparedStatement statement = connection.prepareStatement(DELETE_USER)) {
-      statement.setLong(1, id);
+      statement.setString(1, id);
       statement.execute();
     }
   }
 
-  public User editUser(long id, String username, String fullName, AccessLevel accessLevel,
+  public User editUser(String id, String username, String fullName, AccessLevel accessLevel,
                        byte[][] authInfo)
       throws SQLException {
     List<String> edits = new ArrayList<>();
@@ -166,7 +168,7 @@ public final class UserDatabase extends Database {
         statement.setString(index++, base64Encode(authInfo[2]));
       }
 
-      statement.setLong(index, id);
+      statement.setString(index, id);
       try (ResultSet resultSet = statement.executeQuery()) {
         return resultSet.next() ? User.fromDatabase(resultSet) : null;
       }
@@ -185,14 +187,10 @@ public final class UserDatabase extends Database {
     }
   }
 
-  public AccessLevel getAccessLevel(long id) throws SQLException {
-    if (id == -1) return AccessLevel.SUDO;
-    if (id == -2) return AccessLevel.ADMIN;
-    if (id == -3) return AccessLevel.USER;
-
+  public AccessLevel getAccessLevel(String id) throws SQLException {
     try (Connection connection = getConnection();
          PreparedStatement statement = connection.prepareStatement(SELECT_ACCESS_LEVEL_BY_ID)) {
-      statement.setLong(1, id);
+      statement.setString(1, id);
       try (ResultSet resultSet = statement.executeQuery()) {
         return resultSet.next() ? AccessLevel.valueOf(resultSet.getString(1)) : null;
       }

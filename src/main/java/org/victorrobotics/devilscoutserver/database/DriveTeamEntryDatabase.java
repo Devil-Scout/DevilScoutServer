@@ -14,14 +14,14 @@ public final class DriveTeamEntryDatabase extends EntryDatabase {
     super("drive_team_entries");
   }
 
-  public void createEntry(String eventKey, String matchKey, long submittingUser, int submittingTeam,
+  public void createEntry(String eventKey, String matchKey, String submittingUser, int submittingTeam,
                           int scoutedTeam, String data)
       throws SQLException {
     try (Connection connection = getConnection();
          PreparedStatement statement = connection.prepareStatement(INSERT_ENTRY)) {
       statement.setString(1, eventKey);
       statement.setString(2, matchKey);
-      statement.setLong(3, submittingUser);
+      statement.setString(3, submittingUser);
       statement.setShort(4, (short) submittingTeam);
       statement.setShort(5, (short) scoutedTeam);
       statement.setObject(6, data);
