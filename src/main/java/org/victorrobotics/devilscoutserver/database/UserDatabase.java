@@ -24,14 +24,14 @@ public final class UserDatabase extends Database {
 
   private static final String SELECT_SALT_BY_TEAM_AND_USERNAME =
       "SELECT salt FROM users WHERE team = ? AND username = ?";
-  private static final String SELECT_ACCESS_LEVEL_BY_ID        =
+  private static final String SELECT_ADMIN_BY_ID        =
       "SELECT admin FROM users WHERE id = ?";
 
   private static final String COUNT_USER_BY_ID = "SELECT COUNT(*) FROM users WHERE id = ?";
 
   private static final String INSERT_USER = "INSERT INTO users "
-      + "(team, username, full_name, access_level, salt, stored_key, server_key) "
-      + "VALUES (?, ?, ?, ?::user_access_level, ?, ?, ?)";
+      + "(team, username, full_name, admin, salt, stored_key, server_key) "
+      + "VALUES (?, ?, ?, ?, ?, ?, ?)";
   private static final String DELETE_USER = "DELETE FROM users WHERE id = ?";
 
   public UserDatabase() {}
@@ -187,7 +187,7 @@ public final class UserDatabase extends Database {
 
   public boolean isAdmin(String id) throws SQLException {
     try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(SELECT_ACCESS_LEVEL_BY_ID)) {
+         PreparedStatement statement = connection.prepareStatement(SELECT_ADMIN_BY_ID)) {
       statement.setString(1, id);
       try (ResultSet resultSet = statement.executeQuery()) {
         return resultSet.next() && resultSet.getBoolean(1);
