@@ -30,7 +30,8 @@ import io.javalin.openapi.OpenApiSecurity;
 public final class UserController extends Controller {
   private UserController() {}
 
-  @OpenApi(path = "/users", methods = HttpMethod.POST, tags = "Users", summary = "ADMIN",
+  @OpenApi(path = "/teams/{team}/users", methods = HttpMethod.POST, tags = "Teams",
+           summary = "ADMIN",
            description = "Register a new user. The new user's access level may not exceed client's. "
                + "Requires ADMIN, and new user must be on the same team.",
            security = @OpenApiSecurity(name = "Session"),
@@ -80,7 +81,7 @@ public final class UserController extends Controller {
     throwCreated();
   }
 
-  @OpenApi(path = "/users/{id}", methods = HttpMethod.GET, tags = "Users",
+  @OpenApi(path = "/teams/{team}/users/{id}", methods = HttpMethod.GET, tags = "Teams",
            pathParams = @OpenApiParam(name = "id", type = Long.class, required = true),
            summary = "ADMIN?",
            description = "Get user information. All users may access themselves. "
@@ -121,7 +122,7 @@ public final class UserController extends Controller {
     ctx.json(user);
   }
 
-  @OpenApi(path = "/users/{id}", methods = HttpMethod.PATCH, tags = "Users", summary = "ADMIN?",
+  @OpenApi(path = "/teams/{team}/users/{id}", methods = HttpMethod.PATCH, tags = "Teams", summary = "ADMIN?",
            description = "Edit a user's information. All users may edit themselves. "
                + "Editing other users on the same team requires ADMIN. "
                + "If changing the user's admin status, the client must be an admin.",
@@ -173,7 +174,7 @@ public final class UserController extends Controller {
     ctx.json(user);
   }
 
-  @OpenApi(path = "/users/{id}", methods = HttpMethod.DELETE, tags = "Users", summary = "ADMIN?",
+  @OpenApi(path = "/teams/{team}/users/{id}", methods = HttpMethod.DELETE, tags = "Teams", summary = "ADMIN?",
            pathParams = @OpenApiParam(name = "id", type = Long.class, required = true),
            description = "Delete a user. All users may delete themselves. "
                + "Deleting another user on your team requires ADMIN. Deleting users on other teams is forbidden.",

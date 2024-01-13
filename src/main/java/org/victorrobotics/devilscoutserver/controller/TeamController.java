@@ -95,7 +95,7 @@ public final class TeamController extends Controller {
     ctx.json(team);
   }
 
-  @OpenApi(path = "/teams/{team}/users", methods = HttpMethod.GET, tags = "Users",
+  @OpenApi(path = "/teams/{team}/users", methods = HttpMethod.GET, tags = "Teams",
            summary = "ADMIN",
            description = "Get all registered users on the specified team. "
                + "Requires ADMIN, who must be from the same team.",

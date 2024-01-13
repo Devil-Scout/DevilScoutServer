@@ -107,6 +107,7 @@ public final class SubmissionController extends Controller {
            responses = { @OpenApiResponse(status = "204"),
                          @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)) })
+  @SuppressWarnings("java:S3047")
   public static void submitDriveTeamScouting(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     Team team = teamDB().getTeam(session.getTeam());
