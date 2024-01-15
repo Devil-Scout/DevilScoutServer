@@ -7,9 +7,12 @@ import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.tba.MatchScoresCache;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public abstract sealed class Analyzer permits CrescendoAnalyzer {
@@ -28,16 +31,16 @@ public abstract sealed class Analyzer permits CrescendoAnalyzer {
 
   protected abstract List<Statistic> computeStatistics(int team) throws SQLException;
 
-  protected List<Entry> getMatchEntries(int team) throws SQLException {
-    return matchEntryDB.getEntries(team);
+  protected Map<String, List<Entry>> getMatchEntries(int team) throws SQLException {
+    return entryMap(matchEntryDB.getEntries(team));
   }
 
-  protected List<Entry> getPitEntries(int team) throws SQLException {
-    return pitEntryDB.getEntries(team);
+  protected Map<String, List<Entry>> getPitEntries(int team) throws SQLException {
+    return entryMap(pitEntryDB.getEntries(team));
   }
 
-  protected List<Entry> getDriveTeamEntries(int team) throws SQLException {
-    return driveTeamEntryDB.getEntries(team);
+  protected Map<String, List<Entry>> getDriveTeamEntries(int team) throws SQLException {
+    return entryMap(driveTeamEntryDB.getEntries(team));
   }
 
   protected Collection<Integer> getScores(int team) {
@@ -58,5 +61,14 @@ public abstract sealed class Analyzer permits CrescendoAnalyzer {
     teams.addAll(pitEntryDB.getTeamsSince(lastUpdate));
     teams.addAll(driveTeamEntryDB.getTeamsSince(lastUpdate));
     return teams;
+  }
+
+  private static Map<String, List<Entry>> entryMap(List<Entry> entries) {
+    Map<String, List<Entry>> entryMap = new LinkedHashMap<>();
+    for (Entry entry : entries) {
+      entryMap.computeIfAbsent(entry.matchKey(), s -> new ArrayList<>(1))
+              .add(entry);
+    }
+    return entryMap;
   }
 }

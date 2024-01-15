@@ -1,8 +1,9 @@
 package org.victorrobotics.devilscoutserver.analysis.statistics;
 
-public abstract class Statistic {
+@SuppressWarnings("java:S1694") // non-abstract
+public abstract sealed class Statistic permits BooleanStatistic, NumberStatistic {
   public final StatisticType type;
-  public final String name;
+  public final String        name;
 
   protected Statistic(StatisticType type, String name) {
     this.type = type;
