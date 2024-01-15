@@ -11,11 +11,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 public final class BooleanStatistic extends Statistic {
   public final int yes;
   public final int no;
+  public final int total;
 
-  public BooleanStatistic(String name, int yes, int no) {
+  public BooleanStatistic(String name, int yes, int no, int total) {
     super(StatisticType.BOOLEAN, name);
     this.yes = yes;
     this.no = no;
+    this.total = total;
   }
 
   public static BooleanStatistic direct(String name, Map<String, List<Entry>> entryMap,
@@ -32,6 +34,7 @@ public final class BooleanStatistic extends Statistic {
                                           Function<Entry, Boolean> function) {
     int yes = 0;
     int no = 0;
+    int total = 0;
     for (List<Entry> entries : entryMap.values()) {
       if (entries.isEmpty()) continue;
 
@@ -48,12 +51,15 @@ public final class BooleanStatistic extends Statistic {
         }
       }
 
-      if (yes2 > 2 * no2) {
+      if (yes2 == 0 && no2 == 0) continue;
+
+      if (yes2 > no2) {
         yes++;
-      } else if (no2 > 2 * yes2) {
+      } else if (no2 > yes2) {
         no++;
       }
+      total++;
     }
-    return new BooleanStatistic(name, yes, no);
+    return new BooleanStatistic(name, yes, no, total);
   }
 }
