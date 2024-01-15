@@ -76,7 +76,7 @@ public final class EntryDatabase extends Database {
   private String insertEntry() {
     return "INSERT INTO " + databaseName + " (event_key, " + (hasMatchKeys ? "match_key, " : "")
         + "submitting_user, submitting_team, scouted_team, data) " + "VALUES ("
-        + (hasMatchKeys ? "?, " : "") + "?, ?, ?, ?, ?, ?::JSON)";
+        + (hasMatchKeys ? "?, " : "") + "?, ?, ?, ?, ?::JSON)";
   }
 
   private String selectEntriesByTeamAndYear() {
