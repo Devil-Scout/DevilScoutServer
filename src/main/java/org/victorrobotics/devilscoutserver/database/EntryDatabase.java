@@ -4,23 +4,49 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public sealed class EntryDatabase extends Database
-    permits MatchEntryDatabase, PitEntryDatabase, DriveTeamEntryDatabase {
-  protected final String databaseName;
+public final class EntryDatabase extends Database {
+  private final String  databaseName;
+  private final boolean hasMatchKeys;
 
-  public EntryDatabase(String name) {
+  public EntryDatabase(String name, boolean hasMatchKeys) {
     this.databaseName = name;
+    this.hasMatchKeys = hasMatchKeys;
+  }
+
+  public Entry createEntry(String eventKey, String matchKey, String submittingUser,
+                           int submittingTeam, int scoutedTeam, String json)
+      throws SQLException {
+    try (Connection connection = getConnection();
+         PreparedStatement statement =
+             connection.prepareStatement(insertEntry(), Statement.RETURN_GENERATED_KEYS)) {
+      int index = 1;
+      statement.setString(index++, eventKey);
+      if (hasMatchKeys) {
+        statement.setString(index++, matchKey);
+      }
+      statement.setString(index++, submittingUser);
+      statement.setShort(index++, (short) submittingTeam);
+      statement.setShort(index++, (short) scoutedTeam);
+      statement.setObject(index++, json);
+
+      statement.execute();
+      try (ResultSet resultSet = statement.getGeneratedKeys()) {
+        return !resultSet.next() ? null
+            : new Entry(resultSet.getString(1), resultSet.getLong(2), eventKey, matchKey,
+                        submittingUser, submittingTeam, scoutedTeam, json);
+      }
+    }
   }
 
   public Set<Integer> getTeamsSince(long timestamp) throws SQLException {
     try (Connection connection = getConnection();
-         PreparedStatement statement =
-             connection.prepareStatement(selectTeamsUpdatedSinceTime(databaseName))) {
+         PreparedStatement statement = connection.prepareStatement(selectTeamsUpdatedSinceTime())) {
       statement.setLong(1, timestamp);
 
       try (ResultSet resultSet = statement.executeQuery()) {
@@ -33,28 +59,38 @@ public sealed class EntryDatabase extends Database
     }
   }
 
-  public List<String> getEntries(int scoutedTeam) throws SQLException {
+  public List<Entry> getEntries(int scoutedTeam) throws SQLException {
     try (Connection connection = getConnection();
-         PreparedStatement statement =
-             connection.prepareStatement(selectJsonByTeamAndYear(databaseName))) {
+         PreparedStatement statement = connection.prepareStatement(selectEntriesByTeamAndYear())) {
       statement.setShort(1, (short) scoutedTeam);
 
       try (ResultSet resultSet = statement.executeQuery()) {
-        List<String> entries = new ArrayList<>();
-        while (resultSet.next()) {
-          entries.add(resultSet.getString(1));
+        List<Entry> entries = new ArrayList<>();
+        if (hasMatchKeys) {
+          while (resultSet.next()) {
+            entries.add(Entry.fromDatabaseWithMatch(resultSet));
+          }
+        } else {
+          while (resultSet.next()) {
+            entries.add(Entry.fromDatabase(resultSet));
+          }
         }
         return entries;
       }
     }
   }
 
-  private static String selectJsonByTeamAndYear(String databaseName) {
-    return "SELECT data FROM " + databaseName
-        + " WHERE scouted_team = ? AND timestamp >= '2024-1-1'";
+  private String insertEntry() {
+    return "INSERT INTO " + databaseName + " (event_key, " + (hasMatchKeys ? "match_key, " : "")
+        + "submitting_user, submitting_team, scouted_team, data) " + "VALUES ("
+        + (hasMatchKeys ? "?, " : "") + "?, ?, ?, ?, ?, ?::JSON)";
   }
 
-  private static String selectTeamsUpdatedSinceTime(String databaseName) {
+  private String selectEntriesByTeamAndYear() {
+    return "SELECT * FROM " + databaseName + " WHERE scouted_team = ? AND timestamp >= '2024-1-1'";
+  }
+
+  private String selectTeamsUpdatedSinceTime() {
     return "SELECT DISTINCT scouted_team FROM " + databaseName
         + " WHERE timestamp >= TO_TIMESTAMP(?::double precision / 1000);";
   }

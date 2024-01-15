@@ -1,9 +1,7 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.analysis.TeamAnalysisCache;
-import org.victorrobotics.devilscoutserver.database.DriveTeamEntryDatabase;
-import org.victorrobotics.devilscoutserver.database.MatchEntryDatabase;
-import org.victorrobotics.devilscoutserver.database.PitEntryDatabase;
+import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.tba.EventCache;
@@ -50,9 +48,9 @@ public sealed class Controller
   private static EventTeamListCache EVENT_TEAMS_CACHE;
   private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
 
-  private static MatchEntryDatabase     MATCH_ENTRIES;
-  private static PitEntryDatabase       PIT_ENTRIES;
-  private static DriveTeamEntryDatabase DRIVE_TEAM_ENTRIES;
+  private static EntryDatabase MATCH_ENTRIES;
+  private static EntryDatabase PIT_ENTRIES;
+  private static EntryDatabase DRIVE_TEAM_ENTRIES;
 
   private static TeamAnalysisCache TEAM_ANALYSIS_CACHE;
 
@@ -82,15 +80,15 @@ public sealed class Controller
     MATCH_SCHEDULE_CACHE = cache;
   }
 
-  public static void setMatchEntryDB(MatchEntryDatabase matchEntries) {
+  public static void setMatchEntryDB(EntryDatabase matchEntries) {
     MATCH_ENTRIES = matchEntries;
   }
 
-  public static void setPitEntryDB(PitEntryDatabase pitEntries) {
+  public static void setPitEntryDB(EntryDatabase pitEntries) {
     PIT_ENTRIES = pitEntries;
   }
 
-  public static void setDriveTeamEntryDB(DriveTeamEntryDatabase driveTeamEntries) {
+  public static void setDriveTeamEntryDB(EntryDatabase driveTeamEntries) {
     DRIVE_TEAM_ENTRIES = driveTeamEntries;
   }
 
@@ -126,15 +124,15 @@ public sealed class Controller
     return MATCH_SCHEDULE_CACHE;
   }
 
-  public static MatchEntryDatabase matchEntryDB() {
+  public static EntryDatabase matchEntryDB() {
     return MATCH_ENTRIES;
   }
 
-  public static PitEntryDatabase pitEntryDB() {
+  public static EntryDatabase pitEntryDB() {
     return PIT_ENTRIES;
   }
 
-  public static DriveTeamEntryDatabase driveTeamEntryDB() {
+  public static EntryDatabase driveTeamEntryDB() {
     return DRIVE_TEAM_ENTRIES;
   }
 
