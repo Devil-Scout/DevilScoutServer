@@ -28,6 +28,7 @@ import org.victorrobotics.devilscoutserver.tba.EventCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
+import org.victorrobotics.devilscoutserver.tba.MatchScoresCache;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -200,8 +201,9 @@ public class Server {
     LOGGER.info("Memory caches ready");
 
     LOGGER.info("Initializing analysis...");
+    MatchScoresCache matchScoresCache = new MatchScoresCache();
     Analyzer analyzer = new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
-                                              Controller.driveTeamEntryDB());
+                                              Controller.driveTeamEntryDB(), matchScoresCache);
     Controller.setTeamAnalysisCache(new TeamAnalysisCache(analyzer));
     LOGGER.info("Analysis ready");
 
@@ -232,8 +234,10 @@ public class Server {
       LOGGER.info("Purged {} expired sessions in {}ms", size - sessions.size(),
                   System.currentTimeMillis() - start);
     }, 0, 5, TimeUnit.MINUTES);
-    executor.scheduleAtFixedRate(() -> refreshCache(Controller.teamAnalysisCache()), 0, 15,
-                                 TimeUnit.MINUTES);
+    executor.scheduleAtFixedRate(() -> {
+      refreshCache(matchScoresCache);
+      refreshCache(Controller.teamAnalysisCache());
+    }, 0, 15, TimeUnit.MINUTES);
     LOGGER.info("Daemon services running");
 
     LOGGER.info("Starting HTTP server...");

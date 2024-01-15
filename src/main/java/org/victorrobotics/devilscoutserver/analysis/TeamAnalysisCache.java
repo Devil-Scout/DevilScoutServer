@@ -44,7 +44,7 @@ public class TeamAnalysisCache implements Cache<Integer, List<Statistic>, TeamSt
                                       cacheMap.computeIfAbsent(team,
                                                                t -> new CacheValue<>(new TeamStatistics(t)));
                                   try {
-                                    return value.refresh(analyzer.processTeam(team));
+                                    return value.refresh(analyzer.computeStatistics(team));
                                   } catch (JsonProcessingException | SQLException e) {}
                                   return false;
                                 })
