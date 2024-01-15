@@ -1,5 +1,6 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
+import org.victorrobotics.devilscoutserver.analysis.statistics.Statistic;
 import org.victorrobotics.devilscoutserver.database.Entry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.tba.MatchScoresCache;
@@ -9,8 +10,6 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 public abstract sealed class Analyzer permits CrescendoAnalyzer {
   private final EntryDatabase    matchEntryDB;
@@ -26,19 +25,18 @@ public abstract sealed class Analyzer permits CrescendoAnalyzer {
     this.matchScoresCache = matchScoresCache;
   }
 
-  protected abstract List<Statistic> computeStatistics(int team)
-      throws SQLException, JsonProcessingException;
+  protected abstract List<Statistic> computeStatistics(int team) throws SQLException;
 
   protected List<Entry> getMatchEntries(int team) throws SQLException {
     return matchEntryDB.getEntries(team);
   }
 
   protected List<Entry> getPitEntries(int team) throws SQLException {
-    return matchEntryDB.getEntries(team);
+    return pitEntryDB.getEntries(team);
   }
 
   protected List<Entry> getDriveTeamEntries(int team) throws SQLException {
-    return matchEntryDB.getEntries(team);
+    return driveTeamEntryDB.getEntries(team);
   }
 
   protected Collection<Integer> getScores(int team) {

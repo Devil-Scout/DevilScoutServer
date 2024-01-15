@@ -1,8 +1,10 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
+import org.victorrobotics.devilscoutserver.analysis.statistics.Statistic;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.tba.MatchScoresCache;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public final class CrescendoAnalyzer extends Analyzer {
@@ -12,7 +14,7 @@ public final class CrescendoAnalyzer extends Analyzer {
   }
 
   @Override
-  protected List<Statistic> computeStatistics(int team) {
+  protected List<Statistic> computeStatistics(int team) throws SQLException {
     return List.of();
   }
 }

@@ -1,6 +1,6 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.analysis.TeamAnalysisCache;
+import org.victorrobotics.devilscoutserver.analysis.TeamStatisticsCache;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
@@ -52,7 +52,7 @@ public sealed class Controller
   private static EntryDatabase PIT_ENTRIES;
   private static EntryDatabase DRIVE_TEAM_ENTRIES;
 
-  private static TeamAnalysisCache TEAM_ANALYSIS_CACHE;
+  private static TeamStatisticsCache TEAM_ANALYSIS_CACHE;
 
   protected Controller() {}
 
@@ -92,7 +92,7 @@ public sealed class Controller
     DRIVE_TEAM_ENTRIES = driveTeamEntries;
   }
 
-  public static void setTeamAnalysisCache(TeamAnalysisCache teamAnalysisCache) {
+  public static void setTeamStatisticsCache(TeamStatisticsCache teamAnalysisCache) {
     TEAM_ANALYSIS_CACHE = teamAnalysisCache;
   }
 
@@ -136,7 +136,7 @@ public sealed class Controller
     return DRIVE_TEAM_ENTRIES;
   }
 
-  public static TeamAnalysisCache teamAnalysisCache() {
+  public static TeamStatisticsCache teamAnalysisCache() {
     return TEAM_ANALYSIS_CACHE;
   }
 

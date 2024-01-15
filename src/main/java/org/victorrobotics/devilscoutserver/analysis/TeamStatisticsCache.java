@@ -1,5 +1,6 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
+import org.victorrobotics.devilscoutserver.analysis.statistics.Statistic;
 import org.victorrobotics.devilscoutserver.cache.Cache;
 import org.victorrobotics.devilscoutserver.cache.CacheValue;
 
@@ -11,14 +12,14 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-public class TeamAnalysisCache implements Cache<Integer, List<Statistic>, TeamStatistics> {
+public class TeamStatisticsCache implements Cache<Integer, List<Statistic>, TeamStatistics> {
   private final ConcurrentMap<Integer, CacheValue<List<Statistic>, TeamStatistics>> cacheMap;
 
   private final Analyzer analyzer;
 
   private long timestamp;
 
-  public TeamAnalysisCache(Analyzer analyzer) {
+  public TeamStatisticsCache(Analyzer analyzer) {
     this.cacheMap = new ConcurrentHashMap<>();
     this.analyzer = analyzer;
   }
@@ -45,7 +46,9 @@ public class TeamAnalysisCache implements Cache<Integer, List<Statistic>, TeamSt
                                                                t -> new CacheValue<>(new TeamStatistics(t)));
                                   try {
                                     return value.refresh(analyzer.computeStatistics(team));
-                                  } catch (JsonProcessingException | SQLException e) {}
+                                  } catch (SQLException e) {
+                                    e.printStackTrace();
+                                  }
                                   return false;
                                 })
                                 .count();

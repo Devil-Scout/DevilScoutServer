@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -19,12 +18,11 @@ public final class EntryDatabase extends Database {
     this.hasMatchKeys = hasMatchKeys;
   }
 
-  public Entry createEntry(String eventKey, String matchKey, String submittingUser,
-                           int submittingTeam, int scoutedTeam, String json)
+  public void createEntry(String eventKey, String matchKey, String submittingUser,
+                          int submittingTeam, int scoutedTeam, String json)
       throws SQLException {
     try (Connection connection = getConnection();
-         PreparedStatement statement =
-             connection.prepareStatement(insertEntry(), Statement.RETURN_GENERATED_KEYS)) {
+         PreparedStatement statement = connection.prepareStatement(insertEntry())) {
       int index = 1;
       statement.setString(index++, eventKey);
       if (hasMatchKeys) {
@@ -36,11 +34,6 @@ public final class EntryDatabase extends Database {
       statement.setObject(index++, json);
 
       statement.execute();
-      try (ResultSet resultSet = statement.getGeneratedKeys()) {
-        return !resultSet.next() ? null
-            : new Entry(resultSet.getString(1), resultSet.getLong(2), eventKey, matchKey,
-                        submittingUser, submittingTeam, scoutedTeam, json);
-      }
     }
   }
 

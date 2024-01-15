@@ -9,7 +9,7 @@ import static io.javalin.apibuilder.ApiBuilder.post;
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
 import org.victorrobotics.devilscoutserver.analysis.CrescendoAnalyzer;
-import org.victorrobotics.devilscoutserver.analysis.TeamAnalysisCache;
+import org.victorrobotics.devilscoutserver.analysis.TeamStatisticsCache;
 import org.victorrobotics.devilscoutserver.cache.Cache;
 import org.victorrobotics.devilscoutserver.controller.AnalysisController;
 import org.victorrobotics.devilscoutserver.controller.Controller;
@@ -204,7 +204,7 @@ public class Server {
     MatchScoresCache matchScoresCache = new MatchScoresCache();
     Analyzer analyzer = new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
                                               Controller.driveTeamEntryDB(), matchScoresCache);
-    Controller.setTeamAnalysisCache(new TeamAnalysisCache(analyzer));
+    Controller.setTeamStatisticsCache(new TeamStatisticsCache(analyzer));
     LOGGER.info("Analysis ready");
 
     LOGGER.info("Starting daemon services...");
