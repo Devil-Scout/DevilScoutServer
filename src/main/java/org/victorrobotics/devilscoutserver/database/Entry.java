@@ -2,6 +2,8 @@ package org.victorrobotics.devilscoutserver.database;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -17,6 +19,33 @@ public record Entry(String id,
                     JsonNode json) {
 
   private static final ObjectMapper PARSER = new ObjectMapper();
+
+  public Integer getInteger(String path) {
+    JsonNode node = json.at(path);
+    return node.isNumber() ? node.intValue() : null;
+  }
+
+  public Boolean getBoolean(String path) {
+    JsonNode node = json.at(path);
+    return node.isBoolean() ? node.booleanValue() : null;
+
+  }
+
+  public List<Integer> getIntegers(String path) {
+    JsonNode node = json.at(path);
+    if (node.isNumber()) return List.of(node.intValue());
+    if (!node.isArray()) return null;
+
+    List<Integer> values = new ArrayList<>(node.size());
+    for (int i = 0; i < node.size(); i++) {
+      JsonNode node2 = node.get(i);
+      if (!node2.isNumber()) {
+        return null;
+      }
+      values.add(node2.intValue());
+    }
+    return values;
+  }
 
   public static Entry fromDatabase(ResultSet resultSet) throws SQLException {
     JsonNode json;

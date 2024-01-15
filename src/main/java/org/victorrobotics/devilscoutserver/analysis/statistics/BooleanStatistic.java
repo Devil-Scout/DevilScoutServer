@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 public final class BooleanStatistic extends Statistic {
   public final int yes;
   public final int no;
@@ -22,11 +20,7 @@ public final class BooleanStatistic extends Statistic {
 
   public static BooleanStatistic direct(String name, Map<String, List<Entry>> entryMap,
                                         String path) {
-    return computed(name, entryMap, entry -> {
-      JsonNode node = entry.json()
-                           .at(path);
-      return node.isBoolean() ? node.booleanValue() : null;
-    });
+    return computed(name, entryMap, entry -> entry.getBoolean(path));
   }
 
   @SuppressWarnings("java:S4276") // use Predicate<Entry> instead

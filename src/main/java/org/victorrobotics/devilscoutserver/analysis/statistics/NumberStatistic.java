@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 public final class NumberStatistic extends Statistic {
   public final int    count;
   public final double min;
@@ -64,16 +62,12 @@ public final class NumberStatistic extends Statistic {
 
   public static NumberStatistic direct(String name, Map<String, List<Entry>> entryMap,
                                        String path) {
-    return computed(name, entryMap, entry -> {
-      JsonNode node = entry.json()
-                           .at(path);
-      return node.isNumber() ? node.doubleValue() : Double.NaN;
-    });
+    return computed(name, entryMap, entry -> entry.getInteger(path));
   }
 
   @SuppressWarnings("java:S4276") // use ToDoubleFunction<Entry> instead
   public static NumberStatistic computed(String name, Map<String, List<Entry>> entryMap,
-                                         Function<Entry, Double> function) {
+                                         Function<Entry, Integer> function) {
     List<Double> numbers = new ArrayList<>();
     for (List<Entry> entries : entryMap.values()) {
       if (entries.isEmpty()) continue;
@@ -81,7 +75,7 @@ public final class NumberStatistic extends Statistic {
       double sum = 0;
       int count = 0;
       for (Entry entry : entries) {
-        Double value = function.apply(entry);
+        Integer value = function.apply(entry);
         if (value != null) {
           sum += value.doubleValue();
           count++;

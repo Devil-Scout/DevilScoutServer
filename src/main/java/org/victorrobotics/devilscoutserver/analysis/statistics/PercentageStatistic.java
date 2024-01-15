@@ -2,13 +2,10 @@ package org.victorrobotics.devilscoutserver.analysis.statistics;
 
 import org.victorrobotics.devilscoutserver.database.Entry;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 public final class PercentageStatistic extends Statistic {
   public final int      total;
@@ -24,23 +21,7 @@ public final class PercentageStatistic extends Statistic {
 
   public static PercentageStatistic direct(String name, Map<String, List<Entry>> entryMap,
                                            List<String> labels, String path) {
-    return computed(name, entryMap, labels, entry -> {
-      JsonNode node = entry.json()
-                           .at(path);
-      if (node.isInt()) return List.of(node.intValue());
-      if (!node.isArray()) return null;
-
-      int size = node.size();
-      List<Integer> values = new ArrayList<>(size);
-      for (int i = 0; i < size; i++) {
-        JsonNode value = node.get(i);
-        if (!value.isInt()) {
-          throw new IllegalArgumentException();
-        }
-        values.add(value.intValue());
-      }
-      return values;
-    });
+    return computed(name, entryMap, labels, entry -> entry.getIntegers(path));
   }
 
   @SuppressWarnings("java:S4276") // use ToDoubleFunction<Entry> instead
