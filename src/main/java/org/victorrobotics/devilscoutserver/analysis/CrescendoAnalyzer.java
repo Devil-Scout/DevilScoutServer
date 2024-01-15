@@ -15,6 +15,6 @@ public final class CrescendoAnalyzer extends Analyzer {
 
   @Override
   protected List<Statistic> computeStatistics(int team) throws SQLException {
-    return List.of();
+    return List.of(scoresStat(team));
   }
 }

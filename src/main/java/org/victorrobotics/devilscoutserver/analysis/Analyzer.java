@@ -1,5 +1,6 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
+import org.victorrobotics.devilscoutserver.analysis.statistics.NumberStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.Statistic;
 import org.victorrobotics.devilscoutserver.database.Entry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
@@ -43,6 +44,12 @@ public abstract sealed class Analyzer permits CrescendoAnalyzer {
     return matchScoresCache.get(team)
                            .value()
                            .getScores();
+  }
+
+  protected NumberStatistic scoresStat(int team) {
+    return new NumberStatistic("Match Score", matchScoresCache.get(team)
+                                                              .value()
+                                                              .getScores());
   }
 
   public Set<Integer> getTeamsToUpdate(long lastUpdate) throws SQLException {
