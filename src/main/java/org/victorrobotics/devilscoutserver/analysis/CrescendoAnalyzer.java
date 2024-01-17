@@ -24,11 +24,30 @@ public final class CrescendoAnalyzer extends Analyzer {
     // Map<String, List<Entry>> pitEntries = getPitEntries(team);
     // Map<String, List<Entry>> driveTeamEntries = getDriveTeamEntries(team);
     return List.of(scoresStat(team),
-                   NumberStatistic.direct("Ground pickups", matchEntries, "/teleop/pickup_ground"),
+                   NumberStatistic.direct("Ground Pickups", matchEntries, "/teleop/pickup_ground"),
                    BooleanStatistic.direct("Trap", matchEntries, "/endgame/trap"),
                    PercentageStatistic.direct("Start Location", matchEntries,
                                               List.of("Next to amp", "Front of speaker",
                                                       "Next to speaker", "Next to source"),
-                                              "/auto/start_pos"));
+                                              "/auto/start_pos"),
+                   autoScore(matchEntries));
+  }
+
+  private static NumberStatistic autoScore(Map<String, List<Entry>> matchEntries) {
+    return NumberStatistic.computed("Autonomous Points", matchEntries, entry -> {
+      List<Integer> actions = entry.getIntegers("/auto/routine");
+      if (actions == null) return null;
+
+      int points = 0;
+      for (int action : actions) {
+        points += switch (action) {
+          case 0 -> 2; // Leave start
+          case 1 -> 5; // Score speaker
+          case 2 -> 2; // Score amp
+          default -> 0;
+        };
+      }
+      return points;
+    });
   }
 }
