@@ -19,6 +19,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.javalin.http.Context;
+import io.javalin.http.NoContentResponse;
 import io.javalin.http.NotFoundResponse;
 import io.javalin.http.UnauthorizedResponse;
 import io.javalin.openapi.HttpMethod;
@@ -55,8 +56,7 @@ public final class SessionController extends Controller {
 
     byte[] salt = userDB().getSalt(team, username);
     if (salt == null) {
-      throwUserNotFound(username, team);
-      return;
+      throw new NotFoundResponse();
     }
 
     byte[] nonce = new byte[16];
@@ -90,14 +90,12 @@ public final class SessionController extends Controller {
 
     User user = userDB().getUser(teamNum, username);
     if (user == null) {
-      throwUserNotFound(username, teamNum);
-      return;
+      throw new NotFoundResponse();
     }
 
     Team team = teamDB().getTeam(teamNum);
     if (team == null) {
-      throwTeamNotFound(teamNum);
-      return;
+      throw new NotFoundResponse();
     }
 
     String nonceId = username + "@" + teamNum + ":" + base64Encode(request.nonce());
@@ -155,7 +153,7 @@ public final class SessionController extends Controller {
   public static void logout(Context ctx) {
     Session session = getValidSession(ctx);
     sessions().remove(session.getKey());
-    throwNoContent();
+    throw new NoContentResponse();
   }
 
   private static byte[] xor(byte[] bytes1, byte[] bytes2) {

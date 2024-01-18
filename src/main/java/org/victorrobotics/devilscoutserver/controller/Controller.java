@@ -19,10 +19,7 @@ import java.util.concurrent.ConcurrentMap;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
-import io.javalin.http.CreatedResponse;
 import io.javalin.http.ForbiddenResponse;
-import io.javalin.http.NoContentResponse;
-import io.javalin.http.NotFoundResponse;
 import io.javalin.http.NotModifiedResponse;
 import io.javalin.http.UnauthorizedResponse;
 import io.javalin.openapi.OpenApiExample;
@@ -98,6 +95,7 @@ public sealed class Controller
     TEAM_ANALYSIS_CACHE = teamAnalysisCache;
   }
 
+  @SuppressWarnings("java:S2384") // copy map
   public static ConcurrentMap<String, Session> sessions() {
     return SESSIONS;
   }
@@ -198,34 +196,6 @@ public sealed class Controller
     }
   }
 
-  protected static void throwForbidden() {
-    throw new ForbiddenResponse("User not permitted to access this resource");
-  }
-
-  protected static void throwNoContent() {
-    throw new NoContentResponse();
-  }
-
-  protected static void throwCreated() {
-    throw new CreatedResponse();
-  }
-
-  protected static void throwTeamNotFound(int team) {
-    throw new NotFoundResponse("Team " + team + " not found");
-  }
-
-  protected static void throwUserNotFound(String userId) {
-    throw new NotFoundResponse("User #" + userId + " not found");
-  }
-
-  protected static void throwUserNotFound(String username, int team) {
-    throw new NotFoundResponse("User " + username + "@" + team + " not found");
-  }
-
-  protected static void throwEventNotFound(String eventKey) {
-    throw new NotFoundResponse("Event " + eventKey + " not found");
-  }
-
   public static class Session {
     private static final long DURATION_MILLIS = 8 * 60 * 60 * 1000;
 
@@ -270,7 +240,7 @@ public sealed class Controller
 
     public void verifyAdmin() throws SQLException {
       if (!userDB().isAdmin(getUser())) {
-        throwForbidden();
+        throw new ForbiddenResponse();
       }
     }
   }

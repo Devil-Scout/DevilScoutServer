@@ -38,6 +38,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import io.javalin.Javalin;
+import io.javalin.community.ssl.SSLPlugin;
 import io.javalin.http.Handler;
 import io.javalin.http.HttpResponseException;
 import io.javalin.openapi.ApiKeyAuth;
@@ -80,14 +81,21 @@ public class Server {
     javalin = Javalin.create(config -> {
       config.http.prefer405over404 = true;
 
+      config.plugins.enableSslRedirects();
+      config.plugins.register(new SSLPlugin(sslConfig -> {
+        sslConfig.pemFromPath(System.getenv("SSL_CERT_PATH"), System.getenv("SSL_KEY_PATH"));
+        sslConfig.redirect = true;
+        sslConfig.sniHostCheck = false;
+      }));
+
       // @format:off
       config.plugins.register(new OpenApiPlugin(
           new OpenApiPluginConfiguration()
-              .withDocumentationPath("/openapi/json")
+              .withDocumentationPath("/openapi")
               .withDefinitionConfiguration((version, definition) -> definition
                   .withOpenApiInfo(openApiInfo -> {
                     openApiInfo.setTitle("DevilScout Server");
-                    openApiInfo.setVersion("alpha");
+                    openApiInfo.setVersion("v1");
                     openApiInfo.setDescription(API_DESCRIPTION);
                   })
                   .withSecurity(new SecurityComponentConfiguration()
@@ -101,62 +109,15 @@ public class Server {
 
       SwaggerConfiguration uiConfig = new SwaggerConfiguration();
       uiConfig.setTitle("DevilScout Server API");
-      uiConfig.setDocumentationPath("/openapi/json");
-      uiConfig.setUiPath("/openapi/ui");
+      uiConfig.setDocumentationPath("/openapi");
+      uiConfig.setUiPath("/");
       uiConfig.injectJavaScript(REMOVE_TOP_BAR);
       config.plugins.register(new SwaggerPlugin(uiConfig));
     });
 
     javalin.routes(() -> {
-      post("login", SessionController::login);
-      post("auth", SessionController::auth);
-      delete("logout", SessionController::logout);
-
-      get("sessions/{session_id}", SessionController::getSession);
-
-      path("events", () -> {
-        get(EventController::getAllEvents);
-
-        path("{event}", () -> {
-          get(EventController::getEvent);
-          get("teams", EventController::getTeams);
-          get("match-schedule", EventController::getMatchSchedule);
-        });
-      });
-
-      path("questions", () -> {
-        get("match", QuestionController::matchQuestions);
-        get("pit", QuestionController::pitQuestions);
-        get("drive-team", QuestionController::driveTeamQuestions);
-      });
-
-      path("submissions", () -> {
-        post("match-scouting", SubmissionController::submitMatchScouting);
-        post("pit-scouting", SubmissionController::submitPitScouting);
-        post("drive-team-scouting", SubmissionController::submitDriveTeamScouting);
-      });
-
-      path("analysis", () -> {
-        get("teams", AnalysisController::teams);
-        post("simulation", UNIMPLEMENTED); // request match simulation
-        post("optimization", UNIMPLEMENTED); // request alliance optimization
-      });
-
-      path("teams/{team}", () -> {
-        get(TeamController::getTeam);
-        patch(TeamController::editTeam);
-
-        path("users", () -> {
-          get(TeamController::usersOnTeam);
-          post(UserController::registerUser);
-
-          path("{id}", () -> {
-            get(UserController::getUser);
-            delete(UserController::deleteUser);
-            patch(UserController::editUser);
-          });
-        });
-      });
+      path("/api/v1", Server::endpoints);
+      /// other static elements? website?
     });
 
     javalin.exception(HttpResponseException.class, (e, ctx) -> {
@@ -176,7 +137,7 @@ public class Server {
   }
 
   public void start() {
-    javalin.start(8000);
+    javalin.start();
   }
 
   public void stop() {
@@ -248,13 +209,61 @@ public class Server {
 
   private static void refreshCache(Cache<?, ?, ?> cache) {
     long start = System.currentTimeMillis();
-    try {
-      cache.refresh();
-    } catch (Exception e) {
-      LOGGER.info("Cache refresh: ", e);
-    }
+    cache.refresh();
     LOGGER.info("Refreshed {} ({}) in {}ms", cache.getClass()
                                                   .getSimpleName(),
                 cache.size(), System.currentTimeMillis() - start);
+  }
+
+  private static void endpoints() {
+    post("login", SessionController::login);
+    post("auth", SessionController::auth);
+    delete("logout", SessionController::logout);
+
+    get("sessions/{session_id}", SessionController::getSession);
+
+    path("events", () -> {
+      get(EventController::getAllEvents);
+
+      path("{event}", () -> {
+        get(EventController::getEvent);
+        get("teams", EventController::getTeams);
+        get("match-schedule", EventController::getMatchSchedule);
+      });
+    });
+
+    path("questions", () -> {
+      get("match", QuestionController::matchQuestions);
+      get("pit", QuestionController::pitQuestions);
+      get("drive-team", QuestionController::driveTeamQuestions);
+    });
+
+    path("submissions", () -> {
+      post("match-scouting", SubmissionController::submitMatchScouting);
+      post("pit-scouting", SubmissionController::submitPitScouting);
+      post("drive-team-scouting", SubmissionController::submitDriveTeamScouting);
+    });
+
+    path("analysis", () -> {
+      get("teams", AnalysisController::teams);
+      post("simulation", UNIMPLEMENTED); // request match simulation
+      post("optimization", UNIMPLEMENTED); // request alliance optimization
+    });
+
+    path("teams/{team}", () -> {
+      get(TeamController::getTeam);
+      patch(TeamController::editTeam);
+
+      path("users", () -> {
+        get(TeamController::usersOnTeam);
+        post(UserController::registerUser);
+
+        path("{id}", () -> {
+          get(UserController::getUser);
+          delete(UserController::deleteUser);
+          patch(UserController::editUser);
+        });
+      });
+    });
   }
 }
