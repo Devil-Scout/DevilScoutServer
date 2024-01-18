@@ -1,8 +1,8 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.cache.CacheValue;
-import org.victorrobotics.devilscoutserver.tba.Event;
-import org.victorrobotics.devilscoutserver.tba.EventTeam;
+import org.victorrobotics.devilscoutserver.tba.EventInfo;
+import org.victorrobotics.devilscoutserver.tba.TeamInfo;
 import org.victorrobotics.devilscoutserver.tba.EventTeamList;
 import org.victorrobotics.devilscoutserver.tba.MatchSchedule;
 
@@ -24,18 +24,18 @@ public final class EventController extends Controller {
            headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = Event[].class)),
+                                          content = @OpenApiContent(from = EventInfo[].class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)) })
   public static void getAllEvents(Context ctx) {
     getValidSession(ctx);
 
-    long timestamp = eventCache().timestamp();
+    long timestamp = eventInfoCache().lastModified();
     checkIfNoneMatch(ctx, timestamp);
 
     setResponseEtag(ctx, timestamp);
-    ctx.writeJsonStream(eventCache().values());
+    ctx.json(eventInfoCache().values());
   }
 
   @OpenApi(path = "/events/{event}", methods = HttpMethod.GET, tags = "Event Info",
@@ -45,7 +45,7 @@ public final class EventController extends Controller {
            headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = Event.class)),
+                                          content = @OpenApiContent(from = EventInfo.class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)),
@@ -55,13 +55,13 @@ public final class EventController extends Controller {
     getValidSession(ctx);
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
 
-    CacheValue<?, Event> entry = eventCache().get(eventKey);
+    CacheValue<?, EventInfo> entry = eventInfoCache().get(eventKey);
     if (entry == null) {
       throwEventNotFound(eventKey);
       return;
     }
 
-    long timestamp = entry.lastRefresh();
+    long timestamp = entry.lastModified();
     checkIfNoneMatch(ctx, timestamp);
 
     setResponseEtag(ctx, timestamp);
@@ -75,7 +75,7 @@ public final class EventController extends Controller {
            headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = EventTeam[].class)),
+                                          content = @OpenApiContent(from = TeamInfo[].class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
                                           content = @OpenApiContent(from = Error.class)),
@@ -85,13 +85,13 @@ public final class EventController extends Controller {
     getValidSession(ctx);
 
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
-    if (!eventCache().containsKey(eventKey)) {
+    if (eventInfoCache().get(eventKey) == null) {
       throwEventNotFound(eventKey);
       return;
     }
 
     CacheValue<?, EventTeamList> entry = eventTeamsCache().get(eventKey);
-    long timestamp = entry.lastRefresh();
+    long timestamp = entry.lastModified();
     checkIfNoneMatch(ctx, timestamp);
 
     setResponseEtag(ctx, timestamp);
@@ -115,13 +115,13 @@ public final class EventController extends Controller {
     getValidSession(ctx);
 
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
-    if (!eventCache().containsKey(eventKey)) {
+    if (eventInfoCache().get(eventKey) == null) {
       throwEventNotFound(eventKey);
       return;
     }
 
     CacheValue<?, MatchSchedule> entry = matchScheduleCache().get(eventKey);
-    long timestamp = entry.lastRefresh();
+    long timestamp = entry.lastModified();
     checkIfNoneMatch(ctx, timestamp);
 
     setResponseEtag(ctx, timestamp);

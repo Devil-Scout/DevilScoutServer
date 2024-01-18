@@ -86,7 +86,7 @@ public final class TeamController extends Controller {
     TeamEdits edits = jsonDecode(ctx, TeamEdits.class);
 
     String eventKey = edits.eventKey();
-    if (eventKey != null && !"".equals(eventKey) && !eventCache().containsKey(eventKey)) {
+    if (eventKey != null && !"".equals(eventKey) && eventInfoCache().get(eventKey) == null) {
       throwEventNotFound(eventKey);
       return;
     }

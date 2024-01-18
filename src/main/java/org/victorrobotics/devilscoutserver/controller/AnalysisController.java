@@ -1,7 +1,7 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.analysis.TeamStatistics;
-import org.victorrobotics.devilscoutserver.tba.EventTeam;
+import org.victorrobotics.devilscoutserver.tba.TeamInfo;
 
 import java.sql.SQLException;
 import java.util.Collection;
@@ -36,7 +36,7 @@ public final class AnalysisController extends Controller {
       throw new BadRequestResponse("Team not attending event");
     }
 
-    Collection<EventTeam> teams = eventTeamsCache().get(eventKey)
+    Collection<TeamInfo> teams = eventTeamsCache().get(eventKey)
                                                    .value()
                                                    .teams();
     ctx.writeJsonStream(teams.stream()

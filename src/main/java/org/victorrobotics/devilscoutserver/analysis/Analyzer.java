@@ -43,14 +43,27 @@ public abstract sealed class Analyzer permits CrescendoAnalyzer {
   }
 
   @SuppressWarnings("unchecked")
-  public List<Statistic> processTeam(int team) throws SQLException, JsonProcessingException {
-    List<String> matchJsons = matchEntryDB.getEntries(team);
-    List<String> pitJsons = pitEntryDB.getEntries(team);
-    List<String> driveTeamJsons = driveTeamEntryDB.getEntries(team);
+  public List<Statistic> processTeam(int team) {
+    List<String> matchJsons;
+    List<String> pitJsons;
+    List<String> driveTeamJsons;
+    try {
+      matchJsons = matchEntryDB.getEntries(team);
+      pitJsons = pitEntryDB.getEntries(team);
+      driveTeamJsons = driveTeamEntryDB.getEntries(team);
+    } catch (SQLException e) {
+      throw new IllegalStateException(e);
+    }
 
     Map<String, List<Object>> matchData = new LinkedHashMap<>();
     for (String json : matchJsons) {
-      Map<String, Map<String, Object>> data = JSON.readValue(json, Map.class);
+      Map<String, Map<String, Object>> data;
+      try {
+        data = JSON.readValue(json, Map.class);
+      } catch (JsonProcessingException e) {
+        throw new IllegalStateException(e);
+      }
+
       for (Map.Entry<String, Map<String, Object>> page : data.entrySet()) {
         String pageKey = page.getKey();
         for (Map.Entry<String, Object> response : page.getValue()
@@ -63,7 +76,13 @@ public abstract sealed class Analyzer permits CrescendoAnalyzer {
 
     Map<String, List<Object>> pitData = new LinkedHashMap<>();
     for (String json : pitJsons) {
-      Map<String, Map<String, Object>> data = JSON.readValue(json, Map.class);
+      Map<String, Map<String, Object>> data;
+      try {
+        data = JSON.readValue(json, Map.class);
+      } catch (JsonProcessingException e) {
+        throw new IllegalStateException(e);
+      }
+
       for (Map.Entry<String, Map<String, Object>> page : data.entrySet()) {
         String pageKey = page.getKey();
         for (Map.Entry<String, Object> response : page.getValue()
@@ -76,7 +95,13 @@ public abstract sealed class Analyzer permits CrescendoAnalyzer {
 
     Map<String, List<Object>> driveTeamData = new LinkedHashMap<>();
     for (String json : driveTeamJsons) {
-      Map<String, Object> data = JSON.readValue(json, Map.class);
+      Map<String, Object> data;
+      try {
+        data = JSON.readValue(json, Map.class);
+      } catch (JsonProcessingException e) {
+        throw new IllegalStateException(e);
+      }
+
       for (Map.Entry<String, Object> response : data.entrySet()) {
         driveTeamData.computeIfAbsent(response.getKey(), s -> new ArrayList<>())
                      .add(response.getValue());

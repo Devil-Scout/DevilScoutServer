@@ -7,7 +7,8 @@ import org.victorrobotics.bluealliance.Match.Simple;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class MatchScheduleCache extends BlueAllianceCache<String, List<Match.Simple>, MatchSchedule> {
+public class MatchScheduleCache
+    extends BlueAllianceCache<String, List<Match.Simple>, MatchSchedule> {
   public MatchScheduleCache() {
     super(TimeUnit.HOURS.toMillis(8));
   }
@@ -18,7 +19,7 @@ public class MatchScheduleCache extends BlueAllianceCache<String, List<Match.Sim
   }
 
   @Override
-  protected MatchSchedule createValue(String key) {
+  protected MatchSchedule createValue(String key, List<Match.Simple> data) {
     return new MatchSchedule();
   }
 }

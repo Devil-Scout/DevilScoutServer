@@ -8,14 +8,14 @@ import java.util.Objects;
 import io.javalin.openapi.OpenApiExample;
 import io.javalin.openapi.OpenApiRequired;
 
-public class EventTeam implements Cacheable<Simple>, Comparable<EventTeam> {
+public class TeamInfo implements Cacheable<Simple>, Comparable<TeamInfo> {
   private final String key;
 
   private int    number;
   private String name;
   private String location;
 
-  public EventTeam(String key) {
+  public TeamInfo(String key) {
     this.key = key;
   }
 
@@ -65,7 +65,8 @@ public class EventTeam implements Cacheable<Simple>, Comparable<EventTeam> {
   }
 
   @Override
-  public int compareTo(EventTeam other) {
+  @SuppressWarnings("java:S1210") // override equals too
+  public int compareTo(TeamInfo other) {
     return Integer.compare(number, other.number);
   }
 }

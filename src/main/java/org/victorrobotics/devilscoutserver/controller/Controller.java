@@ -6,8 +6,8 @@ import org.victorrobotics.devilscoutserver.database.MatchEntryDatabase;
 import org.victorrobotics.devilscoutserver.database.PitEntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
-import org.victorrobotics.devilscoutserver.tba.EventCache;
-import org.victorrobotics.devilscoutserver.tba.EventTeamCache;
+import org.victorrobotics.devilscoutserver.tba.EventInfoCache;
+import org.victorrobotics.devilscoutserver.tba.TeamInfoCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 
@@ -45,8 +45,8 @@ public sealed class Controller
   private static UserDatabase USERS;
   private static TeamDatabase TEAMS;
 
-  private static EventTeamCache     TEAM_CACHE;
-  private static EventCache         EVENT_CACHE;
+  private static TeamInfoCache     TEAM_CACHE;
+  private static EventInfoCache     EVENT_INFO_CACHE;
   private static EventTeamListCache EVENT_TEAMS_CACHE;
   private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
 
@@ -66,11 +66,11 @@ public sealed class Controller
     TEAMS = teams;
   }
 
-  public static void setEventCache(EventCache cache) {
-    EVENT_CACHE = cache;
+  public static void setEventInfoCache(EventInfoCache cache) {
+    EVENT_INFO_CACHE = cache;
   }
 
-  public static void setTeamCache(EventTeamCache cache) {
+  public static void setTeamCache(TeamInfoCache cache) {
     TEAM_CACHE = cache;
   }
 
@@ -110,12 +110,12 @@ public sealed class Controller
     return TEAMS;
   }
 
-  public static EventTeamCache teamCache() {
+  public static TeamInfoCache teamCache() {
     return TEAM_CACHE;
   }
 
-  public static EventCache eventCache() {
-    return EVENT_CACHE;
+  public static EventInfoCache eventInfoCache() {
+    return EVENT_INFO_CACHE;
   }
 
   public static EventTeamListCache eventTeamsCache() {
