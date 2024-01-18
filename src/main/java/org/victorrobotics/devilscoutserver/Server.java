@@ -209,7 +209,9 @@ public class Server {
 
   private static void refreshCache(Cache<?, ?, ?> cache) {
     long start = System.currentTimeMillis();
-    cache.refresh();
+    try {
+      cache.refresh();
+    } catch (Exception e) {}
     LOGGER.info("Refreshed {} ({}) in {}ms", cache.getClass()
                                                   .getSimpleName(),
                 cache.size(), System.currentTimeMillis() - start);
