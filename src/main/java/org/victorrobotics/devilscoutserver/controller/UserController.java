@@ -35,9 +35,9 @@ public final class UserController extends Controller {
   private UserController() {}
 
   @OpenApi(path = "/teams/{team}/users", methods = HttpMethod.POST, tags = "Teams",
+           pathParams = @OpenApiParam(name = "team", type = Integer.class, required = true),
            summary = "ADMIN",
-           description = "Register a new user. The new user's access level may not exceed client's. "
-               + "Requires ADMIN, and new user must be on the same team.",
+           description = "Register a new user. Requires ADMIN, and new user must be on the same team.",
            security = @OpenApiSecurity(name = "Session"),
            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = UserRegistration.class)),
            responses = { @OpenApiResponse(status = "201",
@@ -84,7 +84,8 @@ public final class UserController extends Controller {
   }
 
   @OpenApi(path = "/teams/{team}/users/{id}", methods = HttpMethod.GET, tags = "Teams",
-           pathParams = @OpenApiParam(name = "id", type = Long.class, required = true),
+           pathParams = { @OpenApiParam(name = "team", type = Integer.class, required = true),
+                          @OpenApiParam(name = "id", type = String.class, required = true) },
            summary = "ADMIN?",
            description = "Get user information. All users may access themselves. "
                + "Accessing other users on the same team requires ADMIN."
@@ -122,11 +123,13 @@ public final class UserController extends Controller {
     ctx.json(user);
   }
 
-  @OpenApi(path = "/teams/{team}/users/{id}", methods = HttpMethod.PATCH, tags = "Teams", summary = "ADMIN?",
+  @OpenApi(path = "/teams/{team}/users/{id}", methods = HttpMethod.PATCH, tags = "Teams",
+           summary = "ADMIN?",
            description = "Edit a user's information. All users may edit themselves. "
                + "Editing other users on the same team requires ADMIN. "
                + "If changing the user's admin status, the client must be an admin.",
-           pathParams = @OpenApiParam(name = "id", type = Long.class, required = true),
+           pathParams = { @OpenApiParam(name = "team", type = Integer.class, required = true),
+                          @OpenApiParam(name = "id", type = String.class, required = true) },
            security = @OpenApiSecurity(name = "Session"),
            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = UserEdits.class)),
            responses = { @OpenApiResponse(status = "200",
@@ -172,8 +175,10 @@ public final class UserController extends Controller {
     ctx.json(user);
   }
 
-  @OpenApi(path = "/teams/{team}/users/{id}", methods = HttpMethod.DELETE, tags = "Teams", summary = "ADMIN?",
-           pathParams = @OpenApiParam(name = "id", type = Long.class, required = true),
+  @OpenApi(path = "/teams/{team}/users/{id}", methods = HttpMethod.DELETE, tags = "Teams",
+           summary = "ADMIN?",
+           pathParams = { @OpenApiParam(name = "team", type = Integer.class, required = true),
+                          @OpenApiParam(name = "id", type = String.class, required = true) },
            description = "Delete a user. All users may delete themselves. "
                + "Deleting another user on your team requires ADMIN. Deleting users on other teams is forbidden.",
            security = @OpenApiSecurity(name = "Session"),

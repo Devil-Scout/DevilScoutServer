@@ -9,7 +9,7 @@ import static io.javalin.apibuilder.ApiBuilder.post;
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
 import org.victorrobotics.devilscoutserver.analysis.CrescendoAnalyzer;
-import org.victorrobotics.devilscoutserver.analysis.TeamAnalysisCache;
+import org.victorrobotics.devilscoutserver.analysis.TeamStatisticsCache;
 import org.victorrobotics.devilscoutserver.cache.Cache;
 import org.victorrobotics.devilscoutserver.controller.AnalysisController;
 import org.victorrobotics.devilscoutserver.controller.Controller;
@@ -21,15 +21,14 @@ import org.victorrobotics.devilscoutserver.controller.SubmissionController;
 import org.victorrobotics.devilscoutserver.controller.TeamController;
 import org.victorrobotics.devilscoutserver.controller.UserController;
 import org.victorrobotics.devilscoutserver.database.Database;
-import org.victorrobotics.devilscoutserver.database.DriveTeamEntryDatabase;
-import org.victorrobotics.devilscoutserver.database.MatchEntryDatabase;
-import org.victorrobotics.devilscoutserver.database.PitEntryDatabase;
+import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.tba.EventCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
+import org.victorrobotics.devilscoutserver.tba.MatchScoresCache;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -150,9 +149,9 @@ public class Server {
     Database.initConnectionPool();
     Controller.setUserDB(new UserDatabase());
     Controller.setTeamDB(new TeamDatabase());
-    Controller.setMatchEntryDB(new MatchEntryDatabase());
-    Controller.setPitEntryDB(new PitEntryDatabase());
-    Controller.setDriveTeamEntryDB(new DriveTeamEntryDatabase());
+    Controller.setMatchEntryDB(new EntryDatabase("match_entries", true));
+    Controller.setPitEntryDB(new EntryDatabase("pit_entries", false));
+    Controller.setDriveTeamEntryDB(new EntryDatabase("drive_team_entries", true));
     LOGGER.info("Database connected");
 
     LOGGER.info("Initializing memory caches...");
@@ -163,9 +162,10 @@ public class Server {
     LOGGER.info("Memory caches ready");
 
     LOGGER.info("Initializing analysis...");
+    MatchScoresCache matchScoresCache = new MatchScoresCache();
     Analyzer analyzer = new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
-                                              Controller.driveTeamEntryDB());
-    Controller.setTeamAnalysisCache(new TeamAnalysisCache(analyzer));
+                                              Controller.driveTeamEntryDB(), matchScoresCache);
+    Controller.setTeamStatisticsCache(new TeamStatisticsCache(analyzer));
     LOGGER.info("Analysis ready");
 
     LOGGER.info("Starting daemon services...");
@@ -195,8 +195,10 @@ public class Server {
       LOGGER.info("Purged {} expired sessions in {}ms", size - sessions.size(),
                   System.currentTimeMillis() - start);
     }, 0, 5, TimeUnit.MINUTES);
-    executor.scheduleAtFixedRate(() -> refreshCache(Controller.teamAnalysisCache()), 0, 15,
-                                 TimeUnit.MINUTES);
+    executor.scheduleAtFixedRate(() -> {
+      refreshCache(matchScoresCache);
+      refreshCache(Controller.teamAnalysisCache());
+    }, 0, 15, TimeUnit.MINUTES);
     LOGGER.info("Daemon services running");
 
     LOGGER.info("Starting HTTP server...");
