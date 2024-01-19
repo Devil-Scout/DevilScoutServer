@@ -1,5 +1,6 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
+import org.victorrobotics.devilscoutserver.analysis.statistics.Statistic;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
 import java.util.List;

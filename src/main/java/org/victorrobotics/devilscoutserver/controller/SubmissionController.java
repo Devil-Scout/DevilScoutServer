@@ -93,8 +93,8 @@ public final class SubmissionController extends Controller {
       throw new BadRequestResponse("Invalid/expired submission format");
     }
 
-    pitEntryDB().createEntry(payload.event(), session.getUser(), session.getTeam(), payload.team(),
-                             jsonEncode(payload.data()));
+    pitEntryDB().createEntry(payload.event(), null, session.getUser(), session.getTeam(),
+                             payload.team(), jsonEncode(payload.data()));
     throw new NoContentResponse();
   }
 

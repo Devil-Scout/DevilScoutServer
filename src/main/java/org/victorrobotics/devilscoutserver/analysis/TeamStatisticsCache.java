@@ -1,5 +1,6 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
+import org.victorrobotics.devilscoutserver.analysis.statistics.Statistic;
 import org.victorrobotics.devilscoutserver.cache.ListCache;
 
 import java.sql.SQLException;
@@ -8,10 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class TeamAnalysisCache extends ListCache<Integer, List<Statistic>, TeamStatistics> {
+public class TeamStatisticsCache extends ListCache<Integer, List<Statistic>, TeamStatistics> {
   private final Analyzer analyzer;
 
-  public TeamAnalysisCache(Analyzer analyzer) {
+  public TeamStatisticsCache(Analyzer analyzer) {
     super(false);
     this.analyzer = analyzer;
   }
@@ -29,7 +30,7 @@ public class TeamAnalysisCache extends ListCache<Integer, List<Statistic>, TeamS
 
     Map<Integer, List<Statistic>> data = new LinkedHashMap<>();
     for (Integer team : teamsToUpdate) {
-      List<Statistic> statistics = analyzer.processTeam(team);
+      List<Statistic> statistics = analyzer.computeStatistics(team);
       data.put(team, statistics);
     }
     return data;
