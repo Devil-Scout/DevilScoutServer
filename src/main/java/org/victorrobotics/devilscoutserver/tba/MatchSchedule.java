@@ -205,9 +205,10 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
   private final ConcurrentNavigableMap<String, MatchInfo> matchMap;
   private final Collection<MatchInfo>                     matches;
 
-  public MatchSchedule() {
-    matchMap = new ConcurrentSkipListMap<>(MATCH_KEY_COMPARATOR);
-    matches = Collections.unmodifiableCollection(matchMap.values());
+  public MatchSchedule(List<Match.Simple> matches) {
+    this.matchMap = new ConcurrentSkipListMap<>(MATCH_KEY_COMPARATOR);
+    this.matches = Collections.unmodifiableCollection(matchMap.values());
+    update(matches);
   }
 
   @Override

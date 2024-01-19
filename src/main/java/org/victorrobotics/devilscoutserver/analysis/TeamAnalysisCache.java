@@ -37,6 +37,6 @@ public class TeamAnalysisCache extends ListCache<Integer, List<Statistic>, TeamS
 
   @Override
   protected TeamStatistics createValue(Integer key, List<Statistic> data) {
-    return new TeamStatistics(key);
+    return new TeamStatistics(key, data);
   }
 }

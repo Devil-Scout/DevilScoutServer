@@ -1,21 +1,21 @@
 package org.victorrobotics.devilscoutserver.tba;
 
-import org.victorrobotics.bluealliance.Event.Simple;
+import org.victorrobotics.bluealliance.Event;
 
 import java.util.List;
 
-public class EventInfoCache extends BlueAllianceListCache<String, Simple, EventInfo> {
+public class EventInfoCache extends BlueAllianceListCache<String, Event.Simple, EventInfo> {
   public EventInfoCache() {
-    super(List.of(Simple.endpointForYear(2023)));
+    super(List.of(Event.Simple.endpointForYear(2023)));
   }
 
   @Override
-  protected EventInfo createValue(String key, Simple data) {
-    return new EventInfo(key);
+  protected EventInfo createValue(String key, Event.Simple data) {
+    return new EventInfo(key, data);
   }
 
   @Override
-  protected String getKey(Simple data) {
+  protected String getKey(Event.Simple data) {
     return data.key;
   }
 }

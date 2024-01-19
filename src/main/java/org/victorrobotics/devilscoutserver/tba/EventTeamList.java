@@ -14,9 +14,10 @@ public class EventTeamList implements Cacheable<Collection<TeamInfo>> {
   private final ConcurrentNavigableMap<Integer, TeamInfo> teamMap;
   private final Collection<TeamInfo>                      teams;
 
-  public EventTeamList() {
-    teamMap = new ConcurrentSkipListMap<>();
-    teams = Collections.unmodifiableCollection(teamMap.values());
+  public EventTeamList(Collection<TeamInfo> teams) {
+    this.teamMap = new ConcurrentSkipListMap<>();
+    this.teams = Collections.unmodifiableCollection(teamMap.values());
+    update(teams);
   }
 
   @Override

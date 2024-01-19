@@ -13,9 +13,9 @@ public class TeamStatistics implements Cacheable<List<Statistic>> {
 
   private List<Statistic> data;
 
-  public TeamStatistics(int team) {
+  public TeamStatistics(int team, List<Statistic> data) {
     this.team = team;
-    data = List.of();
+    data = List.copyOf(data);
   }
 
   @Override

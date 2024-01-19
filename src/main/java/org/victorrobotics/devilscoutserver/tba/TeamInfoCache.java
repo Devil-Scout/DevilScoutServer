@@ -12,8 +12,8 @@ public class TeamInfoCache extends BlueAllianceListCache<String, Team.Simple, Te
   }
 
   @Override
-  protected TeamInfo createValue(String teamKey, Team.Simple data) {
-    return new TeamInfo(teamKey);
+  protected TeamInfo createValue(String key, Team.Simple data) {
+    return new TeamInfo(key, data);
   }
 
   @Override

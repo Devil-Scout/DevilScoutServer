@@ -1,6 +1,5 @@
 package org.victorrobotics.devilscoutserver.tba;
 
-import org.victorrobotics.bluealliance.Event.Date;
 import org.victorrobotics.bluealliance.Event;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
@@ -12,13 +11,14 @@ import io.javalin.openapi.OpenApiRequired;
 public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo> {
   private final String key;
 
-  private String name;
-  private String location;
-  private Date   start;
-  private Date   end;
+  private String     name;
+  private String     location;
+  private Event.Date start;
+  private Event.Date end;
 
-  public EventInfo(String eventKey) {
+  public EventInfo(String eventKey, Event.Simple event) {
     this.key = eventKey;
+    update(event);
   }
 
   @Override
