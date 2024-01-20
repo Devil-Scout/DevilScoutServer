@@ -7,6 +7,7 @@ import org.victorrobotics.devilscoutserver.tba.EventTeamList;
 import org.victorrobotics.devilscoutserver.tba.MatchSchedule;
 
 import io.javalin.http.Context;
+import io.javalin.http.NotFoundResponse;
 import io.javalin.openapi.HttpMethod;
 import io.javalin.openapi.OpenApi;
 import io.javalin.openapi.OpenApiContent;
@@ -57,8 +58,7 @@ public final class EventController extends Controller {
 
     CacheValue<?, Event> entry = eventCache().get(eventKey);
     if (entry == null) {
-      throwEventNotFound(eventKey);
-      return;
+      throw new NotFoundResponse();
     }
 
     long timestamp = entry.lastRefresh();
@@ -86,8 +86,7 @@ public final class EventController extends Controller {
 
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
     if (!eventCache().containsKey(eventKey)) {
-      throwEventNotFound(eventKey);
-      return;
+      throw new NotFoundResponse();
     }
 
     CacheValue<?, EventTeamList> entry = eventTeamsCache().get(eventKey);
@@ -116,8 +115,7 @@ public final class EventController extends Controller {
 
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
     if (!eventCache().containsKey(eventKey)) {
-      throwEventNotFound(eventKey);
-      return;
+      throw new NotFoundResponse();
     }
 
     CacheValue<?, MatchSchedule> entry = matchScheduleCache().get(eventKey);

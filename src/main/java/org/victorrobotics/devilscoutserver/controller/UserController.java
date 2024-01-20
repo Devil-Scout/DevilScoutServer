@@ -17,6 +17,10 @@ import javax.crypto.spec.PBEKeySpec;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.javalin.http.ConflictResponse;
 import io.javalin.http.Context;
+import io.javalin.http.CreatedResponse;
+import io.javalin.http.ForbiddenResponse;
+import io.javalin.http.NoContentResponse;
+import io.javalin.http.NotFoundResponse;
 import io.javalin.openapi.HttpMethod;
 import io.javalin.openapi.OpenApi;
 import io.javalin.openapi.OpenApiContent;
@@ -56,13 +60,11 @@ public final class UserController extends Controller {
     int team = registration.team();
 
     if (session.getTeam() != team) {
-      throwForbidden();
-      return;
+      throw new ForbiddenResponse();
     }
 
     if (!teamDB().containsTeam(team)) {
-      throwTeamNotFound(team);
-      return;
+      throw new NotFoundResponse();
     }
 
     String username = registration.username();
@@ -78,7 +80,7 @@ public final class UserController extends Controller {
     User user = userDB().registerUser(team, username, registration.fullName(), registration.admin(),
                                       salt, storedKey, serverKey);
     ctx.json(user);
-    throwCreated();
+    throw new CreatedResponse();
   }
 
   @OpenApi(path = "/teams/{team}/users/{id}", methods = HttpMethod.GET, tags = "Teams",
@@ -111,13 +113,11 @@ public final class UserController extends Controller {
 
     User user = userDB().getUser(userId);
     if (user == null) {
-      throwUserNotFound(userId);
-      return;
+      throw new NotFoundResponse();
     }
 
     if (user.team() != session.getTeam()) {
-      throwForbidden();
-      return;
+      throw new ForbiddenResponse();
     }
 
     ctx.json(user);
@@ -153,13 +153,11 @@ public final class UserController extends Controller {
 
     User user = userDB().getUser(userId);
     if (user == null) {
-      throwUserNotFound(userId);
-      return;
+      throw new NotFoundResponse();
     }
 
     if (session.getTeam() != user.team()) {
-      throwForbidden();
-      return;
+      throw new ForbiddenResponse();
     }
 
     UserEdits edits = jsonDecode(ctx, UserEdits.class);
@@ -204,17 +202,15 @@ public final class UserController extends Controller {
 
     User user = userDB().getUser(userId);
     if (user == null) {
-      throwUserNotFound(userId);
-      return;
+      throw new NotFoundResponse();
     }
 
     if (session.getTeam() != user.team()) {
-      throwForbidden();
-      return;
+      throw new ForbiddenResponse();
     }
 
     userDB().deleteUser(user.id());
-    throwNoContent();
+    throw new NoContentResponse();
   }
 
   private static byte[][] computeAuthentication(String password) {
