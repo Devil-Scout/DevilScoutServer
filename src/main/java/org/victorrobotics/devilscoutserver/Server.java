@@ -24,8 +24,8 @@ import org.victorrobotics.devilscoutserver.database.Database;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
-import org.victorrobotics.devilscoutserver.tba.EventCache;
-import org.victorrobotics.devilscoutserver.tba.EventTeamCache;
+import org.victorrobotics.devilscoutserver.tba.EventInfoCache;
+import org.victorrobotics.devilscoutserver.tba.TeamInfoCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScoresCache;
@@ -155,8 +155,8 @@ public class Server {
     LOGGER.info("Database connected");
 
     LOGGER.info("Initializing memory caches...");
-    Controller.setEventCache(new EventCache());
-    Controller.setTeamCache(new EventTeamCache());
+    Controller.setEventInfoCache(new EventInfoCache());
+    Controller.setTeamCache(new TeamInfoCache());
     Controller.setEventTeamsCache(new EventTeamListCache(Controller.teamCache()));
     Controller.setMatchScheduleCache(new MatchScheduleCache());
     LOGGER.info("Memory caches ready");
@@ -178,7 +178,7 @@ public class Server {
                                          .name("Refresh-", 0)
                                          .factory();
     ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, refreshThreads);
-    executor.scheduleAtFixedRate(() -> refreshCache(Controller.eventCache()), 0, 5,
+    executor.scheduleAtFixedRate(() -> refreshCache(Controller.eventInfoCache()), 0, 5,
                                  TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> refreshCache(Controller.matchScheduleCache()), 0, 1,
                                  TimeUnit.MINUTES);
@@ -211,9 +211,7 @@ public class Server {
 
   private static void refreshCache(Cache<?, ?, ?> cache) {
     long start = System.currentTimeMillis();
-    try {
-      cache.refresh();
-    } catch (Exception e) {}
+    cache.refresh();
     LOGGER.info("Refreshed {} ({}) in {}ms", cache.getClass()
                                                   .getSimpleName(),
                 cache.size(), System.currentTimeMillis() - start);

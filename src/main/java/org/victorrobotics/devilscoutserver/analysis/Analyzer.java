@@ -29,18 +29,18 @@ public abstract sealed class Analyzer permits CrescendoAnalyzer {
     this.matchScoresCache = matchScoresCache;
   }
 
-  protected abstract List<Statistic> computeStatistics(int team) throws SQLException;
+  protected abstract List<Statistic> computeStatistics(int team);
 
-  protected Map<String, List<Entry>> getMatchEntries(int team) throws SQLException {
-    return entryMap(matchEntryDB.getEntries(team));
+  protected Map<String, List<Entry>> getMatchEntries(int team) {
+    return entryMap(matchEntryDB, team);
   }
 
-  protected Map<String, List<Entry>> getPitEntries(int team) throws SQLException {
-    return entryMap(pitEntryDB.getEntries(team));
+  protected Map<String, List<Entry>> getPitEntries(int team) {
+    return entryMap(pitEntryDB, team);
   }
 
-  protected Map<String, List<Entry>> getDriveTeamEntries(int team) throws SQLException {
-    return entryMap(driveTeamEntryDB.getEntries(team));
+  protected Map<String, List<Entry>> getDriveTeamEntries(int team) {
+    return entryMap(driveTeamEntryDB, team);
   }
 
   protected Collection<Integer> getScores(int team) {
@@ -63,7 +63,14 @@ public abstract sealed class Analyzer permits CrescendoAnalyzer {
     return teams;
   }
 
-  private static Map<String, List<Entry>> entryMap(List<Entry> entries) {
+  private static Map<String, List<Entry>> entryMap(EntryDatabase database, int team) {
+    List<Entry> entries;
+    try {
+      entries = database.getEntries(team);
+    } catch(SQLException e) {
+      throw new IllegalStateException(e);
+    }
+
     Map<String, List<Entry>> entryMap = new LinkedHashMap<>();
     for (Entry entry : entries) {
       entryMap.computeIfAbsent(entry.matchKey(), s -> new ArrayList<>(1))

@@ -19,7 +19,7 @@ public final class CrescendoAnalyzer extends Analyzer {
   }
 
   @Override
-  protected List<Statistic> computeStatistics(int team) throws SQLException {
+  protected List<Statistic> computeStatistics(int team) {
     Map<String, List<Entry>> matchEntries = getMatchEntries(team);
     // Map<String, List<Entry>> pitEntries = getPitEntries(team);
     // Map<String, List<Entry>> driveTeamEntries = getDriveTeamEntries(team);

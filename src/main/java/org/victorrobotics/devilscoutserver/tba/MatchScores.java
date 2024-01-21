@@ -13,9 +13,10 @@ public class MatchScores implements Cacheable<List<Match.Simple>> {
   private final String               teamKey;
   private final Map<String, Integer> scores;
 
-  public MatchScores(int team) {
+  public MatchScores(int team, List<Match.Simple> matches) {
     teamKey = "frc" + team;
     scores = new LinkedHashMap<>();
+    update(matches);
   }
 
   @Override

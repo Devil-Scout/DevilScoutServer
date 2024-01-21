@@ -1,52 +1,37 @@
 package org.victorrobotics.devilscoutserver.cache;
 
-import static org.victorrobotics.devilscoutserver.EncodingUtil.jsonEncode;
-
-import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public class CacheValue<D, V extends Cacheable<D>> implements Comparable<CacheValue<?, V>> {
   private final V value;
 
-  private volatile long   lastRefresh;
-  private volatile long   lastAccess;
-  private volatile String jsonCache;
+  private volatile long lastModified;
+  private volatile long lastAccess;
 
   public CacheValue(V value) {
     this.value = value;
   }
 
-  public boolean refresh(D data) {
-    if (data == null) return false;
-    if (!value.update(data)) return false;
-
-    lastRefresh = System.currentTimeMillis();
-    jsonCache = null;
-    return true;
+  public boolean update(D data) {
+    boolean update = value.update(data);
+    if (update) {
+      lastModified = System.currentTimeMillis();
+    }
+    return update;
   }
 
+  @JsonValue
   public V value() {
     lastAccess = System.currentTimeMillis();
     return value;
   }
 
-  public long lastRefresh() {
-    return lastRefresh;
+  public long lastModified() {
+    return lastModified;
   }
 
   public long lastAccess() {
     return lastAccess;
-  }
-
-  @JsonValue
-  @JsonRawValue
-  public String toJson() {
-    if (jsonCache == null) {
-      jsonCache = jsonEncode(value);
-    }
-
-    lastAccess = System.currentTimeMillis();
-    return jsonCache;
   }
 
   @Override

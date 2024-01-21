@@ -18,7 +18,7 @@ public class MatchScoresCache extends BlueAllianceCache<Integer, List<Match.Simp
   }
 
   @Override
-  protected MatchScores createValue(Integer team) {
-    return new MatchScores(team);
+  protected MatchScores createValue(Integer key, List<Match.Simple> data) {
+    return new MatchScores(key, data);
   }
 }

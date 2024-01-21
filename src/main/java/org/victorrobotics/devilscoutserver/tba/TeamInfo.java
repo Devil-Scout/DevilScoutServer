@@ -1,6 +1,6 @@
 package org.victorrobotics.devilscoutserver.tba;
 
-import org.victorrobotics.bluealliance.Team.Simple;
+import org.victorrobotics.bluealliance.Team;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
 import java.util.Objects;
@@ -8,19 +8,20 @@ import java.util.Objects;
 import io.javalin.openapi.OpenApiExample;
 import io.javalin.openapi.OpenApiRequired;
 
-public class EventTeam implements Cacheable<Simple>, Comparable<EventTeam> {
+public class TeamInfo implements Cacheable<Team.Simple>, Comparable<TeamInfo> {
   private final String key;
 
   private int    number;
   private String name;
   private String location;
 
-  public EventTeam(String key) {
+  public TeamInfo(String key, Team.Simple team) {
     this.key = key;
+    update(team);
   }
 
   @Override
-  public boolean update(Simple team) {
+  public boolean update(Team.Simple team) {
     if (!key.equals(team.key)) {
       throw new IllegalArgumentException();
     }
@@ -65,7 +66,8 @@ public class EventTeam implements Cacheable<Simple>, Comparable<EventTeam> {
   }
 
   @Override
-  public int compareTo(EventTeam other) {
+  @SuppressWarnings("java:S1210") // override equals too
+  public int compareTo(TeamInfo other) {
     return Integer.compare(number, other.number);
   }
 }
