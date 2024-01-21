@@ -201,9 +201,9 @@ public class Server {
     });
 
     path("submissions", () -> {
-      post("match-scouting", SubmissionController::submitMatchScouting);
-      post("pit-scouting", SubmissionController::submitPitScouting);
-      post("drive-team-scouting", SubmissionController::submitDriveTeamScouting);
+      post("match/{matchKey}/{teamNum}", SubmissionController::submitMatch);
+      post("pit/{eventKey}/{teamNum}", SubmissionController::submitPit);
+      post("drive-team/{matchKey}", SubmissionController::submitDriveTeam);
     });
 
     path("analysis", () -> {

@@ -3,7 +3,6 @@ package org.victorrobotics.devilscoutserver.controller;
 import static org.victorrobotics.devilscoutserver.EncodingUtil.jsonEncode;
 
 import org.victorrobotics.bluealliance.Match.Alliance;
-import org.victorrobotics.devilscoutserver.database.Team;
 import org.victorrobotics.devilscoutserver.questions.Question;
 import org.victorrobotics.devilscoutserver.questions.QuestionPage;
 import org.victorrobotics.devilscoutserver.questions.Questions;
@@ -14,15 +13,16 @@ import java.util.Map;
 
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
+import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.NoContentResponse;
 
 public final class SubmissionController extends Controller {
   private SubmissionController() {}
 
   /**
-   * POST /submissions/match-scouting
+   * POST /submissions/match/{matchKey}/{teamNum}
    * <p>
-   * Request body: {@link MatchSubmission}
+   * Request body: Map (as defined by /questions/match)
    * <p>
    * Success: 204 NoContent
    * <p>
@@ -30,47 +30,46 @@ public final class SubmissionController extends Controller {
    * <ul>
    * <li>400 BadRequest</li>
    * <li>401 Unauthorized</li>
+   * <li>403 Forbidden</li>
    * </ul>
    */
-  public static void submitMatchScouting(Context ctx) throws SQLException {
+  public static void submitMatch(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
-    Team team = teamDB().getTeam(session.getTeam());
 
-    MatchSubmission payload = jsonDecode(ctx, MatchSubmission.class);
-
-    if (!team.eventKey()
-             .equals(payload.event())) {
-      throw new BadRequestResponse("Cannot submit match if not attending event");
+    String matchKey = ctx.pathParam("matchKey");
+    int teamNum = ctx.pathParamAsClass("teamNum", Integer.class)
+                     .get();
+    String teamEvent = teamDB().getTeam(session.getTeam())
+                               .eventKey();
+    if (teamEvent.isEmpty() || !matchKey.startsWith(teamEvent)) {
+      throw new ForbiddenResponse();
     }
 
-    if (!payload.match()
-                .startsWith(payload.event())) {
-      throw new BadRequestResponse("Invalid match key for event");
-    }
-
-    MatchInfo match = matchScheduleCache().get(payload.event())
+    MatchInfo match = matchScheduleCache().get(teamEvent)
                                           .value()
-                                          .getMatch(payload.match());
+                                          .getMatch(matchKey);
     if (match == null) {
       throw new BadRequestResponse("Match not found at event");
-    } else if (!teamOnAlliance(payload.team(), match.getBlue())
-        && !teamOnAlliance(payload.team(), match.getRed())) {
-          throw new BadRequestResponse("Scouted team not in match");
-        }
+    }
 
-    if (!matchesSchema(payload.data(), Questions.MATCH_QUESTIONS)) {
+    if (!teamOnAlliance(teamNum, match.getBlue()) && !teamOnAlliance(teamNum, match.getRed())) {
+      throw new BadRequestResponse("Scouted team not in match");
+    }
+
+    Map<String, Map<String, Object>> payload = jsonDecode(ctx, Map.class);
+    if (!matchesSchema(payload, Questions.MATCH_QUESTIONS)) {
       throw new BadRequestResponse("Invalid/expired submission format");
     }
 
-    matchEntryDB().createEntry(payload.event(), payload.match(), session.getUser(),
-                               session.getTeam(), payload.team(), jsonEncode(payload.data()));
+    matchEntryDB().createEntry(teamEvent, matchKey, session.getUser(), session.getTeam(), teamNum,
+                               jsonEncode(payload));
     throw new NoContentResponse();
   }
 
   /**
-   * POST /submissions/pit-scouting
+   * POST /submissions/pit/{eventKey}/{teamNum}
    * <p>
-   * Request body: {@link PitSubmission}
+   * Request body: Map (as defined by /questions/pit)
    * <p>
    * Success: 204 NoContent
    * <p>
@@ -78,32 +77,34 @@ public final class SubmissionController extends Controller {
    * <ul>
    * <li>400 BadRequest</li>
    * <li>401 Unauthorized</li>
+   * <li>403 Forbidden</li>
    * </ul>
    */
-  public static void submitPitScouting(Context ctx) throws SQLException {
+  public static void submitPit(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
-    Team team = teamDB().getTeam(session.getTeam());
 
-    PitSubmission payload = jsonDecode(ctx, PitSubmission.class);
-
-    if (!team.eventKey()
-             .equals(payload.event())) {
-      throw new BadRequestResponse("Cannot submit match if not attending event");
+    int teamNum = ctx.pathParamAsClass("teamNum", Integer.class)
+                     .get();
+    String teamEvent = teamDB().getTeam(session.getTeam())
+                               .eventKey();
+    if (!teamEvent.equals(ctx.pathParam("eventKey"))) {
+      throw new ForbiddenResponse();
     }
 
-    if (!matchesSchema(payload.data(), Questions.PIT_QUESTIONS)) {
+    Map<String, Map<String, Object>> payload = jsonDecode(ctx, Map.class);
+    if (!matchesSchema(payload, Questions.PIT_QUESTIONS)) {
       throw new BadRequestResponse("Invalid/expired submission format");
     }
 
-    pitEntryDB().createEntry(payload.event(), null, session.getUser(), session.getTeam(),
-                             payload.team(), jsonEncode(payload.data()));
+    pitEntryDB().createEntry(teamEvent, null, session.getUser(), session.getTeam(), teamNum,
+                             jsonEncode(payload));
     throw new NoContentResponse();
   }
 
   /**
-   * POST /submissions/drive-team-scouting
+   * POST /submissions/drive-team/{matchKey}
    * <p>
-   * Request body: {@link PitSubmission}
+   * Request body: Map (as defined by /questions/drive-team)
    * <p>
    * Success: 204 NoContent
    * <p>
@@ -111,28 +112,23 @@ public final class SubmissionController extends Controller {
    * <ul>
    * <li>400 BadRequest</li>
    * <li>401 Unauthorized</li>
+   * <li>403 Forbidden</li>
    * </ul>
    */
   @SuppressWarnings("java:S3047")
-  public static void submitDriveTeamScouting(Context ctx) throws SQLException {
+  public static void submitDriveTeam(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
-    Team team = teamDB().getTeam(session.getTeam());
 
-    DriveTeamSubmission payload = jsonDecode(ctx, DriveTeamSubmission.class);
-
-    if (!team.eventKey()
-             .equals(payload.event())) {
-      throw new BadRequestResponse("Cannot submit match if not attending event");
+    String matchKey = ctx.pathParam("matchKey");
+    String teamEvent = teamDB().getTeam(session.getTeam())
+                               .eventKey();
+    if (teamEvent.isEmpty() || !matchKey.startsWith(teamEvent)) {
+      throw new ForbiddenResponse();
     }
 
-    if (!payload.match()
-                .startsWith(payload.event())) {
-      throw new BadRequestResponse("Invalid match key for event");
-    }
-
-    MatchInfo match = matchScheduleCache().get(payload.event())
+    MatchInfo match = matchScheduleCache().get(teamEvent)
                                           .value()
-                                          .getMatch(payload.match());
+                                          .getMatch(matchKey);
     if (match == null) {
       throw new BadRequestResponse("Match not found at event");
     }
@@ -151,8 +147,8 @@ public final class SubmissionController extends Controller {
       throw new BadRequestResponse("Scouting team not in match");
     }
 
-    for (Map.Entry<String, Map<String, Object>> entry : payload.partners()
-                                                               .entrySet()) {
+    Map<String, Map<String, Object>> payload = jsonDecode(ctx, Map.class);
+    for (Map.Entry<String, Map<String, Object>> entry : payload.entrySet()) {
       int scoutedTeam;
       try {
         scoutedTeam = Integer.parseInt(entry.getKey());
@@ -170,10 +166,9 @@ public final class SubmissionController extends Controller {
       }
     }
 
-    for (Map.Entry<String, Map<String, Object>> entry : payload.partners()
-                                                               .entrySet()) {
-      driveTeamEntryDB().createEntry(payload.event(), payload.match(), session.getUser(),
-                                     session.getTeam(), Integer.parseInt(entry.getKey()),
+    for (Map.Entry<String, Map<String, Object>> entry : payload.entrySet()) {
+      driveTeamEntryDB().createEntry(teamEvent, matchKey, session.getUser(), session.getTeam(),
+                                     Integer.parseInt(entry.getKey()),
                                      jsonEncode(entry.getValue()));
     }
 
@@ -210,24 +205,5 @@ public final class SubmissionController extends Controller {
     }
 
     return true;
-  }
-
-  static record MatchSubmission(String match,
-                                int team,
-                                Map<String, Map<String, Object>> data) {
-    String event() {
-      return match.substring(0, match.indexOf('_'));
-    }
-  }
-
-  static record PitSubmission(String event,
-                              int team,
-                              Map<String, Map<String, Object>> data) {}
-
-  static record DriveTeamSubmission(String match,
-                                    Map<String, Map<String, Object>> partners) {
-    String event() {
-      return match.substring(0, match.indexOf('_'));
-    }
   }
 }
