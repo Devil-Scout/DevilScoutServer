@@ -59,10 +59,7 @@ public class Server {
       }));
     });
 
-    javalin.routes(() -> {
-      path("/api/v1", Server::endpoints);
-      /// other static elements? website?
-    });
+    javalin.routes(Server::endpoints);
 
     javalin.exception(HttpResponseException.class, (e, ctx) -> {
       int status = e.getStatus();
