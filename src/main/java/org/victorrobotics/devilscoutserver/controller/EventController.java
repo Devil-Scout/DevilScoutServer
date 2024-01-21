@@ -16,7 +16,7 @@ import io.javalin.openapi.OpenApiResponse;
 import io.javalin.openapi.OpenApiSecurity;
 
 public final class EventController extends Controller {
-  private static final String EVENT_PATH_PARAM = "event";
+  private static final String EVENT_PATH_PARAM = "eventKey";
 
   private EventController() {}
 
@@ -28,7 +28,7 @@ public final class EventController extends Controller {
                                           content = @OpenApiContent(from = EventInfo[].class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = Error.class)) })
+                                          content = @OpenApiContent(from = ApiError.class)) })
   public static void getAllEvents(Context ctx) {
     getValidSession(ctx);
 
@@ -39,8 +39,8 @@ public final class EventController extends Controller {
     ctx.json(eventInfoCache().values());
   }
 
-  @OpenApi(path = "/events/{event}", methods = HttpMethod.GET, tags = "Event Info",
-           description = "Get information on an event.",
+  @OpenApi(path = "/events/{" + EVENT_PATH_PARAM + "}", methods = HttpMethod.GET,
+           tags = "Event Info", description = "Get information on an event.",
            pathParams = @OpenApiParam(name = EVENT_PATH_PARAM, type = String.class,
                                       required = true),
            headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
@@ -49,9 +49,9 @@ public final class EventController extends Controller {
                                           content = @OpenApiContent(from = EventInfo.class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = Error.class)),
+                                          content = @OpenApiContent(from = ApiError.class)),
                          @OpenApiResponse(status = "404",
-                                          content = @OpenApiContent(from = Error.class)) })
+                                          content = @OpenApiContent(from = ApiError.class)) })
   public static void getEvent(Context ctx) {
     getValidSession(ctx);
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
@@ -68,8 +68,8 @@ public final class EventController extends Controller {
     ctx.json(entry);
   }
 
-  @OpenApi(path = "/events/{event}/teams", methods = HttpMethod.GET, tags = "Event Info",
-           description = "Get the list of teams attending an event.",
+  @OpenApi(path = "/events/{" + EVENT_PATH_PARAM + "}/teams", methods = HttpMethod.GET,
+           tags = "Event Info", description = "Get the list of teams attending an event.",
            pathParams = @OpenApiParam(name = EVENT_PATH_PARAM, type = String.class,
                                       required = true),
            headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
@@ -78,9 +78,10 @@ public final class EventController extends Controller {
                                           content = @OpenApiContent(from = TeamInfo[].class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = Error.class)),
+                                          content = @OpenApiContent(from = ApiError.class)),
                          @OpenApiResponse(status = "404",
-                                          content = @OpenApiContent(from = Error.class)) })
+                                          content = @OpenApiContent(from = ApiError.class)) })
+
   public static void getTeams(Context ctx) {
     getValidSession(ctx);
 
@@ -97,8 +98,8 @@ public final class EventController extends Controller {
     ctx.json(entry);
   }
 
-  @OpenApi(path = "/events/{event}/match-schedule", methods = HttpMethod.GET, tags = "Event Info",
-           description = "Get the match schedule at an event.",
+  @OpenApi(path = "/events/{" + EVENT_PATH_PARAM + "}/matches", methods = HttpMethod.GET,
+           tags = "Event Info", description = "Get the match schedule at an event.",
            pathParams = @OpenApiParam(name = EVENT_PATH_PARAM, type = String.class,
                                       required = true),
            headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
@@ -107,9 +108,9 @@ public final class EventController extends Controller {
                                           content = @OpenApiContent(from = MatchSchedule.MatchInfo[].class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = Error.class)),
+                                          content = @OpenApiContent(from = ApiError.class)),
                          @OpenApiResponse(status = "404",
-                                          content = @OpenApiContent(from = Error.class)) })
+                                          content = @OpenApiContent(from = ApiError.class)) })
   public static void getMatchSchedule(Context ctx) {
     getValidSession(ctx);
 

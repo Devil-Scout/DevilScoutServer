@@ -123,12 +123,12 @@ public class Server {
       int status = e.getStatus();
       ctx.status(status);
       if (status >= 400) {
-        ctx.json(new Controller.Error(e.getMessage()));
+        ctx.json(new Controller.ApiError(e.getMessage()));
       }
     });
     javalin.exception(Exception.class, (e, ctx) -> {
       ctx.status(500);
-      ctx.json(new Controller.Error(e.getMessage()));
+      ctx.json(new Controller.ApiError(e.getMessage()));
       LOGGER.warn("{} occurred while executing request {} {} : {}", e.getClass()
                                                                      .getSimpleName(),
                   ctx.method(), ctx.fullUrl(), e.getMessage());
@@ -221,16 +221,31 @@ public class Server {
     post("login", SessionController::login);
     post("auth", SessionController::auth);
     delete("logout", SessionController::logout);
+    get("session", SessionController::getSession);
 
-    get("sessions/{session_id}", SessionController::getSession);
+    path("teams/{teamNum}", () -> {
+      get(TeamController::getTeam);
+      patch(TeamController::editTeam);
+
+      path("users", () -> {
+        get(TeamController::usersOnTeam);
+        post(UserController::registerUser);
+      });
+    });
+
+    path("users/{userId}", () -> {
+      get(UserController::getUser);
+      delete(UserController::deleteUser);
+      patch(UserController::editUser);
+    });
 
     path("events", () -> {
       get(EventController::getAllEvents);
 
-      path("{event}", () -> {
+      path("{eventKey}", () -> {
         get(EventController::getEvent);
         get("teams", EventController::getTeams);
-        get("match-schedule", EventController::getMatchSchedule);
+        get("matches", EventController::getMatchSchedule);
       });
     });
 
@@ -250,22 +265,6 @@ public class Server {
       get("teams", AnalysisController::teams);
       post("simulation", UNIMPLEMENTED); // request match simulation
       post("optimization", UNIMPLEMENTED); // request alliance optimization
-    });
-
-    path("teams/{team}", () -> {
-      get(TeamController::getTeam);
-      patch(TeamController::editTeam);
-
-      path("users", () -> {
-        get(TeamController::usersOnTeam);
-        post(UserController::registerUser);
-
-        path("{id}", () -> {
-          get(UserController::getUser);
-          delete(UserController::deleteUser);
-          patch(UserController::editUser);
-        });
-      });
     });
   }
 }

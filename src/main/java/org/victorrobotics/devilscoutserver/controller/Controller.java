@@ -40,7 +40,7 @@ public sealed class Controller
   private static UserDatabase USERS;
   private static TeamDatabase TEAMS;
 
-  private static TeamInfoCache     TEAM_CACHE;
+  private static TeamInfoCache      TEAM_CACHE;
   private static EventInfoCache     EVENT_INFO_CACHE;
   private static EventTeamListCache EVENT_TEAMS_CACHE;
   private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
@@ -243,5 +243,5 @@ public sealed class Controller
     }
   }
 
-  public static record Error(@OpenApiRequired @OpenApiExample("Error message") String error) {}
+  public static record ApiError(@OpenApiRequired @OpenApiExample("Error message") String error) {}
 }

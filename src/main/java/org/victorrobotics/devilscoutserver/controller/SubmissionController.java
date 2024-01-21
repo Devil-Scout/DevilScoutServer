@@ -34,7 +34,7 @@ public final class SubmissionController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "204"),
                          @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = Error.class)) })
+                                          content = @OpenApiContent(from = ApiError.class)) })
   public static void submitMatchScouting(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     Team team = teamDB().getTeam(session.getTeam());
@@ -77,7 +77,7 @@ public final class SubmissionController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "204"),
                          @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = Error.class)) })
+                                          content = @OpenApiContent(from = ApiError.class)) })
   public static void submitPitScouting(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     Team team = teamDB().getTeam(session.getTeam());
@@ -106,7 +106,7 @@ public final class SubmissionController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "204"),
                          @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = Error.class)) })
+                                          content = @OpenApiContent(from = ApiError.class)) })
   @SuppressWarnings("java:S3047")
   public static void submitDriveTeamScouting(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
@@ -206,19 +206,25 @@ public final class SubmissionController extends Controller {
     return true;
   }
 
-  static record MatchSubmission(@OpenApiRequired @OpenApiExample("2023nyrr") String event,
-                                @OpenApiRequired @OpenApiExample("2023nyrr_qm1") String match,
+  static record MatchSubmission(@OpenApiRequired @OpenApiExample("2023nyrr_qm1") String match,
                                 @OpenApiRequired @OpenApiExample("1559") int team,
                                 @OpenApiRequired
-                                @OpenApiExample("{}") Map<String, Map<String, Object>> data) {}
+                                @OpenApiExample("{}") Map<String, Map<String, Object>> data) {
+    String event() {
+      return match.substring(0, match.indexOf('_'));
+    }
+  }
 
   static record PitSubmission(@OpenApiRequired @OpenApiExample("2023nyrr") String event,
                               @OpenApiRequired @OpenApiExample("1559") int team,
                               @OpenApiRequired
                               @OpenApiExample("{}") Map<String, Map<String, Object>> data) {}
 
-  static record DriveTeamSubmission(@OpenApiRequired @OpenApiExample("2023nyrr") String event,
-                                    @OpenApiRequired @OpenApiExample("2023nyrr_qm1") String match,
+  static record DriveTeamSubmission(@OpenApiRequired @OpenApiExample("2023nyrr_qm1") String match,
                                     @OpenApiRequired
-                                    @OpenApiExample("{}") Map<String, Map<String, Object>> partners) {}
+                                    @OpenApiExample("{}") Map<String, Map<String, Object>> partners) {
+    String event() {
+      return match.substring(0, match.indexOf('_'));
+    }
+  }
 }

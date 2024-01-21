@@ -23,7 +23,7 @@ public final class QuestionController extends Controller {
                                           content = @OpenApiContent(from = QuestionPage[].class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = Error.class)) })
+                                          content = @OpenApiContent(from = ApiError.class)) })
   public static void matchQuestions(Context ctx) {
     getValidSession(ctx);
     checkIfNoneMatch(ctx, Questions.MATCH_QUESTIONS_HASH);
@@ -40,7 +40,7 @@ public final class QuestionController extends Controller {
                                           content = @OpenApiContent(from = QuestionPage[].class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = Error.class)) })
+                                          content = @OpenApiContent(from = ApiError.class)) })
   public static void pitQuestions(Context ctx) {
     getValidSession(ctx);
     checkIfNoneMatch(ctx, Questions.PIT_QUESTIONS_HASH);
@@ -57,9 +57,9 @@ public final class QuestionController extends Controller {
                                           content = @OpenApiContent(from = Question[].class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = Error.class)),
+                                          content = @OpenApiContent(from = ApiError.class)),
                          @OpenApiResponse(status = "403",
-                                          content = @OpenApiContent(from = Error.class)) })
+                                          content = @OpenApiContent(from = ApiError.class)) })
   public static void driveTeamQuestions(Context ctx) {
     getValidSession(ctx);
     checkIfNoneMatch(ctx, Questions.DRIVE_TEAM_QUESTIONS_HASH);

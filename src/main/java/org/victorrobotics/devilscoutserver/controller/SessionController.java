@@ -46,9 +46,9 @@ public final class SessionController extends Controller {
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = LoginChallenge.class)),
                          @OpenApiResponse(status = "400",
-                                          content = @OpenApiContent(from = Error.class)),
+                                          content = @OpenApiContent(from = ApiError.class)),
                          @OpenApiResponse(status = "404",
-                                          content = @OpenApiContent(from = Error.class)) })
+                                          content = @OpenApiContent(from = ApiError.class)) })
   public static void login(Context ctx) throws SQLException {
     LoginRequest request = jsonDecode(ctx, LoginRequest.class);
     int team = request.team();
@@ -77,11 +77,11 @@ public final class SessionController extends Controller {
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = AuthResponse.class)),
                          @OpenApiResponse(status = "400",
-                                          content = @OpenApiContent(from = Error.class)),
+                                          content = @OpenApiContent(from = ApiError.class)),
                          @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = Error.class)),
+                                          content = @OpenApiContent(from = ApiError.class)),
                          @OpenApiResponse(status = "404",
-                                          content = @OpenApiContent(from = Error.class)) })
+                                          content = @OpenApiContent(from = ApiError.class)) })
   public static void auth(Context ctx)
       throws NoSuchAlgorithmException, InvalidKeyException, SQLException {
     AuthRequest request = jsonDecode(ctx, AuthRequest.class);
@@ -132,7 +132,7 @@ public final class SessionController extends Controller {
            responses = { @OpenApiResponse(status = "200",
                                           content = @OpenApiContent(from = Session.class)),
                          @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = Error.class)) })
+                                          content = @OpenApiContent(from = ApiError.class)) })
   public static void getSession(Context ctx) {
     String sessionId = ctx.pathParam("session_id");
 
@@ -149,7 +149,7 @@ public final class SessionController extends Controller {
            security = @OpenApiSecurity(name = "Session"),
            responses = { @OpenApiResponse(status = "204"),
                          @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = Error.class)) })
+                                          content = @OpenApiContent(from = ApiError.class)) })
   public static void logout(Context ctx) {
     Session session = getValidSession(ctx);
     sessions().remove(session.getKey());
@@ -183,10 +183,10 @@ public final class SessionController extends Controller {
                                       @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==")
                                       @OpenApiRequired byte[] nonce) {}
 
-  public static record AuthRequest(@OpenApiExample("1559") @OpenApiRequired
-  @JsonProperty(required = true) int team,
-                                   @OpenApiExample("xander") @OpenApiRequired
-                                   @JsonProperty(required = true) String username,
+  public static record AuthRequest(@OpenApiExample("xander") @OpenApiRequired
+  @JsonProperty(required = true) String username,
+                                   @OpenApiExample("1559") @OpenApiRequired
+                                   @JsonProperty(required = true) int team,
                                    @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") @OpenApiRequired
                                    @JsonProperty(required = true) byte[] nonce,
                                    @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJCrze8=")

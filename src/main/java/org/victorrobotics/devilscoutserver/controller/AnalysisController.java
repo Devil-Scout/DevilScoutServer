@@ -27,7 +27,7 @@ public final class AnalysisController extends Controller {
                                           content = @OpenApiContent(from = TeamStatistics[].class)),
                          @OpenApiResponse(status = "304"),
                          @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = Error.class)) })
+                                          content = @OpenApiContent(from = ApiError.class)) })
   public static void teams(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     String eventKey = teamDB().getTeam(session.getTeam())
