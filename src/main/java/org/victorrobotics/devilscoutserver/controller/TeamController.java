@@ -8,6 +8,8 @@ import java.util.Collection;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.javalin.http.Context;
+import io.javalin.http.ForbiddenResponse;
+import io.javalin.http.NotFoundResponse;
 import io.javalin.openapi.HttpMethod;
 import io.javalin.openapi.OpenApi;
 import io.javalin.openapi.OpenApiContent;
@@ -40,14 +42,12 @@ public final class TeamController extends Controller {
     checkTeamRange(teamNum);
 
     if (teamNum != session.getTeam()) {
-      throwForbidden();
-      return;
+      throw new ForbiddenResponse();
     }
 
     Team team = teamDB().getTeam(teamNum);
     if (team == null) {
-      throwTeamNotFound(teamNum);
-      return;
+      throw new NotFoundResponse();
     }
 
     ctx.json(team);
@@ -73,22 +73,19 @@ public final class TeamController extends Controller {
                      .get();
 
     if (session.getTeam() != teamNum) {
-      throwForbidden();
-      return;
+      throw new ForbiddenResponse();
     }
 
     Team team = teamDB().getTeam(teamNum);
     if (team == null) {
-      throwTeamNotFound(teamNum);
-      return;
+      throw new NotFoundResponse();
     }
 
     TeamEdits edits = jsonDecode(ctx, TeamEdits.class);
 
     String eventKey = edits.eventKey();
     if (eventKey != null && !"".equals(eventKey) && eventInfoCache().get(eventKey) == null) {
-      throwEventNotFound(eventKey);
-      return;
+      throw new NotFoundResponse();
     }
 
     team = teamDB().editTeam(teamNum, edits.name(), eventKey);
@@ -120,13 +117,11 @@ public final class TeamController extends Controller {
     checkTeamRange(team);
 
     if (team != session.getTeam()) {
-      throwForbidden();
-      return;
+      throw new ForbiddenResponse();
     }
 
     if (!teamDB().containsTeam(team)) {
-      throwTeamNotFound(team);
-      return;
+      throw new NotFoundResponse();
     }
 
     Collection<User> users = userDB().usersOnTeam(team);
