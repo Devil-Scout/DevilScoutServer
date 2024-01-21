@@ -8,27 +8,24 @@ import org.victorrobotics.devilscoutserver.tba.MatchSchedule;
 
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
-import io.javalin.openapi.HttpMethod;
-import io.javalin.openapi.OpenApi;
-import io.javalin.openapi.OpenApiContent;
-import io.javalin.openapi.OpenApiParam;
-import io.javalin.openapi.OpenApiResponse;
-import io.javalin.openapi.OpenApiSecurity;
 
 public final class EventController extends Controller {
   private static final String EVENT_PATH_PARAM = "eventKey";
 
   private EventController() {}
 
-  @OpenApi(path = "/events", methods = HttpMethod.GET, tags = "Event Info",
-           description = "Get information on all current-year events.",
-           headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
-           security = @OpenApiSecurity(name = "Session"),
-           responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = EventInfo[].class)),
-                         @OpenApiResponse(status = "304"),
-                         @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = ApiError.class)) })
+  /**
+   * GET /events
+   * <p>
+   * Success: 200 {@link EventInfo}[]
+   * <p>
+   * Cached: 304 NotModified ({@code If-None-Match})
+   * <p>
+   * Errors:
+   * <ul>
+   * <li>401 Unauthorized</li>
+   * </ul>
+   */
   public static void getAllEvents(Context ctx) {
     getValidSession(ctx);
 
@@ -39,19 +36,19 @@ public final class EventController extends Controller {
     ctx.json(eventInfoCache().values());
   }
 
-  @OpenApi(path = "/events/{" + EVENT_PATH_PARAM + "}", methods = HttpMethod.GET,
-           tags = "Event Info", description = "Get information on an event.",
-           pathParams = @OpenApiParam(name = EVENT_PATH_PARAM, type = String.class,
-                                      required = true),
-           headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
-           security = @OpenApiSecurity(name = "Session"),
-           responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = EventInfo.class)),
-                         @OpenApiResponse(status = "304"),
-                         @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = ApiError.class)),
-                         @OpenApiResponse(status = "404",
-                                          content = @OpenApiContent(from = ApiError.class)) })
+  /**
+   * GET /events/{eventKey}
+   * <p>
+   * Success: 200 {@link EventInfo}
+   * <p>
+   * Cached: 304 NotModified ({@code If-None-Match})
+   * <p>
+   * Errors:
+   * <ul>
+   * <li>401 Unauthorized</li>
+   * <li>404 NotFound</li>
+   * </ul>
+   */
   public static void getEvent(Context ctx) {
     getValidSession(ctx);
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
@@ -68,20 +65,19 @@ public final class EventController extends Controller {
     ctx.json(entry);
   }
 
-  @OpenApi(path = "/events/{" + EVENT_PATH_PARAM + "}/teams", methods = HttpMethod.GET,
-           tags = "Event Info", description = "Get the list of teams attending an event.",
-           pathParams = @OpenApiParam(name = EVENT_PATH_PARAM, type = String.class,
-                                      required = true),
-           headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
-           security = @OpenApiSecurity(name = "Session"),
-           responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = TeamInfo[].class)),
-                         @OpenApiResponse(status = "304"),
-                         @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = ApiError.class)),
-                         @OpenApiResponse(status = "404",
-                                          content = @OpenApiContent(from = ApiError.class)) })
-
+  /**
+   * GET /events/{eventKey}/teams
+   * <p>
+   * Success: 200 {@link TeamInfo}[]
+   * <p>
+   * Cached: 304 NotModified ({@code If-None-Match})
+   * <p>
+   * Errors:
+   * <ul>
+   * <li>401 Unauthorized</li>
+   * <li>404 NotFound</li>
+   * </ul>
+   */
   public static void getTeams(Context ctx) {
     getValidSession(ctx);
 
@@ -98,19 +94,19 @@ public final class EventController extends Controller {
     ctx.json(entry);
   }
 
-  @OpenApi(path = "/events/{" + EVENT_PATH_PARAM + "}/matches", methods = HttpMethod.GET,
-           tags = "Event Info", description = "Get the match schedule at an event.",
-           pathParams = @OpenApiParam(name = EVENT_PATH_PARAM, type = String.class,
-                                      required = true),
-           headers = @OpenApiParam(name = "If-None-Match", type = Long.class, required = false),
-           security = @OpenApiSecurity(name = "Session"),
-           responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = MatchSchedule.MatchInfo[].class)),
-                         @OpenApiResponse(status = "304"),
-                         @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = ApiError.class)),
-                         @OpenApiResponse(status = "404",
-                                          content = @OpenApiContent(from = ApiError.class)) })
+  /**
+   * GET /events/{eventKey}/matches
+   * <p>
+   * Success: 200 {@link MatchInfo}[]
+   * <p>
+   * Cached: 304 NotModified ({@code If-None-Match})
+   * <p>
+   * Errors:
+   * <ul>
+   * <li>401 Unauthorized</li>
+   * <li>404 NotFound</li>
+   * </ul>
+   */
   public static void getMatchSchedule(Context ctx) {
     getValidSession(ctx);
 

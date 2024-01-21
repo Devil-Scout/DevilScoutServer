@@ -15,26 +15,23 @@ import java.util.Map;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.NoContentResponse;
-import io.javalin.openapi.HttpMethod;
-import io.javalin.openapi.OpenApi;
-import io.javalin.openapi.OpenApiContent;
-import io.javalin.openapi.OpenApiExample;
-import io.javalin.openapi.OpenApiRequestBody;
-import io.javalin.openapi.OpenApiRequired;
-import io.javalin.openapi.OpenApiResponse;
-import io.javalin.openapi.OpenApiSecurity;
 
 public final class SubmissionController extends Controller {
   private SubmissionController() {}
 
-  @OpenApi(path = "/submissions/match_scouting", methods = HttpMethod.POST, tags = "Submissions",
-           description = "Submit match scouting data to the pool. "
-               + "The current user's team must be attending the corresponding event.",
-           requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = MatchSubmission.class)),
-           security = @OpenApiSecurity(name = "Session"),
-           responses = { @OpenApiResponse(status = "204"),
-                         @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = ApiError.class)) })
+  /**
+   * POST /submissions/match-scouting
+   * <p>
+   * Request body: {@link MatchSubmission}
+   * <p>
+   * Success: 204 NoContent
+   * <p>
+   * Errors:
+   * <ul>
+   * <li>400 BadRequest</li>
+   * <li>401 Unauthorized</li>
+   * </ul>
+   */
   public static void submitMatchScouting(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     Team team = teamDB().getTeam(session.getTeam());
@@ -70,14 +67,19 @@ public final class SubmissionController extends Controller {
     throw new NoContentResponse();
   }
 
-  @OpenApi(path = "/submissions/pit_scouting", methods = HttpMethod.POST, tags = "Submissions",
-           description = "Submit pit scouting data to the pool. "
-               + "The current user's team must be attending the corresponding event.",
-           requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = PitSubmission.class)),
-           security = @OpenApiSecurity(name = "Session"),
-           responses = { @OpenApiResponse(status = "204"),
-                         @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = ApiError.class)) })
+  /**
+   * POST /submissions/pit-scouting
+   * <p>
+   * Request body: {@link PitSubmission}
+   * <p>
+   * Success: 204 NoContent
+   * <p>
+   * Errors:
+   * <ul>
+   * <li>400 BadRequest</li>
+   * <li>401 Unauthorized</li>
+   * </ul>
+   */
   public static void submitPitScouting(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     Team team = teamDB().getTeam(session.getTeam());
@@ -98,15 +100,19 @@ public final class SubmissionController extends Controller {
     throw new NoContentResponse();
   }
 
-  @OpenApi(path = "/submissions/drive_team_scouting", methods = HttpMethod.POST,
-           tags = "Submissions",
-           description = "Submit drive team scouting data to the pool. "
-               + "The current user's team must be attending the corresponding event.",
-           requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = DriveTeamSubmission.class)),
-           security = @OpenApiSecurity(name = "Session"),
-           responses = { @OpenApiResponse(status = "204"),
-                         @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = ApiError.class)) })
+  /**
+   * POST /submissions/drive-team-scouting
+   * <p>
+   * Request body: {@link PitSubmission}
+   * <p>
+   * Success: 204 NoContent
+   * <p>
+   * Errors:
+   * <ul>
+   * <li>400 BadRequest</li>
+   * <li>401 Unauthorized</li>
+   * </ul>
+   */
   @SuppressWarnings("java:S3047")
   public static void submitDriveTeamScouting(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
@@ -206,23 +212,20 @@ public final class SubmissionController extends Controller {
     return true;
   }
 
-  static record MatchSubmission(@OpenApiRequired @OpenApiExample("2023nyrr_qm1") String match,
-                                @OpenApiRequired @OpenApiExample("1559") int team,
-                                @OpenApiRequired
-                                @OpenApiExample("{}") Map<String, Map<String, Object>> data) {
+  static record MatchSubmission(String match,
+                                int team,
+                                Map<String, Map<String, Object>> data) {
     String event() {
       return match.substring(0, match.indexOf('_'));
     }
   }
 
-  static record PitSubmission(@OpenApiRequired @OpenApiExample("2023nyrr") String event,
-                              @OpenApiRequired @OpenApiExample("1559") int team,
-                              @OpenApiRequired
-                              @OpenApiExample("{}") Map<String, Map<String, Object>> data) {}
+  static record PitSubmission(String event,
+                              int team,
+                              Map<String, Map<String, Object>> data) {}
 
-  static record DriveTeamSubmission(@OpenApiRequired @OpenApiExample("2023nyrr_qm1") String match,
-                                    @OpenApiRequired
-                                    @OpenApiExample("{}") Map<String, Map<String, Object>> partners) {
+  static record DriveTeamSubmission(String match,
+                                    Map<String, Map<String, Object>> partners) {
     String event() {
       return match.substring(0, match.indexOf('_'));
     }

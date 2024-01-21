@@ -9,25 +9,21 @@ import java.util.Objects;
 
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
-import io.javalin.openapi.HttpMethod;
-import io.javalin.openapi.OpenApi;
-import io.javalin.openapi.OpenApiContent;
-import io.javalin.openapi.OpenApiParam;
-import io.javalin.openapi.OpenApiResponse;
-import io.javalin.openapi.OpenApiSecurity;
 
 public final class AnalysisController extends Controller {
   private AnalysisController() {}
 
-  @OpenApi(path = "/analysis/teams", methods = HttpMethod.GET, tags = "Analysis",
-           description = "Get the server-generated analysis of the teams at the current event.",
-           headers = @OpenApiParam(name = "If-None-Match", type = String.class, required = false),
-           security = @OpenApiSecurity(name = "Session"),
-           responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = TeamStatistics[].class)),
-                         @OpenApiResponse(status = "304"),
-                         @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = ApiError.class)) })
+  /**
+   * GET /analysis/teams
+   * <p>
+   * Success: 200 {@link TeamStatistics}
+   * <p>
+   * Errors:
+   * <ul>
+   * <li>400 BadRequest</li>
+   * <li>401 Unauthorized</li>
+   * </ul>
+   */
   public static void teams(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
     String eventKey = teamDB().getTeam(session.getTeam())
@@ -37,8 +33,8 @@ public final class AnalysisController extends Controller {
     }
 
     Collection<TeamInfo> teams = eventTeamsCache().get(eventKey)
-                                                   .value()
-                                                   .teams();
+                                                  .value()
+                                                  .teams();
     ctx.writeJsonStream(teams.stream()
                              .map(team -> teamAnalysisCache().get(team.getNumber()))
                              .filter(Objects::nonNull));

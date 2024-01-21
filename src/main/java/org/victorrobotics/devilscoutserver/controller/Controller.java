@@ -5,9 +5,9 @@ import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.tba.EventInfoCache;
-import org.victorrobotics.devilscoutserver.tba.TeamInfoCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
+import org.victorrobotics.devilscoutserver.tba.TeamInfoCache;
 
 import java.security.SecureRandom;
 import java.sql.SQLException;
@@ -20,9 +20,6 @@ import io.javalin.http.Context;
 import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.NotModifiedResponse;
 import io.javalin.http.UnauthorizedResponse;
-import io.javalin.openapi.OpenApiExample;
-import io.javalin.openapi.OpenApiIgnore;
-import io.javalin.openapi.OpenApiRequired;
 
 public sealed class Controller
     permits EventController, QuestionController, SessionController, SubmissionController,
@@ -212,22 +209,18 @@ public sealed class Controller
     }
 
     @JsonIgnore
-    @OpenApiIgnore
     public boolean isExpired() {
       return System.currentTimeMillis() >= expiration;
     }
 
-    @OpenApiExample("ffffffff-ffff-ffff-ffff-ffffffffffff")
     public String getKey() {
       return key;
     }
 
-    @OpenApiExample("ffffffff-ffff-ffff-ffff-ffffffffffff")
     public String getUser() {
       return user;
     }
 
-    @OpenApiExample("1559")
     public int getTeam() {
       return team;
     }
@@ -243,5 +236,5 @@ public sealed class Controller
     }
   }
 
-  public static record ApiError(@OpenApiRequired @OpenApiExample("Error message") String error) {}
+  public static record ApiError(String error) {}
 }

@@ -15,8 +15,6 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.javalin.openapi.OpenApiExample;
-import io.javalin.openapi.OpenApiRequired;
 
 public class MatchSchedule implements Cacheable<List<Match.Simple>> {
   public static class MatchInfo {
@@ -126,57 +124,40 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
       return teams;
     }
 
-    @OpenApiRequired
-    @OpenApiExample("2023nyrr_qm1")
     public String getKey() {
       return key;
     }
 
-    @OpenApiRequired
-    @OpenApiExample("Qualification 1")
     public String getName() {
       return name;
     }
 
-    @OpenApiRequired
     public MatchLevel getLevel() {
       return level;
     }
 
-    @OpenApiRequired
-    @OpenApiExample("1")
     public int getSet() {
       return set;
     }
 
-    @OpenApiRequired
-    @OpenApiExample("1")
     public int getNumber() {
       return number;
     }
 
-    @OpenApiRequired
-    @OpenApiExample("[2228,1585,578]")
     @SuppressWarnings("java:S2384")
     public int[] getBlue() {
       return blue;
     }
 
-    @OpenApiRequired
-    @OpenApiExample("[1559,9996,5740]")
     @SuppressWarnings("java:S2384")
     public int[] getRed() {
       return red;
     }
 
-    @OpenApiRequired
-    @OpenApiExample("1697891944000")
     public long getTime() {
       return time;
     }
 
-    @OpenApiRequired
-    @OpenApiExample("true")
     public boolean isCompleted() {
       return completed;
     }

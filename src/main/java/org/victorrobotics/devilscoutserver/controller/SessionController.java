@@ -22,15 +22,6 @@ import io.javalin.http.Context;
 import io.javalin.http.NoContentResponse;
 import io.javalin.http.NotFoundResponse;
 import io.javalin.http.UnauthorizedResponse;
-import io.javalin.openapi.HttpMethod;
-import io.javalin.openapi.OpenApi;
-import io.javalin.openapi.OpenApiContent;
-import io.javalin.openapi.OpenApiExample;
-import io.javalin.openapi.OpenApiParam;
-import io.javalin.openapi.OpenApiRequestBody;
-import io.javalin.openapi.OpenApiRequired;
-import io.javalin.openapi.OpenApiResponse;
-import io.javalin.openapi.OpenApiSecurity;
 
 @SuppressWarnings("java:S6218") // override equals for array content
 public final class SessionController extends Controller {
@@ -38,17 +29,19 @@ public final class SessionController extends Controller {
 
   private SessionController() {}
 
-  @OpenApi(path = "/login", methods = HttpMethod.POST, tags = "Authentication",
-           summary = "unauthorized",
-           description = "Requests a login challenge. Must be called before `/auth`.",
-           requestBody = @OpenApiRequestBody(required = true,
-                                             content = @OpenApiContent(from = LoginRequest.class)),
-           responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = LoginChallenge.class)),
-                         @OpenApiResponse(status = "400",
-                                          content = @OpenApiContent(from = ApiError.class)),
-                         @OpenApiResponse(status = "404",
-                                          content = @OpenApiContent(from = ApiError.class)) })
+  /**
+   * POST /login
+   * <p>
+   * Request body: {@link LoginRequest}
+   * <p>
+   * Success: 200 {@link LoginChallenge}
+   * <p>
+   * Errors:
+   * <ul>
+   * <li>400 BadRequest</li>
+   * <li>404 NotFound</li>
+   * </ul>
+   */
   public static void login(Context ctx) throws SQLException {
     LoginRequest request = jsonDecode(ctx, LoginRequest.class);
     int team = request.team();
@@ -69,19 +62,20 @@ public final class SessionController extends Controller {
     ctx.json(new LoginChallenge(salt, nonce));
   }
 
-  @OpenApi(path = "/auth", methods = HttpMethod.POST, tags = "Authentication",
-           summary = "unauthorized",
-           description = "Authenticates a client. Must have already called `/login` to compute clientProof.",
-           requestBody = @OpenApiRequestBody(required = true,
-                                             content = @OpenApiContent(from = AuthRequest.class)),
-           responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = AuthResponse.class)),
-                         @OpenApiResponse(status = "400",
-                                          content = @OpenApiContent(from = ApiError.class)),
-                         @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = ApiError.class)),
-                         @OpenApiResponse(status = "404",
-                                          content = @OpenApiContent(from = ApiError.class)) })
+  /**
+   * POST /auth
+   * <p>
+   * Request body: {@link AuthRequest}
+   * <p>
+   * Success: 200 {@link AuthResponse}
+   * <p>
+   * Errors:
+   * <ul>
+   * <li>400 BadRequest</li>
+   * <li>401 Unauthorized</li>
+   * <li>404 NotFound</li>
+   * </ul>
+   */
   public static void auth(Context ctx)
       throws NoSuchAlgorithmException, InvalidKeyException, SQLException {
     AuthRequest request = jsonDecode(ctx, AuthRequest.class);
@@ -126,30 +120,31 @@ public final class SessionController extends Controller {
     ctx.json(new AuthResponse(user, team, session, serverSignature));
   }
 
-  @OpenApi(path = "/session/{session_id}", methods = HttpMethod.GET, tags = "Authentication",
-           description = "Get the current status of your session.",
-           pathParams = @OpenApiParam(name = "session_id", type = String.class, required = true),
-           responses = { @OpenApiResponse(status = "200",
-                                          content = @OpenApiContent(from = Session.class)),
-                         @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = ApiError.class)) })
+  /**
+   * GET /session
+   * <p>
+   * Success: 200 {@link Session}
+   * <p>
+   * Errors:
+   * <ul>
+   * <li>401 Unauthorized</li>
+   * </ul>
+   */
   public static void getSession(Context ctx) {
-    String sessionId = ctx.pathParam("session_id");
-
-    Session session = sessions().get(sessionId);
-    if (session == null) {
-      throw new NotFoundResponse("Session not found");
-    }
-
+    Session session = getValidSession(ctx);
     ctx.json(session);
   }
 
-  @OpenApi(path = "/logout", methods = HttpMethod.DELETE, tags = "Authentication",
-           description = "Invalidates a session, logging a client out.",
-           security = @OpenApiSecurity(name = "Session"),
-           responses = { @OpenApiResponse(status = "204"),
-                         @OpenApiResponse(status = "401",
-                                          content = @OpenApiContent(from = ApiError.class)) })
+  /**
+   * DELETE /logout
+   * <p>
+   * Success: 204 NoContent
+   * <p>
+   * Errors:
+   * <ul>
+   * <li>401 Unauthorized</li>
+   * </ul>
+   */
   public static void logout(Context ctx) {
     Session session = getValidSession(ctx);
     sessions().remove(session.getKey());
@@ -172,30 +167,20 @@ public final class SessionController extends Controller {
     return bytes;
   }
 
-  public static record LoginRequest(@OpenApiExample("1559") @OpenApiRequired
-  @JsonProperty(required = true) int team,
-                                    @OpenApiExample("xander") @OpenApiRequired
+  public static record LoginRequest(@JsonProperty(required = true) int team,
                                     @JsonProperty(required = true) String username,
-                                    @OpenApiExample("EjRWeJCrze8=") @OpenApiRequired
                                     @JsonProperty(required = true) byte[] clientNonce) {}
 
-  public static record LoginChallenge(@OpenApiExample("mHZUMhCrze8=") @OpenApiRequired byte[] salt,
-                                      @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==")
-                                      @OpenApiRequired byte[] nonce) {}
+  public static record LoginChallenge(byte[] salt,
+                                      byte[] nonce) {}
 
-  public static record AuthRequest(@OpenApiExample("xander") @OpenApiRequired
-  @JsonProperty(required = true) String username,
-                                   @OpenApiExample("1559") @OpenApiRequired
+  public static record AuthRequest(@JsonProperty(required = true) String username,
                                    @JsonProperty(required = true) int team,
-                                   @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7w==") @OpenApiRequired
                                    @JsonProperty(required = true) byte[] nonce,
-                                   @OpenApiExample("EjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJCrze8=")
-                                   @OpenApiRequired
                                    @JsonProperty(required = true) byte[] clientProof) {}
 
-  public static record AuthResponse(@OpenApiRequired User user,
-                                    @OpenApiRequired Team team,
-                                    @OpenApiRequired Session session,
-                                    @OpenApiExample("m7squ/lkrdjWSAER1g84uxQm3yDAOYUtVfYEJeYR2Tw=")
-                                    @OpenApiRequired byte[] serverSignature) {}
+  public static record AuthResponse(User user,
+                                    Team team,
+                                    Session session,
+                                    byte[] serverSignature) {}
 }

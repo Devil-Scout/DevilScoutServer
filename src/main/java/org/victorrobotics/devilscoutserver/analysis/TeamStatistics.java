@@ -6,9 +6,6 @@ import org.victorrobotics.devilscoutserver.cache.Cacheable;
 import java.util.List;
 import java.util.Objects;
 
-import io.javalin.openapi.OpenApiExample;
-import io.javalin.openapi.OpenApiRequired;
-
 public class TeamStatistics implements Cacheable<List<Statistic>> {
   private final int team;
 
@@ -29,13 +26,10 @@ public class TeamStatistics implements Cacheable<List<Statistic>> {
     return true;
   }
 
-  @OpenApiRequired
   public List<Statistic> getData() {
     return data;
   }
 
-  @OpenApiRequired
-  @OpenApiExample("1559")
   public int getTeam() {
     return team;
   }
