@@ -13,8 +13,10 @@ RestartSec=30
 
 Environment=TBA_API_KEY="NE6o6UL7rNrdpjbw23nnOWsS0uRyZWczDtzCyDy7PfEd2vZXCvZNn7hyS5t0t2Df"
 Environment=POSTGRESQL_PASSWORD="Devil-Tech0617"
+Environment=SSL_CERT_PATH="/home/team1559/cert.pem"
+Environment=SSL_KEY_PATH="/home/team1559/key.pem"
 
-ExecStart=/usr/bin/authbind --deep /usr/bin/java -jar /home/team1559/DevilScoutServer/build/libs/DevilScoutServer.jar
+ExecStart=/usr/bin/authbind --deep /usr/bin/java -jar /home/team1559/DevilScoutServer/build/libs/DevilScoutServer-all.jar
 ExecStop=/bin/kill -15 $MAINPID
 SuccessExitStatus=143
 

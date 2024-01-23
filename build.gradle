@@ -1,6 +1,7 @@
 plugins {
   id 'application'
   id 'jvm-test-suite'
+  id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 java {
@@ -38,10 +39,10 @@ jar {
   manifest {
     attributes 'Main-Class': application.mainClass
   }
+}
 
-  from {
-    configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-  }
+shadowJar {
+  mergeServiceFiles()
 }
 
 tasks.withType(Tar) {
