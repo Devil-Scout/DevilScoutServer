@@ -156,10 +156,6 @@ public class Server {
     LOGGER.info("HTTP server started");
 
     LOGGER.info("DevilScoutServer startup complete, main thread exiting");
-    executor.scheduleAtFixedRate(() -> {
-      LOGGER.info("Idle threads: " + server.javalin.jettyServer().server().getThreadPool().getIdleThreads());
-      LOGGER.info(server.javalin.jettyServer().server().dump());
-    }, 0, 1, TimeUnit.MINUTES);
   }
 
   private static void refreshCache(Cache<?, ?, ?> cache) {
