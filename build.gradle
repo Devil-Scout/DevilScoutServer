@@ -28,7 +28,7 @@ dependencies {
   implementation 'com.impossibl.pgjdbc-ng:pgjdbc-ng:0.8.9'
   implementation 'com.zaxxer:HikariCP:5.1.0'
 
-  implementation 'org.victorrobotics.bluealliance:blue-alliance-api:2023-beta-2'
+  implementation 'org.victorrobotics.bluealliance:blue-alliance-api:2023-beta-3'
 
   annotationProcessor 'io.javalin.community.openapi:openapi-annotation-processor:5.6.3'
 }

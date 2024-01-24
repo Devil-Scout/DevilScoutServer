@@ -33,7 +33,9 @@ public final class EventController extends Controller {
     checkIfNoneMatch(ctx, timestamp);
 
     setResponseEtag(ctx, timestamp);
-    ctx.json(eventInfoCache().values());
+    ctx.writeJsonStream(eventInfoCache().values()
+                                        .stream()
+                                        .sorted());
   }
 
   /**

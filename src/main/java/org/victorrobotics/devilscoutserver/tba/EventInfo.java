@@ -62,28 +62,28 @@ public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo>
     return location;
   }
 
-  public String getStart() {
-    return String.format("%04d-%02d-%02d", start.year, start.month, start.day);
+  public Event.Date getStart() {
+    return start;
   }
 
-  public String getEnd() {
-    return String.format("%04d-%02d-%02d", end.year, end.month, end.day);
+  public Event.Date getEnd() {
+    return end;
   }
 
   @Override
   public int compareTo(EventInfo other) {
-    if (start.year != other.start.year) {
-      return Integer.compare(start.year, other.start.year);
-    }
+    int compare = start.compareTo(other.start);
+    if (compare != 0) return compare;
 
-    if (start.month != other.start.month) {
-      return Integer.compare(start.month, other.start.month);
-    }
+    compare = end.compareTo(other.end);
+    if (compare != 0) return compare;
 
-    if (start.day != other.start.day) {
-      return Integer.compare(start.day, other.start.day);
-    }
+    compare = name.compareTo(other.name);
+    if (compare != 0) return compare;
 
-    return key.compareTo(other.key);
+    compare = key.compareTo(other.key);
+    if (compare != 0) return compare;
+
+    return location.compareTo(other.location);
   }
 }

@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public abstract class BlueAllianceListCache<K, D, V extends Cacheable<D>>
     extends ListCache<K, D, V> {
@@ -24,6 +25,7 @@ public abstract class BlueAllianceListCache<K, D, V extends Cacheable<D>>
   protected Map<K, D> getData() {
     List<D> dataList = endpoints.stream()
                                 .map(Endpoint::refresh)
+                                .flatMap(Optional::stream)
                                 .flatMap(Collection::stream)
                                 .toList();
     Map<K, D> map = new LinkedHashMap<>();
