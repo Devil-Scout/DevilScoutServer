@@ -1,14 +1,13 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
-import org.victorrobotics.devilscoutserver.analysis.statistics.NumberStatistic;
+import org.victorrobotics.devilscoutserver.analysis.statistics.OprStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.Statistic;
 import org.victorrobotics.devilscoutserver.database.Entry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
-import org.victorrobotics.devilscoutserver.tba.MatchScoresCache;
+import org.victorrobotics.devilscoutserver.tba.TeamOprsCache;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -16,17 +15,17 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract sealed class Analyzer permits CrescendoAnalyzer {
-  private final EntryDatabase    matchEntryDB;
-  private final EntryDatabase    pitEntryDB;
-  private final EntryDatabase    driveTeamEntryDB;
-  private final MatchScoresCache matchScoresCache;
+  private final EntryDatabase matchEntryDB;
+  private final EntryDatabase pitEntryDB;
+  private final EntryDatabase driveTeamEntryDB;
+  private final TeamOprsCache teamOprsCache;
 
   protected Analyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
-                     EntryDatabase driveTeamEntryDB, MatchScoresCache matchScoresCache) {
+                     EntryDatabase driveTeamEntryDB, TeamOprsCache teamOprsCache) {
     this.matchEntryDB = matchEntryDB;
     this.pitEntryDB = pitEntryDB;
     this.driveTeamEntryDB = driveTeamEntryDB;
-    this.matchScoresCache = matchScoresCache;
+    this.teamOprsCache = teamOprsCache;
   }
 
   protected abstract List<Statistic> computeStatistics(int team);
@@ -43,18 +42,6 @@ public abstract sealed class Analyzer permits CrescendoAnalyzer {
     return entryMap(driveTeamEntryDB, team);
   }
 
-  protected Collection<Integer> getScores(int team) {
-    return matchScoresCache.get(team)
-                           .value()
-                           .getScores();
-  }
-
-  protected NumberStatistic scoresStat(int team) {
-    return new NumberStatistic("Match Score", matchScoresCache.get(team)
-                                                              .value()
-                                                              .getScores());
-  }
-
   public Set<Integer> getTeamsToUpdate(long lastUpdate) throws SQLException {
     Set<Integer> teams = new LinkedHashSet<>();
     teams.addAll(matchEntryDB.getTeamsSince(lastUpdate));
@@ -63,11 +50,16 @@ public abstract sealed class Analyzer permits CrescendoAnalyzer {
     return teams;
   }
 
+  protected OprStatistic teamOprs(int team) {
+    return new OprStatistic("Total OPRs", teamOprsCache.get(team)
+                                                       .value());
+  }
+
   private static Map<String, List<Entry>> entryMap(EntryDatabase database, int team) {
     List<Entry> entries;
     try {
       entries = database.getEntries(team);
-    } catch(SQLException e) {
+    } catch (SQLException e) {
       throw new IllegalStateException(e);
     }
 

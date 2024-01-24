@@ -5,9 +5,6 @@ import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
 import java.util.Objects;
 
-import io.javalin.openapi.OpenApiExample;
-import io.javalin.openapi.OpenApiRequired;
-
 public class TeamInfo implements Cacheable<Team.Simple>, Comparable<TeamInfo> {
   private final String key;
 
@@ -47,20 +44,14 @@ public class TeamInfo implements Cacheable<Team.Simple>, Comparable<TeamInfo> {
     return changed;
   }
 
-  @OpenApiExample("1559")
-  @OpenApiRequired
   public int getNumber() {
     return number;
   }
 
-  @OpenApiExample("Devil Tech")
-  @OpenApiRequired
   public String getName() {
     return name;
   }
 
-  @OpenApiExample("Victor, New York, USA")
-  @OpenApiRequired
   public String getLocation() {
     return location;
   }

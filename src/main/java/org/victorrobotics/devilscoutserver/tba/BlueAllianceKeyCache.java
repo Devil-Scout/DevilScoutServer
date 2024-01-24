@@ -21,6 +21,7 @@ public abstract class BlueAllianceKeyCache<K, I, D extends Cacheable<I>, V exten
   public List<D> getData(K key) {
     return getEndpoint(key).refresh()
                            .stream()
+                           .flatMap(Collection::stream)
                            .map(this::sourceData)
                            .toList();
   }

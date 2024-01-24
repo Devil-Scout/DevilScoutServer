@@ -1,11 +1,188 @@
 package org.victorrobotics.devilscoutserver.cache;
 
-public interface Cache<K, D, V extends Cacheable<D>> {
-  int size();
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
-  long lastModified();
+public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, CacheValue<D, V>> {
+  protected final ConcurrentMap<K, CacheValue<D, V>> cacheMap;
 
-  CacheValue<D, V> get(K key);
+  private TrackingView<Entry<K, CacheValue<D, V>>> entrySet;
+  private TrackingView<K>                          keySet;
+  private TrackingView<CacheValue<D, V>>           values;
 
-  void refresh();
+  private long lastModified;
+
+  protected Cache(Supplier<ConcurrentMap<K, CacheValue<D, V>>> cacheMap) {
+    this.cacheMap = cacheMap.get();
+    lastModified = System.currentTimeMillis();
+  }
+
+  public abstract void refresh();
+
+  protected abstract CacheValue<D, V> getValue(K key);
+
+  public long lastModified() {
+    return lastModified;
+  }
+
+  protected void modified() {
+    lastModified = System.currentTimeMillis();
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public CacheValue<D, V> get(Object key) {
+    try {
+      return getValue((K) key);
+    } catch (ClassCastException e) {
+      return null;
+    }
+  }
+
+  @Override
+  public boolean containsKey(Object key) {
+    return cacheMap.containsKey(key);
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return size() == 0;
+  }
+
+  @Override
+  public int size() {
+    return cacheMap.size();
+  }
+
+  @Override
+  public boolean containsValue(Object value) {
+    return cacheMap.containsValue(value);
+  }
+
+  @Override
+  public CacheValue<D, V> remove(Object key) {
+    CacheValue<D, V> value = cacheMap.remove(key);
+    if (value != null) {
+      modified();
+    }
+    return value;
+  }
+
+  @Override
+  public void clear() {
+    boolean mod = !isEmpty();
+    cacheMap.clear();
+    if (mod) {
+      modified();
+    }
+  }
+
+  @Override
+  public Set<K> keySet() {
+    if (keySet == null) {
+      keySet = new TrackingView<>(cacheMap.keySet());
+    }
+    return keySet;
+  }
+
+  @Override
+  public Collection<CacheValue<D, V>> values() {
+    if (values == null) {
+      values = new TrackingView<>(cacheMap.values());
+    }
+    return values;
+  }
+
+  @Override
+  public Set<Entry<K, CacheValue<D, V>>> entrySet() {
+    if (entrySet == null) {
+      entrySet = new TrackingView<>(cacheMap.entrySet());
+    }
+    return entrySet;
+  }
+
+  @Override
+  public CacheValue<D, V> put(K key, CacheValue<D, V> value) {
+    throw new UnsupportedOperationException("Caches are read-only");
+  }
+
+  @Override
+  public void putAll(Map<? extends K, ? extends CacheValue<D, V>> m) {
+    throw new UnsupportedOperationException("Caches are read-only");
+  }
+
+  private class TrackingView<T> extends AbstractSet<T> {
+    private final Collection<T> source;
+
+    TrackingView(Collection<T> source) {
+      this.source = source;
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+      return new TrackingIterator<>(source);
+    }
+
+    @Override
+    public int size() {
+      return source.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+      return source.isEmpty();
+    }
+
+    @Override
+    public void clear() {
+      boolean mod = size() != 0;
+      source.clear();
+      if (mod) {
+        modified();
+      }
+    }
+
+    @Override
+    public boolean contains(Object v) {
+      return source.contains(v);
+    }
+
+    @Override
+    public boolean remove(Object o) {
+      if (source.remove(o)) {
+        modified();
+        return true;
+      }
+      return false;
+    }
+  }
+
+  private class TrackingIterator<T> implements Iterator<T> {
+    private final Iterator<T> iterator;
+
+    TrackingIterator(Collection<T> collection) {
+      iterator = collection.iterator();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return iterator.hasNext();
+    }
+
+    @Override
+    public T next() {
+      return iterator.next();
+    }
+
+    @Override
+    public void remove() {
+      iterator.remove();
+      modified();
+    }
+  }
 }

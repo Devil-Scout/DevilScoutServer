@@ -2,17 +2,12 @@ package org.victorrobotics.devilscoutserver.cache;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
-public abstract class OnDemandCache<K, D, V extends Cacheable<D>> implements Cache<K, D, V> {
-  private final ConcurrentMap<K, CacheValue<D, V>> cacheMap;
-
+public abstract class OnDemandCache<K, D, V extends Cacheable<D>> extends Cache<K, D, V> {
   private final long purgeTime;
 
-  private volatile long lastModified;
-
   protected OnDemandCache(long purgeTime) {
-    this.cacheMap = new ConcurrentHashMap<>();
+    super(ConcurrentHashMap::new);
     this.purgeTime = purgeTime;
   }
 
@@ -21,24 +16,13 @@ public abstract class OnDemandCache<K, D, V extends Cacheable<D>> implements Cac
   protected abstract V createValue(K key, D data);
 
   @Override
-  public int size() {
-    return cacheMap.size();
-  }
-
-  @Override
-  public long lastModified() {
-    return lastModified;
-  }
-
-  @Override
-  public CacheValue<D, V> get(K key) {
+  protected CacheValue<D, V> getValue(K key) {
     return cacheMap.computeIfAbsent(key, k -> {
-      D data = getData(key);
+      D data = getData(k);
       if (data == null) return null;
 
-      CacheValue<D, V> entry = new CacheValue<>(createValue(k, data));
-      // set entry lastRefresh to now
-      lastModified = System.currentTimeMillis();
+      CacheValue<D, V> entry = new CacheValue<>(createValue(k, data), this::modified);
+      modified();
       return entry;
     });
   }
@@ -46,20 +30,17 @@ public abstract class OnDemandCache<K, D, V extends Cacheable<D>> implements Cac
   @Override
   public void refresh() {
     long time = System.currentTimeMillis();
-    boolean removals = cacheMap.values()
-                               .removeIf(value -> time - value.lastAccess() > purgeTime);
+    if (cacheMap.values()
+                .removeIf(value -> time - value.lastAccess() > purgeTime)) {
+      modified();
+    }
 
-    boolean mods = false;
     for (Map.Entry<K, CacheValue<D, V>> entry : cacheMap.entrySet()) {
       D data = getData(entry.getKey());
       if (data == null) continue;
 
-      mods |= entry.getValue()
-                   .update(data);
-    }
-
-    if (mods || removals) {
-      lastModified = System.currentTimeMillis();
+      entry.getValue()
+           .update(data);
     }
   }
 }

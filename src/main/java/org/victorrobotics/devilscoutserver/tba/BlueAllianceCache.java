@@ -14,6 +14,7 @@ public abstract class BlueAllianceCache<K, D, V extends Cacheable<D>>
 
   @Override
   protected D getData(K key) {
-    return getEndpoint(key).refresh();
+    return getEndpoint(key).refresh()
+                           .orElse(null);
   }
 }

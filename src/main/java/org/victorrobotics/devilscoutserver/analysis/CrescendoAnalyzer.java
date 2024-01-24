@@ -6,16 +6,15 @@ import org.victorrobotics.devilscoutserver.analysis.statistics.PercentageStatist
 import org.victorrobotics.devilscoutserver.analysis.statistics.Statistic;
 import org.victorrobotics.devilscoutserver.database.Entry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
-import org.victorrobotics.devilscoutserver.tba.MatchScoresCache;
+import org.victorrobotics.devilscoutserver.tba.TeamOprsCache;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
 public final class CrescendoAnalyzer extends Analyzer {
   public CrescendoAnalyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
-                           EntryDatabase driveTeamEntryDB, MatchScoresCache matchScoresCache) {
-    super(matchEntryDB, pitEntryDB, driveTeamEntryDB, matchScoresCache);
+                           EntryDatabase driveTeamEntryDB, TeamOprsCache teamOprsCache) {
+    super(matchEntryDB, pitEntryDB, driveTeamEntryDB, teamOprsCache);
   }
 
   @Override
@@ -23,8 +22,7 @@ public final class CrescendoAnalyzer extends Analyzer {
     Map<String, List<Entry>> matchEntries = getMatchEntries(team);
     // Map<String, List<Entry>> pitEntries = getPitEntries(team);
     // Map<String, List<Entry>> driveTeamEntries = getDriveTeamEntries(team);
-    return List.of(scoresStat(team),
-                   NumberStatistic.direct("Ground Pickups", matchEntries, "/teleop/pickup_ground"),
+    return List.of(NumberStatistic.direct("Ground Pickups", matchEntries, "/teleop/pickup_ground"),
                    BooleanStatistic.direct("Trap", matchEntries, "/endgame/trap"),
                    PercentageStatistic.direct("Start Location", matchEntries,
                                               List.of("Next to amp", "Front of speaker",

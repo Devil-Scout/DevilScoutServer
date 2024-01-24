@@ -5,9 +5,6 @@ import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
 import java.util.Objects;
 
-import io.javalin.openapi.OpenApiExample;
-import io.javalin.openapi.OpenApiRequired;
-
 public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo> {
   private final String key;
 
@@ -53,50 +50,40 @@ public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo>
     return changed;
   }
 
-  @OpenApiExample("2023nyrr")
-  @OpenApiRequired
   public String getKey() {
     return key;
   }
 
-  @OpenApiExample("Rah Cha Cha Ruckus")
-  @OpenApiRequired
   public String getName() {
     return name;
   }
 
-  @OpenApiExample("Rochester, NY, USA")
-  @OpenApiRequired
   public String getLocation() {
     return location;
   }
 
-  @OpenApiExample("2023-10-21")
-  @OpenApiRequired
-  public String getStart() {
-    return String.format("%04d-%02d-%02d", start.year, start.month, start.day);
+  public Event.Date getStart() {
+    return start;
   }
 
-  @OpenApiExample("2023-10-21")
-  @OpenApiRequired
-  public String getEnd() {
-    return String.format("%04d-%02d-%02d", end.year, end.month, end.day);
+  public Event.Date getEnd() {
+    return end;
   }
 
   @Override
   public int compareTo(EventInfo other) {
-    if (start.year != other.start.year) {
-      return Integer.compare(start.year, other.start.year);
-    }
+    int compare = start.compareTo(other.start);
+    if (compare != 0) return compare;
 
-    if (start.month != other.start.month) {
-      return Integer.compare(start.month, other.start.month);
-    }
+    compare = end.compareTo(other.end);
+    if (compare != 0) return compare;
 
-    if (start.day != other.start.day) {
-      return Integer.compare(start.day, other.start.day);
-    }
+    compare = name.compareTo(other.name);
+    if (compare != 0) return compare;
 
-    return key.compareTo(other.key);
+    compare = key.compareTo(other.key);
+    if (compare != 0) return compare;
+
+    return location.compareTo(other.location);
   }
 }
