@@ -165,10 +165,6 @@ public sealed class Controller
   }
 
   protected static Session getValidSession(Context ctx) {
-    if (true) {
-      return new Session("a", "a", 1559);
-    }
-
     String sessionKey = ctx.header(SESSION_HEADER);
     if (sessionKey == null) {
       throw new UnauthorizedResponse("Missing " + SESSION_HEADER + " header");
