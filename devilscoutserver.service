@@ -16,7 +16,7 @@ Environment=POSTGRESQL_PASSWORD="Devil-Tech0617"
 Environment=SSL_CERT_PATH="/home/team1559/cert.pem"
 Environment=SSL_KEY_PATH="/home/team1559/key.pem"
 
-ExecStart=/usr/bin/authbind --deep /usr/bin/java -jar /home/team1559/DevilScoutServer/build/libs/DevilScoutServer-all.jar
+ExecStart=/usr/bin/authbind --deep /usr/bin/strace -o /home/team1559/strace_ds.log /usr/bin/java -jar /home/team1559/DevilScoutServer/build/libs/DevilScoutServer-all.jar
 ExecStop=/bin/kill -15 $MAINPID
 SuccessExitStatus=143
 
