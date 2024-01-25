@@ -152,6 +152,11 @@ public class Server {
 
     LOGGER.info("Starting HTTP server...");
     Server server = new Server();
+    executor.scheduleAtFixedRate(() -> {
+      server.javalin.jettyServer()
+                    .server()
+                    .dump();
+    }, 0, 1, TimeUnit.MINUTES);
     server.start();
     LOGGER.info("HTTP server started");
 
