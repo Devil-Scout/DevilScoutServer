@@ -231,7 +231,7 @@ public final class UserController extends Controller {
       SECURE_RANDOM.nextBytes(salt);
 
       SecretKeyFactory factory = SecretKeyFactory.getInstance(KEYGEN_ALGORITHM);
-      KeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, 4096, 256);
+      KeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, 65536, 256);
       SecretKey saltedPassword = factory.generateSecret(keySpec);
 
       MessageDigest sha256 = MessageDigest.getInstance(HASH_ALGORITHM);
