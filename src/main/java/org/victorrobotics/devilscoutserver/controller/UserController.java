@@ -162,7 +162,7 @@ public final class UserController extends Controller {
   public static void editUser(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
 
-    String userId = ctx.pathParam("id");
+    String userId = ctx.pathParam(USER_PATH_PARAM);
     if (!userId.equals(session.getUser())) {
       session.verifyAdmin();
     }
