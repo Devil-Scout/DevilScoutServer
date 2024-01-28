@@ -17,6 +17,10 @@ import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.NoContentResponse;
 
 public final class SubmissionController extends Controller {
+  private static final String MATCH_KEY_PATH_PARAM = "matchKey";
+  private static final String EVENT_KEY_PATH_PARAM = "eventKey";
+  private static final String TEAM_NUMBER_PATH_PARAM = "teamNum";
+
   private SubmissionController() {}
 
   /**
@@ -36,8 +40,8 @@ public final class SubmissionController extends Controller {
   public static void submitMatch(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
 
-    String matchKey = ctx.pathParam("matchKey");
-    int teamNum = ctx.pathParamAsClass("teamNum", Integer.class)
+    String matchKey = ctx.pathParam(MATCH_KEY_PATH_PARAM);
+    int teamNum = ctx.pathParamAsClass(TEAM_NUMBER_PATH_PARAM, Integer.class)
                      .get();
     String teamEvent = teamDB().getTeam(session.getTeam())
                                .eventKey();
@@ -83,11 +87,11 @@ public final class SubmissionController extends Controller {
   public static void submitPit(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
 
-    int teamNum = ctx.pathParamAsClass("teamNum", Integer.class)
+    int teamNum = ctx.pathParamAsClass(TEAM_NUMBER_PATH_PARAM, Integer.class)
                      .get();
     String teamEvent = teamDB().getTeam(session.getTeam())
                                .eventKey();
-    if (!teamEvent.equals(ctx.pathParam("eventKey"))) {
+    if (!teamEvent.equals(ctx.pathParam(EVENT_KEY_PATH_PARAM))) {
       throw new ForbiddenResponse();
     }
 
@@ -119,7 +123,7 @@ public final class SubmissionController extends Controller {
   public static void submitDriveTeam(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
 
-    String matchKey = ctx.pathParam("matchKey");
+    String matchKey = ctx.pathParam(MATCH_KEY_PATH_PARAM);
     String teamEvent = teamDB().getTeam(session.getTeam())
                                .eventKey();
     if (teamEvent.isEmpty() || !matchKey.startsWith(teamEvent)) {

@@ -70,10 +70,7 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
         this.name = level + " " + number;
       }
 
-      this.blue = parseTeamKeys(match.blueAlliance.teamKeys);
-      this.red = parseTeamKeys(match.redAlliance.teamKeys);
-      this.completed = match.winner != null;
-      this.time = completed ? match.predictedTime.getTime() : match.actualTime.getTime();
+      update(match);
     }
 
     public boolean update(Match.Simple match) {
@@ -95,7 +92,7 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
         change = true;
       }
 
-      boolean matchIsComplete = match.actualTime != null;
+      boolean matchIsComplete = match.winner != null;
       if (completed != matchIsComplete) {
         completed = matchIsComplete;
         change = true;
