@@ -1,17 +1,23 @@
 package org.victorrobotics.devilscoutserver.questions;
 
-public final class NumberQuestion extends Question {
-  public final Integer min;
-  public final Integer max;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-  public NumberQuestion(String prompt, String key, Integer min, Integer max) {
+public final class NumberQuestion extends Question {
+  public final int min;
+  public final int max;
+
+  @JsonProperty("default")
+  public final int defaultValue;
+
+  public NumberQuestion(String prompt, String key, int min, int max, int defaultValue) {
     super(QuestionType.NUMBER, prompt, key);
     this.min = min;
     this.max = max;
+    this.defaultValue = defaultValue;
   }
 
   @Override
   public boolean isValidResponse(Object response) {
-    return response instanceof Integer i && (min == null || i >= min) && (max == null || i <= max);
+    return response instanceof Integer i && i >= min && i <= max;
   }
 }
