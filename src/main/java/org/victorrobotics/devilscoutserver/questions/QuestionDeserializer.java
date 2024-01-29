@@ -30,10 +30,13 @@ public class QuestionDeserializer extends StdDeserializer<Question> {
       case BOOLEAN -> new BooleanQuestion(prompt, key);
       case COUNTER -> new CounterQuestion(prompt, key);
       case NUMBER -> {
-        JsonNode min = json.get("min");
-        JsonNode max = json.get("max");
-        yield new NumberQuestion(prompt, key, min == null ? null : min.intValue(),
-                                 max == null ? null : max.intValue());
+        int min = json.get("min")
+                      .intValue();
+        int max = json.get("max")
+                      .intValue();
+        int defaultValue = json.get("default")
+                               .intValue();
+        yield new NumberQuestion(prompt, key, min, max, defaultValue);
       }
       case RANGE -> {
         int min = json.get("min")

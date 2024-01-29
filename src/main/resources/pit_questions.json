@@ -6,18 +6,18 @@
       {
         "prompt": "Chassis width (in)",
         "key": "width",
-        "type": "RANGE",
-        "min": 24,
+        "type": "NUMBER",
+        "min": 18,
         "max": 30,
-        "increment": 2
+        "default": 24
       },
       {
         "prompt": "Weight (no battery/bumpers)",
         "key": "weight",
-        "type": "RANGE",
-        "min": 90,
+        "type": "NUMBER",
+        "min": 80,
         "max": 125,
-        "increment": 5
+        "default": 100
       },
       {
         "prompt": "Drivetrain",
