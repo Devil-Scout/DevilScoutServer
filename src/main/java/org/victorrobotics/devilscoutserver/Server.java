@@ -38,7 +38,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import io.javalin.Javalin;
-import io.javalin.community.ssl.SSLPlugin;
+import io.javalin.community.ssl.SslPlugin;
 import io.javalin.http.HttpResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,15 +52,15 @@ public class Server {
     javalin = Javalin.create(config -> {
       config.http.prefer405over404 = true;
 
-      config.plugins.enableSslRedirects();
-      config.plugins.register(new SSLPlugin(sslConfig -> {
+      config.bundledPlugins.enableSslRedirects();
+      config.registerPlugin(new SslPlugin(sslConfig -> {
         sslConfig.pemFromPath(System.getenv("SSL_CERT_PATH"), System.getenv("SSL_KEY_PATH"));
         sslConfig.redirect = true;
         sslConfig.sniHostCheck = false;
       }));
-    });
 
-    javalin.routes(Server::endpoints);
+      config.router.apiBuilder(Server::endpoints);
+    });
 
     javalin.before(ctx -> LOGGER.info("Request {} {}", ctx.method(), ctx.path()));
     javalin.exception(HttpResponseException.class, (e, ctx) -> {
