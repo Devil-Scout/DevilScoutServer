@@ -1,6 +1,7 @@
 package org.victorrobotics.devilscoutserver.tba;
 
 import org.victorrobotics.bluealliance.Match;
+import org.victorrobotics.bluealliance.Match.Alliance.Color;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
 import java.util.ArrayList;
@@ -92,7 +93,7 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
         change = true;
       }
 
-      boolean matchIsComplete = match.winner != null;
+      boolean matchIsComplete = match.winner != Color.NONE;
       if (completed != matchIsComplete) {
         completed = matchIsComplete;
         change = true;
