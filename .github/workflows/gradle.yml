@@ -18,5 +18,3 @@ jobs:
         distribution: 'temurin'
     - name: Build
       run: ./gradlew build --no-daemon
-      env:
-        TBA_API_KEY: ${{ secrets.TBA_API_KEY }}
