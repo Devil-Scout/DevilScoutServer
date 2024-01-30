@@ -28,7 +28,6 @@ import org.victorrobotics.devilscoutserver.tba.EventInfoCache;
 import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
-import org.victorrobotics.devilscoutserver.tba.TeamInfoCache;
 import org.victorrobotics.devilscoutserver.tba.TeamOprsCache;
 
 import java.util.concurrent.ConcurrentMap;
@@ -103,8 +102,7 @@ public class Server {
 
     LOGGER.info("Initializing memory caches...");
     Controller.setEventInfoCache(new EventInfoCache());
-    Controller.setTeamCache(new TeamInfoCache());
-    Controller.setEventTeamsCache(new EventTeamListCache(Controller.teamCache()));
+    Controller.setEventTeamsCache(new EventTeamListCache());
     Controller.setMatchScheduleCache(new MatchScheduleCache());
     LOGGER.info("Memory caches ready");
 
@@ -130,10 +128,8 @@ public class Server {
                                  TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> refreshCache(Controller.matchScheduleCache()), 0, 1,
                                  TimeUnit.MINUTES);
-    executor.scheduleAtFixedRate(() -> {
-      refreshCache(Controller.teamCache());
-      refreshCache(Controller.eventTeamsCache());
-    }, 0, 5, TimeUnit.MINUTES);
+    executor.scheduleAtFixedRate(() -> refreshCache(Controller.eventTeamsCache()), 0, 5,
+                                 TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
       ConcurrentMap<String, Session> sessions = Controller.sessions();
       long start = System.currentTimeMillis();

@@ -1,7 +1,7 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.analysis.TeamStatistics;
-import org.victorrobotics.devilscoutserver.tba.TeamInfo;
+import org.victorrobotics.devilscoutserver.tba.EventTeamList.TeamInfo;
 
 import java.sql.SQLException;
 import java.util.Collection;
