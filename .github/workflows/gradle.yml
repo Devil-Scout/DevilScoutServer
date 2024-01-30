@@ -16,8 +16,6 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-    - name: Set up Gradle
-      uses: gradle/gradle-build-action@v2
     - name: Build
       run: ./gradlew build --no-daemon
       env:
