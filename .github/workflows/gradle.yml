@@ -1,4 +1,4 @@
-name: Gradle Build & Test
+name: Gradle Build
 on: [push]
 permissions:
   contents: read
