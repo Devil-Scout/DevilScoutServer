@@ -89,7 +89,8 @@ public class Server {
     javalin.stop();
   }
 
-  @SuppressWarnings("java:S2095") // close the executor
+  // close the executor, single-line lambda bodies
+  @SuppressWarnings({ "java:S2095", "java:S1602" })
   public static void main(String... args) {
     LOGGER.info("Connecting to database...");
     Database.initConnectionPool();
@@ -124,12 +125,15 @@ public class Server {
                                          .name("Refresh-", 0)
                                          .factory();
     ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, refreshThreads);
-    executor.scheduleAtFixedRate(() -> refreshCache(Controller.eventInfoCache()), 0, 5,
-                                 TimeUnit.MINUTES);
-    executor.scheduleAtFixedRate(() -> refreshCache(Controller.matchScheduleCache()), 0, 1,
-                                 TimeUnit.MINUTES);
-    executor.scheduleAtFixedRate(() -> refreshCache(Controller.eventTeamsCache()), 0, 5,
-                                 TimeUnit.MINUTES);
+    executor.scheduleAtFixedRate(() -> {
+      refreshCache(Controller.eventInfoCache());
+    }, 0, 60, TimeUnit.MINUTES);
+    executor.scheduleAtFixedRate(() -> {
+      refreshCache(Controller.matchScheduleCache());
+    }, 0, 1, TimeUnit.MINUTES);
+    executor.scheduleAtFixedRate(() -> {
+      refreshCache(Controller.eventTeamsCache());
+    }, 0, 60, TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
       ConcurrentMap<String, Session> sessions = Controller.sessions();
       long start = System.currentTimeMillis();
@@ -138,7 +142,7 @@ public class Server {
               .removeIf(Session::isExpired);
       LOGGER.info("Purged {} expired sessions in {}ms", size - sessions.size(),
                   System.currentTimeMillis() - start);
-    }, 0, 5, TimeUnit.MINUTES);
+    }, 0, 15, TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
       refreshCache(eventOprsCache);
       refreshCache(teamOprsCache);
@@ -211,10 +215,6 @@ public class Server {
       post("drive-team/{matchKey}", SubmissionController::submitDriveTeam);
     });
 
-    path("analysis", () -> {
-      get("teams", AnalysisController::teams);
-      // post("simulation", null); // request match simulation
-      // post("optimization", null); // request alliance optimization
-    });
+    get("analysis/teams", AnalysisController::teams);
   }
 }
