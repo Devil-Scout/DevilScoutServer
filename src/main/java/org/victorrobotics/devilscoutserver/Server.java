@@ -62,23 +62,23 @@ public class Server {
 
     javalin.routes(Server::endpoints);
 
+    javalin.before(ctx -> LOGGER.info("Request {} {}", ctx.method(), ctx.path()));
     javalin.exception(HttpResponseException.class, (e, ctx) -> {
       int status = e.getStatus();
       ctx.status(status);
-      if (status >= 400) {
+
+      if (status >= 500) {
         ctx.json(new Controller.ApiError(e.getMessage()));
+        LOGGER.warn("Server error {} {} {}", ctx.method(), ctx.path(), ctx.status(), e);
+      } else if (status >= 400) {
+        ctx.json(new Controller.ApiError(e.getMessage()));
+        LOGGER.warn("Client error {} {} {}", ctx.method(), ctx.path(), ctx.status());
       }
     });
     javalin.exception(Exception.class, (e, ctx) -> {
       ctx.status(500);
       ctx.json(new Controller.ApiError(e.getMessage()));
-      LOGGER.warn("{} occurred while executing request {} {} : {}", e.getClass()
-                                                                     .getSimpleName(),
-                  ctx.method(), ctx.fullUrl(), e.getMessage());
-    });
-
-    javalin.before(ctx -> {
-      LOGGER.info("Received request: " + ctx.method() + " " + ctx.path());
+      LOGGER.error("Server exception {} {} {}", ctx.method(), ctx.path(), ctx.status(), e);
     });
   }
 
