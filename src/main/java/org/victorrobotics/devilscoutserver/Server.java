@@ -55,7 +55,6 @@ public class Server {
       config.bundledPlugins.enableSslRedirects();
       config.registerPlugin(new SslPlugin(sslConfig -> {
         sslConfig.pemFromPath(System.getenv("SSL_CERT_PATH"), System.getenv("SSL_KEY_PATH"));
-        sslConfig.redirect = true;
         sslConfig.sniHostCheck = false;
       }));
 
