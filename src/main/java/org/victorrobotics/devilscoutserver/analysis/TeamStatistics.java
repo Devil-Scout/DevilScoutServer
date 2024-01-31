@@ -2,17 +2,20 @@ package org.victorrobotics.devilscoutserver.analysis;
 
 import org.victorrobotics.devilscoutserver.analysis.statistics.Statistic;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
+import org.victorrobotics.devilscoutserver.database.DataEntry;
 
 import java.util.List;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class TeamStatistics implements Cacheable<List<Statistic>> {
-  private final int team;
+  private final DataEntry.Key key;
 
   private List<Statistic> data;
 
-  public TeamStatistics(int team, List<Statistic> data) {
-    this.team = team;
+  public TeamStatistics(DataEntry.Key key, List<Statistic> data) {
+    this.key = key;
     data = List.copyOf(data);
   }
 
@@ -31,6 +34,11 @@ public class TeamStatistics implements Cacheable<List<Statistic>> {
   }
 
   public int getTeam() {
-    return team;
+    return key.team();
+  }
+
+  @JsonIgnore
+  public DataEntry.Key getKey() {
+    return key;
   }
 }

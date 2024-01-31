@@ -37,35 +37,37 @@ public final class EntryDatabase extends Database {
     }
   }
 
-  public Set<Integer> getTeamsSince(long timestamp) throws SQLException {
+  public Set<DataEntry.Key> getEntryKeysSince(long timestamp) throws SQLException {
     try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(selectTeamsUpdatedSinceTime())) {
+         PreparedStatement statement =
+             connection.prepareStatement(selectNewEntriesEventAndTeam())) {
       statement.setLong(1, timestamp);
 
       try (ResultSet resultSet = statement.executeQuery()) {
-        Set<Integer> teams = new LinkedHashSet<>();
+        Set<DataEntry.Key> keys = new LinkedHashSet<>();
         while (resultSet.next()) {
-          teams.add((int) resultSet.getShort(1));
+          keys.add(DataEntry.Key.fromDatabase(resultSet));
         }
-        return teams;
+        return keys;
       }
     }
   }
 
-  public List<Entry> getEntries(int scoutedTeam) throws SQLException {
+  public List<DataEntry> getEntries(String eventKey, int scoutedTeam) throws SQLException {
     try (Connection connection = getConnection();
          PreparedStatement statement = connection.prepareStatement(selectEntriesByTeamAndYear())) {
       statement.setShort(1, (short) scoutedTeam);
+      statement.setString(2, eventKey);
 
       try (ResultSet resultSet = statement.executeQuery()) {
-        List<Entry> entries = new ArrayList<>();
+        List<DataEntry> entries = new ArrayList<>();
         if (hasMatchKeys) {
           while (resultSet.next()) {
-            entries.add(Entry.fromDatabaseWithMatch(resultSet));
+            entries.add(DataEntry.fromDatabaseWithMatch(resultSet));
           }
         } else {
           while (resultSet.next()) {
-            entries.add(Entry.fromDatabase(resultSet));
+            entries.add(DataEntry.fromDatabase(resultSet));
           }
         }
         return entries;
@@ -80,11 +82,11 @@ public final class EntryDatabase extends Database {
   }
 
   private String selectEntriesByTeamAndYear() {
-    return "SELECT * FROM " + databaseName + " WHERE scouted_team = ? AND timestamp >= '2024-1-1'";
+    return "SELECT * FROM " + databaseName + " WHERE scouted_team = ? AND event_key = ?";
   }
 
-  private String selectTeamsUpdatedSinceTime() {
-    return "SELECT DISTINCT scouted_team FROM " + databaseName
-        + " WHERE timestamp >= TO_TIMESTAMP(?::double precision / 1000);";
+  private String selectNewEntriesEventAndTeam() {
+    return "SELECT DISTINCT event_key, scouted_team FROM " + databaseName
+        + " WHERE timestamp >= TO_TIMESTAMP(? / 1000.0);";
   }
 }

@@ -1,10 +1,11 @@
-package org.victorrobotics.devilscoutserver.analysis;
+package org.victorrobotics.devilscoutserver.analysis._2024;
 
+import org.victorrobotics.devilscoutserver.analysis.Analyzer;
 import org.victorrobotics.devilscoutserver.analysis.statistics.BooleanStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.NumberStatistic;
-import org.victorrobotics.devilscoutserver.analysis.statistics.PercentageStatistic;
+import org.victorrobotics.devilscoutserver.analysis.statistics.PieChartStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.Statistic;
-import org.victorrobotics.devilscoutserver.database.Entry;
+import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.tba.TeamOprsCache;
 
@@ -18,20 +19,13 @@ public final class CrescendoAnalyzer extends Analyzer {
   }
 
   @Override
-  protected List<Statistic> computeStatistics(int team) {
-    Map<String, List<Entry>> matchEntries = getMatchEntries(team);
-    // Map<String, List<Entry>> pitEntries = getPitEntries(team);
-    // Map<String, List<Entry>> driveTeamEntries = getDriveTeamEntries(team);
-    return List.of(NumberStatistic.direct("Ground Pickups", matchEntries, "/teleop/pickup_ground"),
-                   BooleanStatistic.direct("Trap", matchEntries, "/endgame/trap"),
-                   PercentageStatistic.direct("Start Location", matchEntries,
-                                              List.of("Next to amp", "Front of speaker",
-                                                      "Next to speaker", "Next to source"),
-                                              "/auto/start_pos"),
-                   autoScore(matchEntries));
+  protected List<Statistic> computeStatistics(DataHandle handle) {
+    Map<String, List<DataEntry>> matchEntries = handle.getMatchEntries();
+
+    return List.of();
   }
 
-  private static NumberStatistic autoScore(Map<String, List<Entry>> matchEntries) {
+  private static NumberStatistic autoScore(Map<String, List<DataEntry>> matchEntries) {
     return NumberStatistic.computed("Autonomous Points", matchEntries, entry -> {
       List<Integer> actions = entry.getIntegers("/auto/routine");
       if (actions == null) return null;

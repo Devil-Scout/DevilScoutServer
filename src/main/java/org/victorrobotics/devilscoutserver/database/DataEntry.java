@@ -9,14 +9,22 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public record Entry(String id,
-                    String eventKey,
-                    String matchKey,
-                    String submittingUser,
-                    int submittingTeam,
-                    int scoutedTeam,
-                    JsonNode json,
-                    long timestamp) {
+public record DataEntry(String id,
+                        String eventKey,
+                        String matchKey,
+                        String submittingUser,
+                        int submittingTeam,
+                        int scoutedTeam,
+                        JsonNode json,
+                        long timestamp) {
+  public static record Key(String eventKey,
+                           int team) {
+    public static Key fromDatabase(ResultSet resultSet) throws SQLException {
+      String eventKey = resultSet.getString(1);
+      int team = resultSet.getInt(2);
+      return new Key(eventKey, team);
+    }
+  }
 
   private static final ObjectMapper PARSER = new ObjectMapper();
 
@@ -47,7 +55,7 @@ public record Entry(String id,
     return values;
   }
 
-  public static Entry fromDatabase(ResultSet resultSet) throws SQLException {
+  public static DataEntry fromDatabase(ResultSet resultSet) throws SQLException {
     JsonNode json;
     try {
       String jsonStr = resultSet.getString(6);
@@ -64,11 +72,11 @@ public record Entry(String id,
     long timestamp = resultSet.getTimestamp(7)
                               .getTime();
 
-    return new Entry(id, eventKey, null, submittingUser, submittingTeam, scoutedTeam, json,
-                     timestamp);
+    return new DataEntry(id, eventKey, null, submittingUser, submittingTeam, scoutedTeam, json,
+                         timestamp);
   }
 
-  public static Entry fromDatabaseWithMatch(ResultSet resultSet) throws SQLException {
+  public static DataEntry fromDatabaseWithMatch(ResultSet resultSet) throws SQLException {
     JsonNode json;
     try {
       String jsonStr = resultSet.getString(7);
@@ -86,7 +94,7 @@ public record Entry(String id,
     long timestamp = resultSet.getTimestamp(8)
                               .getTime();
 
-    return new Entry(id, eventKey, matchKey, submittingUser, submittingTeam, scoutedTeam, json,
-                     timestamp);
+    return new DataEntry(id, eventKey, matchKey, submittingUser, submittingTeam, scoutedTeam, json,
+                         timestamp);
   }
 }
