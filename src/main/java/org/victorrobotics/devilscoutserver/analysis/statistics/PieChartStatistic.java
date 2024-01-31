@@ -1,42 +1,42 @@
 package org.victorrobotics.devilscoutserver.analysis.statistics;
 
-import org.victorrobotics.devilscoutserver.database.Entry;
+import org.victorrobotics.devilscoutserver.database.DataEntry;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public final class PercentageStatistic extends Statistic {
+public final class PieChartStatistic extends Statistic {
   public final int      total;
   public final int[]    counts;
   public final String[] labels;
 
-  public PercentageStatistic(String name, Collection<String> labels, int[] counts, int total) {
+  public PieChartStatistic(String name, Collection<String> labels, int[] counts, int total) {
     super(StatisticType.PERCENTAGE, name);
     this.labels = labels.toArray(new String[labels.size()]);
     this.counts = counts.clone();
     this.total = total;
   }
 
-  public static PercentageStatistic direct(String name, Map<String, List<Entry>> entryMap,
-                                           List<String> labels, String path) {
-    return computed(name, entryMap, labels, entry -> entry.getIntegers(path));
+  public static PieChartStatistic direct(String name, Map<String, List<DataEntry>> matchEntries,
+                                         List<String> labels, String path) {
+    return computed(name, matchEntries.values(), labels, entry -> entry.getIntegers(path));
   }
 
   @SuppressWarnings("java:S4276") // use ToDoubleFunction<Entry> instead
-  public static PercentageStatistic computed(String name, Map<String, List<Entry>> entryMap,
-                                             Collection<String> labels,
-                                             Function<Entry, Collection<Integer>> function) {
+  public static PieChartStatistic computed(String name, Iterable<List<DataEntry>> matchEntries,
+                                           Collection<String> labels,
+                                           Function<DataEntry, Collection<Integer>> function) {
     int total = 0;
     int[] counts = new int[labels.size()];
-    for (List<Entry> entries : entryMap.values()) {
+    for (List<DataEntry> entries : matchEntries) {
       if (entries.isEmpty()) continue;
 
       int total2 = 0;
       int[] counts2 = new int[labels.size()];
 
-      for (Entry entry : entries) {
+      for (DataEntry entry : entries) {
         Collection<Integer> indexes = function.apply(entry);
         if (indexes != null) {
           for (int index : indexes) {
@@ -56,6 +56,6 @@ public final class PercentageStatistic extends Statistic {
       }
       total++;
     }
-    return new PercentageStatistic(name, labels, counts, total);
+    return new PieChartStatistic(name, labels, counts, total);
   }
 }

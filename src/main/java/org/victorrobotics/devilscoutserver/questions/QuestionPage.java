@@ -1,6 +1,7 @@
 package org.victorrobotics.devilscoutserver.questions;
 
-@SuppressWarnings("java:S6218") // consider array content
+import java.util.List;
+
 public record QuestionPage(String key,
                            String title,
-                           Question[] questions) {}
+                           List<Question> questions) {}

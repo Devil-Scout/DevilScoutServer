@@ -1,6 +1,6 @@
 package org.victorrobotics.devilscoutserver.analysis.statistics;
 
-import org.victorrobotics.devilscoutserver.database.Entry;
+import org.victorrobotics.devilscoutserver.database.DataEntry;
 
 import java.util.List;
 import java.util.Map;
@@ -18,23 +18,23 @@ public final class BooleanStatistic extends Statistic {
     this.total = total;
   }
 
-  public static BooleanStatistic direct(String name, Map<String, List<Entry>> entryMap,
+  public static BooleanStatistic direct(String name, Map<String, List<DataEntry>> entryMap,
                                         String path) {
     return computed(name, entryMap, entry -> entry.getBoolean(path));
   }
 
   @SuppressWarnings("java:S4276") // use Predicate<Entry> instead
-  public static BooleanStatistic computed(String name, Map<String, List<Entry>> entryMap,
-                                          Function<Entry, Boolean> function) {
+  public static BooleanStatistic computed(String name, Map<String, List<DataEntry>> entryMap,
+                                          Function<DataEntry, Boolean> function) {
     int yes = 0;
     int no = 0;
     int total = 0;
-    for (List<Entry> entries : entryMap.values()) {
+    for (List<DataEntry> entries : entryMap.values()) {
       if (entries.isEmpty()) continue;
 
       int yes2 = 0;
       int no2 = 0;
-      for (Entry entry : entries) {
+      for (DataEntry entry : entries) {
         Boolean value = function.apply(entry);
         if (value != null) {
           if (value) {

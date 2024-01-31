@@ -1,6 +1,6 @@
 package org.victorrobotics.devilscoutserver.analysis.statistics;
 
-import org.victorrobotics.devilscoutserver.database.Entry;
+import org.victorrobotics.devilscoutserver.database.DataEntry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,21 +60,21 @@ public final class NumberStatistic extends Statistic {
     }
   }
 
-  public static NumberStatistic direct(String name, Map<String, List<Entry>> entryMap,
+  public static NumberStatistic direct(String name, Map<String, List<DataEntry>> entryMap,
                                        String path) {
     return computed(name, entryMap, entry -> entry.getInteger(path));
   }
 
   @SuppressWarnings("java:S4276") // use ToDoubleFunction<Entry> instead
-  public static NumberStatistic computed(String name, Map<String, List<Entry>> entryMap,
-                                         Function<Entry, Integer> function) {
+  public static NumberStatistic computed(String name, Map<String, List<DataEntry>> entryMap,
+                                         Function<DataEntry, Integer> function) {
     List<Double> numbers = new ArrayList<>();
-    for (List<Entry> entries : entryMap.values()) {
+    for (List<DataEntry> entries : entryMap.values()) {
       if (entries.isEmpty()) continue;
 
       double sum = 0;
       int count = 0;
-      for (Entry entry : entries) {
+      for (DataEntry entry : entries) {
         Integer value = function.apply(entry);
         if (value != null) {
           sum += value.doubleValue();

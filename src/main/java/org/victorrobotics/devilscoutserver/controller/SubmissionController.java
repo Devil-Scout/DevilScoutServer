@@ -9,6 +9,7 @@ import org.victorrobotics.devilscoutserver.questions.Questions;
 import org.victorrobotics.devilscoutserver.tba.MatchSchedule.MatchInfo;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 
 import io.javalin.http.BadRequestResponse;
@@ -17,8 +18,8 @@ import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.NoContentResponse;
 
 public final class SubmissionController extends Controller {
-  private static final String MATCH_KEY_PATH_PARAM = "matchKey";
-  private static final String EVENT_KEY_PATH_PARAM = "eventKey";
+  private static final String MATCH_KEY_PATH_PARAM   = "matchKey";
+  private static final String EVENT_KEY_PATH_PARAM   = "eventKey";
   private static final String TEAM_NUMBER_PATH_PARAM = "teamNum";
 
   private SubmissionController() {}
@@ -187,8 +188,8 @@ public final class SubmissionController extends Controller {
   }
 
   private static boolean matchesSchema(Map<String, Map<String, Object>> data,
-                                       QuestionPage[] schema) {
-    if (data.size() != schema.length) return false;
+                                       List<QuestionPage> schema) {
+    if (data.size() != schema.size()) return false;
 
     for (QuestionPage page : schema) {
       Map<String, Object> pageData = data.get(page.key());
@@ -199,8 +200,8 @@ public final class SubmissionController extends Controller {
     return true;
   }
 
-  private static boolean matchesQuestions(Map<String, Object> data, Question[] questions) {
-    if (data.size() != questions.length) return false;
+  private static boolean matchesQuestions(Map<String, Object> data, List<Question> questions) {
+    if (data.size() != questions.size()) return false;
 
     for (Question question : questions) {
       Object value = data.get(question.getKey());
