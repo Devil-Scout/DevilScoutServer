@@ -1,7 +1,7 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
 import org.victorrobotics.devilscoutserver.analysis.statistics.OprStatistic;
-import org.victorrobotics.devilscoutserver.analysis.statistics.Statistic;
+import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.tba.TeamOprsCache;
@@ -29,9 +29,9 @@ public abstract class Analyzer {
     this.teamOprsCache = teamOprsCache;
   }
 
-  protected abstract List<Statistic> computeStatistics(DataHandle handle);
+  protected abstract List<StatisticsPage> computeStatistics(DataHandle handle);
 
-  public List<Statistic> computeStatistics(DataEntry.Key key) {
+  public List<StatisticsPage> computeStatistics(DataEntry.Key key) {
     return computeStatistics(new DataHandle(key));
   }
 

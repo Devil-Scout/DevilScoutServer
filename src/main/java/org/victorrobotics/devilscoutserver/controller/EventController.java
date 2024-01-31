@@ -1,10 +1,11 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.cache.CacheValue;
+import org.victorrobotics.devilscoutserver.cache.Cache.Value;
 import org.victorrobotics.devilscoutserver.tba.EventInfo;
-import org.victorrobotics.devilscoutserver.tba.TeamInfo;
 import org.victorrobotics.devilscoutserver.tba.EventTeamList;
 import org.victorrobotics.devilscoutserver.tba.MatchSchedule;
+import org.victorrobotics.devilscoutserver.tba.MatchSchedule.MatchInfo;
+import org.victorrobotics.devilscoutserver.tba.TeamInfo;
 
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
@@ -55,7 +56,7 @@ public final class EventController extends Controller {
     getValidSession(ctx);
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
 
-    CacheValue<?, EventInfo> entry = eventInfoCache().get(eventKey);
+    Value<?, EventInfo> entry = eventInfoCache().get(eventKey);
     if (entry == null) {
       throw new NotFoundResponse();
     }
@@ -88,7 +89,7 @@ public final class EventController extends Controller {
       throw new NotFoundResponse();
     }
 
-    CacheValue<?, EventTeamList> entry = eventTeamsCache().get(eventKey);
+    Value<?, EventTeamList> entry = eventTeamsCache().get(eventKey);
     long timestamp = entry.lastModified();
     checkIfNoneMatch(ctx, timestamp);
 
@@ -117,7 +118,7 @@ public final class EventController extends Controller {
       throw new NotFoundResponse();
     }
 
-    CacheValue<?, MatchSchedule> entry = matchScheduleCache().get(eventKey);
+    Value<?, MatchSchedule> entry = matchScheduleCache().get(eventKey);
     long timestamp = entry.lastModified();
     checkIfNoneMatch(ctx, timestamp);
 

@@ -3,7 +3,6 @@ package org.victorrobotics.devilscoutserver.tba;
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.bluealliance.Team;
 import org.victorrobotics.devilscoutserver.cache.Cache;
-import org.victorrobotics.devilscoutserver.cache.CacheValue;
 
 import java.util.Collection;
 import java.util.List;
@@ -30,7 +29,7 @@ public class EventTeamListCache
 
   @Override
   protected TeamInfo sourceData(String key) {
-    CacheValue<Team.Simple, TeamInfo> value = source.get(key);
+    Value<Team.Simple, TeamInfo> value = source.get(key);
     return value == null ? null : value.value();
   }
 }

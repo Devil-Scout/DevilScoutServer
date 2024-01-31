@@ -1,7 +1,6 @@
 package org.victorrobotics.devilscoutserver.tba;
 
 import org.victorrobotics.devilscoutserver.cache.Cache;
-import org.victorrobotics.devilscoutserver.cache.CacheValue;
 import org.victorrobotics.devilscoutserver.cache.ListCache;
 import org.victorrobotics.devilscoutserver.tba.EventOprs.EventTeamOprs;
 
@@ -35,7 +34,7 @@ public class TeamOprsCache extends ListCache<Integer, Map<String, EventTeamOprs>
   protected Map<Integer, Map<String, EventTeamOprs>> getData() {
     return source.values()
                  .stream()
-                 .map(CacheValue::value)
+                 .map(Value::value)
                  .map(EventOprs::entrySet)
                  .flatMap(Collection::stream)
                  .collect(TO_MAP);

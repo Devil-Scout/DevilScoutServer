@@ -215,10 +215,6 @@ public class Server {
       post("drive-team/{matchKey}", SubmissionController::submitDriveTeam);
     });
 
-    path("analysis", () -> {
-      get("teams", AnalysisController::teams);
-      // post("simulation", null); // request match simulation
-      // post("optimization", null); // request alliance optimization
-    });
+    get("analysis/{eventKey}/teams", AnalysisController::teams);
   }
 }

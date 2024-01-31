@@ -1,30 +1,35 @@
 package org.victorrobotics.devilscoutserver.cache;
 
+import static org.victorrobotics.devilscoutserver.EncodingUtil.jsonEncode;
+
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Supplier;
 
-public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, CacheValue<D, V>> {
-  protected final ConcurrentMap<K, CacheValue<D, V>> cacheMap;
+import com.fasterxml.jackson.annotation.JsonRawValue;
+import com.fasterxml.jackson.annotation.JsonValue;
 
-  private TrackingView<Entry<K, CacheValue<D, V>>> entrySet;
-  private TrackingView<K>                          keySet;
-  private TrackingView<CacheValue<D, V>>           values;
+public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cache.Value<D, V>> {
+  protected final ConcurrentMap<K, Value<D, V>> cacheMap;
+
+  private TrackingView<Entry<K, Value<D, V>>> entrySet;
+  private TrackingView<K>                     keySet;
+  private TrackingView<Value<D, V>>           values;
 
   private long lastModified;
 
-  protected Cache(Supplier<ConcurrentMap<K, CacheValue<D, V>>> cacheMap) {
-    this.cacheMap = cacheMap.get();
+  protected Cache() {
+    this.cacheMap = new ConcurrentHashMap<>();
     lastModified = System.currentTimeMillis();
   }
 
   public abstract void refresh();
 
-  protected abstract CacheValue<D, V> getValue(K key);
+  protected abstract Value<D, V> getValue(K key);
 
   public long lastModified() {
     return lastModified;
@@ -34,9 +39,13 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
     lastModified = System.currentTimeMillis();
   }
 
+  protected void updateValue(Value<D, V> value, D data) {
+    value.update(data);
+  }
+
   @Override
   @SuppressWarnings("unchecked")
-  public CacheValue<D, V> get(Object key) {
+  public Value<D, V> get(Object key) {
     try {
       return getValue((K) key);
     } catch (ClassCastException e) {
@@ -65,8 +74,8 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
   }
 
   @Override
-  public CacheValue<D, V> remove(Object key) {
-    CacheValue<D, V> value = cacheMap.remove(key);
+  public Value<D, V> remove(Object key) {
+    Value<D, V> value = cacheMap.remove(key);
     if (value != null) {
       modified();
     }
@@ -91,7 +100,7 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
   }
 
   @Override
-  public Collection<CacheValue<D, V>> values() {
+  public Collection<Value<D, V>> values() {
     if (values == null) {
       values = new TrackingView<>(cacheMap.values());
     }
@@ -99,7 +108,7 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
   }
 
   @Override
-  public Set<Entry<K, CacheValue<D, V>>> entrySet() {
+  public Set<Entry<K, Value<D, V>>> entrySet() {
     if (entrySet == null) {
       entrySet = new TrackingView<>(cacheMap.entrySet());
     }
@@ -107,12 +116,12 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
   }
 
   @Override
-  public CacheValue<D, V> put(K key, CacheValue<D, V> value) {
+  public Value<D, V> put(K key, Value<D, V> value) {
     throw new UnsupportedOperationException("Caches are read-only");
   }
 
   @Override
-  public void putAll(Map<? extends K, ? extends CacheValue<D, V>> m) {
+  public void putAll(Map<? extends K, ? extends Value<D, V>> m) {
     throw new UnsupportedOperationException("Caches are read-only");
   }
 
@@ -183,6 +192,58 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
     public void remove() {
       iterator.remove();
       modified();
+    }
+  }
+
+  public static class Value<D, V extends Cacheable<D>> implements Comparable<Value<?, V>> {
+    private final V        val;
+    private final Runnable onModification;
+
+    private volatile long lastModified;
+    private volatile long lastAccess;
+
+    private String jsonCache;
+
+    public Value(V value, Runnable onModification) {
+      this.val = value;
+      this.onModification = onModification;
+    }
+
+    void update(D data) {
+      if (val.update(data)) {
+        onModification.run();
+      }
+    }
+
+    public V value() {
+      lastAccess = System.currentTimeMillis();
+      return val;
+    }
+
+    public long lastModified() {
+      return lastModified;
+    }
+
+    public long lastAccess() {
+      return lastAccess;
+    }
+
+    @Override
+    @SuppressWarnings({ "unchecked", "java:S3740", "java:S1210" })
+    public int compareTo(Value<?, V> o) {
+      if (val instanceof Comparable v) {
+        return ((Comparable<V>) v).compareTo(o.val);
+      }
+      return 0;
+    }
+
+    @JsonRawValue
+    @JsonValue
+    String toJson() {
+      if (jsonCache == null) {
+        jsonCache = jsonEncode(value());
+      }
+      return jsonCache;
     }
   }
 }

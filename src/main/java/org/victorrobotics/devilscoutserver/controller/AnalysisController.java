@@ -1,20 +1,17 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.analysis.TeamStatistics;
-import org.victorrobotics.devilscoutserver.tba.TeamInfo;
 
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Objects;
-
-import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
+import io.javalin.http.NotFoundResponse;
 
 public final class AnalysisController extends Controller {
+  private static final String EVENT_KEY_PATH_PARAM = "eventKey";
+
   private AnalysisController() {}
 
   /**
-   * GET /analysis/teams
+   * GET /analysis/{eventKey}/teams
    * <p>
    * Success: 200 {@link TeamStatistics}
    * <p>
@@ -24,19 +21,16 @@ public final class AnalysisController extends Controller {
    * <li>401 Unauthorized</li>
    * </ul>
    */
-  public static void teams(Context ctx) throws SQLException {
+  public static void teams(Context ctx) {
     Session session = getValidSession(ctx);
-    String eventKey = teamDB().getTeam(session.getTeam())
-                              .eventKey();
-    if ("".equals(eventKey)) {
-      throw new BadRequestResponse("Team not attending event");
+
+    String eventKey = ctx.pathParam(EVENT_KEY_PATH_PARAM);
+    if (!eventInfoCache().containsKey(eventKey)) {
+      throw new NotFoundResponse();
     }
 
-    Collection<TeamInfo> teams = eventTeamsCache().get(eventKey)
-                                                  .value()
-                                                  .teams();
-    ctx.writeJsonStream(teams.stream()
-                             .map(team -> teamAnalysisCache().get(team.getNumber()))
-                             .filter(Objects::nonNull));
+    // TODO: verify team is permitted to access event analysis
+
+    ctx.json(teamAnalysisCache().getEvent(eventKey));
   }
 }
