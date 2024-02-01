@@ -4,10 +4,12 @@ import org.victorrobotics.devilscoutserver.analysis.statistics.OprStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
-import org.victorrobotics.devilscoutserver.tba.TeamOprsCache;
+import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
+import org.victorrobotics.devilscoutserver.tba.EventOprs.TeamOpr;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -16,17 +18,17 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract class Analyzer {
-  private final EntryDatabase matchEntryDB;
-  private final EntryDatabase pitEntryDB;
-  private final EntryDatabase driveTeamEntryDB;
-  private final TeamOprsCache teamOprsCache;
+  private final EntryDatabase  matchEntryDB;
+  private final EntryDatabase  pitEntryDB;
+  private final EntryDatabase  driveTeamEntryDB;
+  private final EventOprsCache oprsCache;
 
   protected Analyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
-                     EntryDatabase driveTeamEntryDB, TeamOprsCache teamOprsCache) {
+                     EntryDatabase driveTeamEntryDB, EventOprsCache teamOprsCache) {
     this.matchEntryDB = matchEntryDB;
     this.pitEntryDB = pitEntryDB;
     this.driveTeamEntryDB = driveTeamEntryDB;
-    this.teamOprsCache = teamOprsCache;
+    this.oprsCache = teamOprsCache;
   }
 
   protected abstract List<StatisticsPage> computeStatistics(DataHandle handle);
@@ -47,16 +49,21 @@ public abstract class Analyzer {
     }
   }
 
-  protected OprStatistic teamOprs(int team) {
-    return new OprStatistic("Total OPRs", teamOprsCache.get(team)
-                                                       .value());
-  }
-
   protected class DataHandle {
     private final DataEntry.Key key;
 
     DataHandle(DataEntry.Key key) {
       this.key = key;
+    }
+
+    public OprStatistic oprStatistic(String name) {
+      TeamOpr oprs = oprsCache.get(key.eventKey())
+                              .value()
+                              .get(key.team());
+      if (oprs == null) {
+        return new OprStatistic(name);
+      }
+      return new OprStatistic(name, oprs.getOpr(), oprs.getDpr(), oprs.getCcwm());
     }
 
     public List<DataEntry> getPitEntries() {
@@ -67,16 +74,16 @@ public abstract class Analyzer {
       }
     }
 
-    public Map<String, List<DataEntry>> getMatchEntries() {
-      return entryMap(matchEntryDB, key.eventKey(), key.team());
+    public Collection<List<DataEntry>> getMatchEntries() {
+      return getEntries(matchEntryDB, key.eventKey(), key.team());
     }
 
-    public Map<String, List<DataEntry>> getDriveTeamEntries() {
-      return entryMap(driveTeamEntryDB, key.eventKey(), key.team());
+    public Collection<List<DataEntry>> getDriveTeamEntries() {
+      return getEntries(driveTeamEntryDB, key.eventKey(), key.team());
     }
 
-    private static Map<String, List<DataEntry>> entryMap(EntryDatabase database, String eventKey,
-                                                         int team) {
+    private static Collection<List<DataEntry>> getEntries(EntryDatabase database, String eventKey,
+                                                          int team) {
       List<DataEntry> entries;
       try {
         entries = database.getEntries(eventKey, team);
@@ -89,7 +96,7 @@ public abstract class Analyzer {
         entryMap.computeIfAbsent(entry.matchKey(), s -> new ArrayList<>(1))
                 .add(entry);
       }
-      return entryMap;
+      return entryMap.values();
     }
   }
 }

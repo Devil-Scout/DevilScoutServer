@@ -10,19 +10,15 @@ import java.util.Objects;
 import java.util.Set;
 
 public class EventOprs implements Cacheable<OPRs> {
-  public final class EventTeamOprs {
+  public static class TeamOpr {
     private double opr;
     private double dpr;
     private double ccwm;
 
-    public EventTeamOprs() {
+    public TeamOpr() {
       this.opr = Double.NaN;
       this.dpr = Double.NaN;
       this.ccwm = Double.NaN;
-    }
-
-    public String getEventKey() {
-      return eventKey;
     }
 
     public double getOpr() {
@@ -45,7 +41,7 @@ public class EventOprs implements Cacheable<OPRs> {
     @Override
     public boolean equals(Object obj) {
       if (this == obj) return true;
-      if (!(obj instanceof EventTeamOprs other)) return false;
+      if (!(obj instanceof TeamOpr other)) return false;
 
       return Double.doubleToLongBits(opr) == Double.doubleToLongBits(other.opr)
           && Double.doubleToLongBits(dpr) == Double.doubleToLongBits(other.dpr)
@@ -53,11 +49,9 @@ public class EventOprs implements Cacheable<OPRs> {
     }
   }
 
-  private final Map<Integer, EventTeamOprs> teamOprs;
-  private final String eventKey;
+  private final Map<Integer, TeamOpr> teamOprs;
 
-  public EventOprs(String eventKey, OPRs oprs) {
-    this.eventKey = eventKey;
+  public EventOprs(OPRs oprs) {
     this.teamOprs = new LinkedHashMap<>();
     update(oprs);
   }
@@ -70,13 +64,20 @@ public class EventOprs implements Cacheable<OPRs> {
     oprs.defensivePowerRatings.forEach((teamKey, opr) -> teams.add(parseTeamKey(teamKey)));
     oprs.contributionsToWinMargin.forEach((teamKey, opr) -> teams.add(parseTeamKey(teamKey)));
 
-    boolean mods = false;
-    mods |= teamOprs.keySet()
-                    .retainAll(teams);
+    boolean mods = teamOprs.keySet()
+                           .retainAll(teams);
 
     for (int team : teams) {
-      EventTeamOprs teamOpr = teamOprs.computeIfAbsent(team, t -> new EventTeamOprs());
+      TeamOpr teamOpr = teamOprs.get(team);
       String key = "frc" + team;
+      if (teamOpr == null) {
+        teamOpr = new TeamOpr();
+        teamOpr.opr = oprs.offensivePowerRatings.get(key);
+        teamOpr.dpr = oprs.defensivePowerRatings.get(key);
+        teamOpr.ccwm = oprs.contributionsToWinMargin.get(key);
+        teamOprs.put(team, teamOpr);
+        continue;
+      }
 
       double opr = oprs.offensivePowerRatings.get(key);
       if (teamOpr.opr != opr) {
@@ -100,11 +101,11 @@ public class EventOprs implements Cacheable<OPRs> {
     return mods;
   }
 
-  public EventTeamOprs get(int team) {
+  public TeamOpr get(int team) {
     return teamOprs.get(team);
   }
 
-  public Set<Map.Entry<Integer, EventTeamOprs>> entrySet() {
+  public Set<Map.Entry<Integer, TeamOpr>> entrySet() {
     return teamOprs.entrySet();
   }
 

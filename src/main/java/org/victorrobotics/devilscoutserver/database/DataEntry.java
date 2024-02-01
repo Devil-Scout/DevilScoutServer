@@ -43,9 +43,9 @@ public record DataEntry(String id,
   public Boolean getBoolean(String path) {
     JsonNode node = json.at(path);
     return node.isBoolean() ? node.booleanValue() : null;
-
   }
 
+  @SuppressWarnings("java:S1168") // empty list instead of null
   public List<Integer> getIntegers(String path) {
     JsonNode node = json.at(path);
     if (node.isNumber()) return List.of(node.intValue());
@@ -54,9 +54,7 @@ public record DataEntry(String id,
     List<Integer> values = new ArrayList<>(node.size());
     for (int i = 0; i < node.size(); i++) {
       JsonNode node2 = node.get(i);
-      if (!node2.isNumber()) {
-        return null;
-      }
+      if (!node2.isNumber()) return null;
       values.add(node2.intValue());
     }
     return values;

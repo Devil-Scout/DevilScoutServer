@@ -2,46 +2,42 @@ package org.victorrobotics.devilscoutserver.analysis.statistics;
 
 import org.victorrobotics.devilscoutserver.database.DataEntry;
 
-import java.util.List;
-import java.util.Map;
+import java.util.Collection;
 import java.util.function.Function;
 
 public final class BooleanStatistic extends Statistic {
-  public final int yes;
-  public final int no;
-  public final int total;
+  public final double percent;
 
-  public BooleanStatistic(String name, int yes, int no, int total) {
+  public BooleanStatistic(String name, Double percent) {
     super(StatisticType.BOOLEAN, name);
-    this.yes = yes;
-    this.no = no;
-    this.total = total;
+    this.percent = percent;
   }
 
-  public static BooleanStatistic direct(String name, Map<String, List<DataEntry>> entryMap,
-                                        String path) {
-    return computed(name, entryMap, entry -> entry.getBoolean(path));
+  public static BooleanStatistic
+      directMatch(String name, String path,
+                  Iterable<? extends Collection<DataEntry>> matchEntries) {
+    return computedMatch(name, matchEntries, entry -> entry.getBoolean(path));
   }
 
   @SuppressWarnings("java:S4276") // use Predicate<Entry> instead
-  public static BooleanStatistic computed(String name, Map<String, List<DataEntry>> entryMap,
-                                          Function<DataEntry, Boolean> function) {
+  public static BooleanStatistic
+      computedMatch(String name, Iterable<? extends Collection<DataEntry>> matchEntries,
+                    Function<DataEntry, Boolean> function) {
     int yes = 0;
-    int no = 0;
     int total = 0;
-    for (List<DataEntry> entries : entryMap.values()) {
+    for (Collection<DataEntry> entries : matchEntries) {
       if (entries.isEmpty()) continue;
 
       int yes2 = 0;
       int no2 = 0;
       for (DataEntry entry : entries) {
         Boolean value = function.apply(entry);
-        if (value != null) {
-          if (value) {
-            yes2++;
-          } else {
-            no2++;
-          }
+        if (value == null) continue;
+
+        if (value) {
+          yes2++;
+        } else {
+          no2++;
         }
       }
 
@@ -49,11 +45,35 @@ public final class BooleanStatistic extends Statistic {
 
       if (yes2 > no2) {
         yes++;
-      } else if (no2 > yes2) {
-        no++;
       }
       total++;
     }
-    return new BooleanStatistic(name, yes, no, total);
+
+    Double percent = total == 0 ? null : ((double) yes / total);
+    return new BooleanStatistic(name, percent);
+  }
+
+  public static BooleanStatistic directPit(String name, String path,
+                                           Iterable<DataEntry> pitEntries) {
+    return computedPit(name, pitEntries, entry -> entry.getBoolean(path));
+  }
+
+  @SuppressWarnings("java:S4276") // use Predicate<Entry> instead
+  public static BooleanStatistic computedPit(String name, Iterable<DataEntry> pitEntries,
+                                             Function<DataEntry, Boolean> function) {
+    int yes = 0;
+    int total = 0;
+    for (DataEntry entry : pitEntries) {
+      Boolean value = function.apply(entry);
+      if (value == null) continue;
+
+      if (value) {
+        yes++;
+      }
+      total++;
+    }
+
+    double percent = total == 0 ? -1 : ((double) yes / total);
+    return new BooleanStatistic(name, percent);
   }
 }

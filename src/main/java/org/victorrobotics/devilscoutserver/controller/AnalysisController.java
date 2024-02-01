@@ -22,7 +22,7 @@ public final class AnalysisController extends Controller {
    * </ul>
    */
   public static void teams(Context ctx) {
-    Session session = getValidSession(ctx);
+    getValidSession(ctx);
 
     String eventKey = ctx.pathParam(EVENT_KEY_PATH_PARAM);
     if (!eventInfoCache().containsKey(eventKey)) {
