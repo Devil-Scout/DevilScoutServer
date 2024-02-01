@@ -5,5 +5,6 @@ public enum StatisticType {
   BOOLEAN,
   RADAR,
   OPR,
-  PIE_CHART;
+  PIE_CHART,
+  STRING;
 }
