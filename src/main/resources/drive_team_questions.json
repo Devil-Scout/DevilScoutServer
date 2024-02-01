@@ -7,22 +7,15 @@
     "max": 5
   },
   {
-    "prompt": "Leadership",
-    "key": "leadership",
+    "prompt": "Planning/Strategy",
+    "key": "strategy",
     "type": "RANGE",
     "min": 1,
     "max": 5
   },
   {
-    "prompt": "Planning",
-    "key": "planning",
-    "type": "RANGE",
-    "min": 1,
-    "max": 5
-  },
-  {
-    "prompt": "Quick Thinking",
-    "key": "thinking",
+    "prompt": "Adaptability",
+    "key": "adaptability",
     "type": "RANGE",
     "min": 1,
     "max": 5
@@ -33,10 +26,5 @@
     "type": "RANGE",
     "min": 1,
     "max": 5
-  },
-  {
-    "prompt": "Enjoyed working with them?",
-    "key": "enjoy",
-    "type": "BOOLEAN"
   }
 ]

@@ -8,7 +8,6 @@ import org.victorrobotics.devilscoutserver.tba.EventInfoCache;
 import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
-import org.victorrobotics.devilscoutserver.tba.TeamInfoCache;
 
 import java.security.SecureRandom;
 import java.sql.SQLException;
@@ -38,7 +37,6 @@ public sealed class Controller
   private static UserDatabase USERS;
   private static TeamDatabase TEAMS;
 
-  private static TeamInfoCache      TEAM_CACHE;
   private static EventInfoCache     EVENT_INFO_CACHE;
   private static EventTeamListCache EVENT_TEAMS_CACHE;
   private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
@@ -62,10 +60,6 @@ public sealed class Controller
 
   public static void setEventInfoCache(EventInfoCache cache) {
     EVENT_INFO_CACHE = cache;
-  }
-
-  public static void setTeamCache(TeamInfoCache cache) {
-    TEAM_CACHE = cache;
   }
 
   public static void setEventTeamsCache(EventTeamListCache cache) {
@@ -107,10 +101,6 @@ public sealed class Controller
 
   public static TeamDatabase teamDB() {
     return TEAMS;
-  }
-
-  public static TeamInfoCache teamCache() {
-    return TEAM_CACHE;
   }
 
   public static EventInfoCache eventInfoCache() {

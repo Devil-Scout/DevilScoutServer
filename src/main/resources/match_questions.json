@@ -1,10 +1,10 @@
 [
   {
     "key": "auto",
-    "title": "Autonomous",
+    "title": "Auto",
     "questions": [
       {
-        "prompt": "Start Location",
+        "prompt": "Start Position",
         "key": "start_pos",
         "type": "SINGLE",
         "options": [
@@ -19,11 +19,10 @@
         "key": "routine",
         "type": "SEQUENCE",
         "options": [
-          "Leave starting zone",
           "Score note in speaker",
           "Score note in amp",
-          "Pickup note from floor (near)",
-          "Pickup note from floor (center)"
+          "Fail to score note",
+          "Pickup note from floor"
         ]
       }
     ]
@@ -88,36 +87,8 @@
         "max": 5
       },
       {
-        "prompt": "Issues?",
-        "key": "issues",
-        "type": "MULTIPLE",
-        "options": [
-          "Died",
-          "Killed",
-          "Mechanisms"
-        ]
-      },
-      {
-        "prompt": "Defended by others?",
-        "key": "defended",
-        "type": "BOOLEAN"
-      }
-    ]
-  },
-  {
-    "key": "human",
-    "title": "Human",
-    "questions": [
-      {
-        "prompt": "Driver Skill",
-        "key": "driver_skill",
-        "type": "RANGE",
-        "min": 1,
-        "max": 5
-      },
-      {
         "prompt": "Human Player Location",
-        "key": "player_location",
+        "key": "human_player",
         "type": "SINGLE",
         "options": [
           "Amp",

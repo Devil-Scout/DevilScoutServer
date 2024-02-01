@@ -28,7 +28,6 @@ import org.victorrobotics.devilscoutserver.tba.EventInfoCache;
 import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
-import org.victorrobotics.devilscoutserver.tba.TeamInfoCache;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -54,7 +53,6 @@ public class Server {
       config.bundledPlugins.enableSslRedirects();
       config.registerPlugin(new SslPlugin(sslConfig -> {
         sslConfig.pemFromPath(System.getenv("SSL_CERT_PATH"), System.getenv("SSL_KEY_PATH"));
-        sslConfig.redirect = true;
         sslConfig.sniHostCheck = false;
       }));
 
@@ -89,7 +87,8 @@ public class Server {
     javalin.stop();
   }
 
-  @SuppressWarnings("java:S2095") // close the executor
+  // close the executor, single-line lambda bodies
+  @SuppressWarnings({ "java:S2095", "java:S1602" })
   public static void main(String... args) {
     LOGGER.info("Connecting to database...");
     Database.initConnectionPool();
@@ -102,8 +101,7 @@ public class Server {
 
     LOGGER.info("Initializing memory caches...");
     Controller.setEventInfoCache(new EventInfoCache());
-    Controller.setTeamCache(new TeamInfoCache());
-    Controller.setEventTeamsCache(new EventTeamListCache(Controller.teamCache()));
+    Controller.setEventTeamsCache(new EventTeamListCache());
     Controller.setMatchScheduleCache(new MatchScheduleCache());
     LOGGER.info("Memory caches ready");
 
@@ -124,14 +122,15 @@ public class Server {
                                          .name("Refresh-", 0)
                                          .factory();
     ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, refreshThreads);
-    executor.scheduleAtFixedRate(() -> refreshCache(Controller.eventInfoCache()), 0, 5,
-                                 TimeUnit.MINUTES);
-    executor.scheduleAtFixedRate(() -> refreshCache(Controller.matchScheduleCache()), 0, 1,
-                                 TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
-      refreshCache(Controller.teamCache());
+      refreshCache(Controller.eventInfoCache());
+    }, 0, 60, TimeUnit.MINUTES);
+    executor.scheduleAtFixedRate(() -> {
+      refreshCache(Controller.matchScheduleCache());
+    }, 0, 1, TimeUnit.MINUTES);
+    executor.scheduleAtFixedRate(() -> {
       refreshCache(Controller.eventTeamsCache());
-    }, 0, 5, TimeUnit.MINUTES);
+    }, 0, 60, TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
       ConcurrentMap<String, Session> sessions = Controller.sessions();
       long start = System.currentTimeMillis();
@@ -140,7 +139,7 @@ public class Server {
               .removeIf(Session::isExpired);
       LOGGER.info("Purged {} expired sessions in {}ms", size - sessions.size(),
                   System.currentTimeMillis() - start);
-    }, 0, 5, TimeUnit.MINUTES);
+    }, 0, 15, TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
       refreshCache(eventOprsCache);
       refreshCache(Controller.teamAnalysisCache());

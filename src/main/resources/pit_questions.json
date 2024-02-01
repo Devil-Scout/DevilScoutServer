@@ -4,22 +4,6 @@
     "title": "Specs",
     "questions": [
       {
-        "prompt": "Chassis width (in)",
-        "key": "width",
-        "type": "NUMBER",
-        "min": 18,
-        "max": 30,
-        "default": 24
-      },
-      {
-        "prompt": "Weight (no battery/bumpers)",
-        "key": "weight",
-        "type": "NUMBER",
-        "min": 80,
-        "max": 125,
-        "default": 100
-      },
-      {
         "prompt": "Drivetrain",
         "key": "drivetrain",
         "type": "SINGLE",
@@ -29,16 +13,32 @@
           "Mecanum",
           "Other"
         ]
+      },
+      {
+        "prompt": "Chassis size (in)",
+        "key": "size",
+        "type": "NUMBER",
+        "min": 18,
+        "max": 30,
+        "default": 28
+      },
+      {
+        "prompt": "Weight (no battery/bumpers)",
+        "key": "weight",
+        "type": "NUMBER",
+        "min": 80,
+        "max": 125,
+        "default": 100
       }
     ]
   },
   {
     "key": "auto",
-    "title": "Autonomous",
+    "title": "Auto",
     "questions": [
       {
-        "prompt": "Preferred Start Locations",
-        "key": "start",
+        "prompt": "Start Position(s)",
+        "key": "start_pos",
         "type": "MULTIPLE",
         "options": [
           "Next to amp",
@@ -48,16 +48,12 @@
         ]
       },
       {
-        "prompt": "Best Routine",
-        "key": "routine",
-        "type": "SEQUENCE",
-        "options": [
-          "Leave starting zone",
-          "Score note in speaker",
-          "Score note in amp",
-          "Pickup note from floor (near)",
-          "Pickup note from floor (center)"
-        ]
+        "prompt": "Number of Notes",
+        "key": "notes",
+        "type": "NUMBER",
+        "min": 0,
+        "max": 11,
+        "default": 1
       }
     ]
   },
@@ -66,7 +62,7 @@
     "title": "Teleop",
     "questions": [
       {
-        "prompt": "Pickup Locations",
+        "prompt": "Pickup Location(s)",
         "key": "pickup",
         "type": "MULTIPLE",
         "options": [
@@ -75,7 +71,7 @@
         ]
       },
       {
-        "prompt": "Score Locations",
+        "prompt": "Score Location(s)",
         "key": "score",
         "type": "MULTIPLE",
         "options": [
@@ -90,17 +86,18 @@
     "title": "Endgame",
     "questions": [
       {
-        "prompt": "Climb onstage?",
-        "key": "onstage",
-        "type": "BOOLEAN"
+        "prompt": "Final Status",
+        "key": "status",
+        "type": "SINGLE",
+        "options": [
+          "None",
+          "Parked",
+          "Onstage",
+          "Harmony"
+        ]
       },
       {
-        "prompt": "Climb onstage with another robot?",
-        "key": "harmony",
-        "type": "BOOLEAN"
-      },
-      {
-        "prompt": "Score in trap?",
+        "prompt": "Note in Trap?",
         "key": "trap",
         "type": "BOOLEAN"
       }
@@ -111,24 +108,17 @@
     "title": "General",
     "questions": [
       {
-        "prompt": "Driver Skill",
-        "key": "driver_skill",
-        "type": "RANGE",
-        "min": 1,
-        "max": 5
-      },
-      {
         "prompt": "Human Player Location",
-        "key": "player_location",
+        "key": "human_player",
         "type": "SINGLE",
         "options": [
-          "Source",
           "Amp",
-          "No preference"
+          "Source",
+          "No Preference"
         ]
       },
       {
-        "prompt": "Gracious Professionalism (do NOT ask)",
+        "prompt": "Gracious Professionalism (don't ask)",
         "key": "professionalism",
         "type": "RANGE",
         "min": 1,
