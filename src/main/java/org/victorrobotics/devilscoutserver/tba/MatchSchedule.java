@@ -268,13 +268,17 @@ public class MatchSchedule<S extends ScoreBreakdown> implements Cacheable<List<M
     // If schedule was updated, update team statistics
     Map<Integer, Collection<S>> stats = new LinkedHashMap<>();
     for (MatchInfo<S> match : matchMap.values()) {
-      for (int team : match.red) {
-        stats.computeIfAbsent(team, t -> new ArrayList<>())
-             .add(match.redStatistics);
+      if (match.redStatistics != null) {
+        for (int team : match.red) {
+          stats.computeIfAbsent(team, t -> new ArrayList<>())
+               .add(match.redStatistics);
+        }
       }
-      for (int team : match.blue) {
-        stats.computeIfAbsent(team, t -> new ArrayList<>())
-             .add(match.blueStatistics);
+      if (match.blueStatistics != null) {
+        for (int team : match.blue) {
+          stats.computeIfAbsent(team, t -> new ArrayList<>())
+               .add(match.blueStatistics);
+        }
       }
     }
 

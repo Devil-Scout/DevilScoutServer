@@ -11,6 +11,6 @@ public class WltStatistic extends Statistic {
 
   public WltStatistic(ScoreBreakdown breakdown) {
     super(StatisticType.WTL, "Event WLT");
-    this.wlt = breakdown.getWltRecord();
+    this.wlt = breakdown == null ? null : breakdown.getWltRecord();
   }
 }
