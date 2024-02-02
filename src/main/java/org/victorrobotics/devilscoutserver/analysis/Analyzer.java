@@ -1,6 +1,5 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
-import org.victorrobotics.bluealliance.Event.WinLossRecord;
 import org.victorrobotics.devilscoutserver.analysis.statistics.OprStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.RankingPointsStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
@@ -9,7 +8,6 @@ import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.tba.EventOprs.TeamOpr;
 import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
-import org.victorrobotics.devilscoutserver.tba.EventWltCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 
 import java.sql.SQLException;
@@ -29,17 +27,15 @@ public abstract class Analyzer {
 
   private final MatchScheduleCache<?> matchScheduleCache;
   private final EventOprsCache        oprsCache;
-  private final EventWltCache         eventWltCache;
 
   protected Analyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
                      EntryDatabase driveTeamEntryDB, MatchScheduleCache<?> matchScheduleCache,
-                     EventOprsCache teamOprsCache, EventWltCache eventWltCache) {
+                     EventOprsCache teamOprsCache) {
     this.matchEntryDB = matchEntryDB;
     this.pitEntryDB = pitEntryDB;
     this.driveTeamEntryDB = driveTeamEntryDB;
     this.matchScheduleCache = matchScheduleCache;
     this.oprsCache = teamOprsCache;
-    this.eventWltCache = eventWltCache;
   }
 
   protected abstract List<StatisticsPage> computeStatistics(DataHandle handle);
@@ -78,13 +74,9 @@ public abstract class Analyzer {
     }
 
     public WltStatistic wltStatistic(String name) {
-      WinLossRecord wlt = eventWltCache.get(key.eventKey())
-                                       .value()
-                                       .get(key.team());
-      if (wlt == null) {
-        return new WltStatistic(name, 0, 0, 0);
-      }
-      return new WltStatistic(name, wlt.wins, wlt.losses, wlt.ties);
+      return new WltStatistic(name, matchScheduleCache.get(key.eventKey())
+                                                      .value()
+                                                      .getTeamStatistics(key.team()));
     }
 
     public RankingPointsStatistic rpStatistic(String name) {

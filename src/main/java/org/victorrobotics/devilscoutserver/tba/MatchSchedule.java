@@ -17,13 +17,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public class MatchSchedule<S extends AllianceStatistics> implements Cacheable<List<Match>> {
-  public static class MatchInfo<S extends AllianceStatistics> {
+public class MatchSchedule<S extends ScoreBreakdown> implements Cacheable<List<Match>> {
+  public static class MatchInfo<S extends ScoreBreakdown> {
     enum MatchLevel {
       QUAL("Qualification"),
       QUARTER("Quarterfinal"),
@@ -58,7 +59,7 @@ public class MatchSchedule<S extends AllianceStatistics> implements Cacheable<Li
     private final int        set;
     private final int        number;
 
-    private final Function<Match.ScoreBreakdown, S> statsFunction;
+    private final BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction;
 
     private int[]   blue;
     private int[]   red;
@@ -68,7 +69,7 @@ public class MatchSchedule<S extends AllianceStatistics> implements Cacheable<Li
     private S redStatistics;
     private S blueStatistics;
 
-    MatchInfo(Function<Match.ScoreBreakdown, S> statsFunction, Match match) {
+    MatchInfo(BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction, Match match) {
       this.key = match.key;
       this.level = MatchLevel.of(match.level);
       this.set = match.setNumber;
@@ -120,7 +121,7 @@ public class MatchSchedule<S extends AllianceStatistics> implements Cacheable<Li
         change |= blueStatistics != null;
         blueStatistics = null;
       } else {
-        S blueStats = statsFunction.apply(match.blueScore);
+        S blueStats = statsFunction.apply(match.blueScore, wonMatch(match, Color.BLUE));
         if (!Objects.equals(blueStatistics, blueStats)) {
           blueStatistics = blueStats;
           change = true;
@@ -131,7 +132,7 @@ public class MatchSchedule<S extends AllianceStatistics> implements Cacheable<Li
         change |= redStatistics != null;
         redStatistics = null;
       } else {
-        S redStats = statsFunction.apply(match.redScore);
+        S redStats = statsFunction.apply(match.redScore, wonMatch(match, Color.RED));
         if (!Objects.equals(redStatistics, redStats)) {
           redStatistics = redStats;
           change = true;
@@ -153,6 +154,16 @@ public class MatchSchedule<S extends AllianceStatistics> implements Cacheable<Li
                                             .substring(3));
       }
       return teams;
+    }
+
+    private static Boolean wonMatch(Match match, Color color) {
+      if (match.winningAlliance == null || match.winningAlliance == Color.NONE) {
+        return null;
+      } else if (match.winningAlliance == color) {
+        return Boolean.TRUE;
+      } else {
+        return Boolean.FALSE;
+      }
     }
 
     public String getKey() {
@@ -217,10 +228,10 @@ public class MatchSchedule<S extends AllianceStatistics> implements Cacheable<Li
   private final ConcurrentNavigableMap<String, MatchInfo<S>> matchMap;
   private final ConcurrentMap<Integer, S>                    teamMatches;
   private final Collection<MatchInfo<S>>                     matches;
-  private final Function<Match.ScoreBreakdown, S>            statsFunction;
+  private final BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction;
   private final Function<Collection<S>, S>                   statsMergeFunction;
 
-  public MatchSchedule(Function<Match.ScoreBreakdown, S> statsFunction,
+  public MatchSchedule(BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction,
                        Function<Collection<S>, S> statsMergeFunction, List<Match> matches) {
     this.matchMap = new ConcurrentSkipListMap<>(MATCH_KEY_COMPARATOR);
     this.matches = Collections.unmodifiableCollection(matchMap.values());

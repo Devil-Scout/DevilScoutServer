@@ -9,8 +9,8 @@ import static io.javalin.apibuilder.ApiBuilder.post;
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
 import org.victorrobotics.devilscoutserver.analysis.TeamStatisticsCache;
-import org.victorrobotics.devilscoutserver.analysis._2024.CrescendoAnalyzer;
 import org.victorrobotics.devilscoutserver.analysis._2024.CrescendoAllianceStatistics;
+import org.victorrobotics.devilscoutserver.analysis._2024.CrescendoAnalyzer;
 import org.victorrobotics.devilscoutserver.cache.Cache;
 import org.victorrobotics.devilscoutserver.controller.AnalysisController;
 import org.victorrobotics.devilscoutserver.controller.Controller;
@@ -28,7 +28,6 @@ import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.tba.EventInfoCache;
 import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
-import org.victorrobotics.devilscoutserver.tba.EventWltCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 
 import java.util.concurrent.ConcurrentMap;
@@ -107,14 +106,12 @@ public class Server {
     Controller.setMatchScheduleCache(new MatchScheduleCache<>(CrescendoAllianceStatistics::new,
                                                               CrescendoAllianceStatistics::new));
     EventOprsCache eventOprsCache = new EventOprsCache();
-    EventWltCache eventWltCache = new EventWltCache();
     LOGGER.info("Memory caches ready");
 
     LOGGER.info("Initializing analysis...");
-    Analyzer analyzer =
-        new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
-                              Controller.driveTeamEntryDB(), Controller.matchScheduleCache(),
-                              eventOprsCache, eventWltCache);
+    Analyzer analyzer = new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
+                                              Controller.driveTeamEntryDB(),
+                                              Controller.matchScheduleCache(), eventOprsCache);
     Controller.setTeamStatisticsCache(new TeamStatisticsCache(analyzer));
     LOGGER.info("Analysis ready");
 
@@ -148,7 +145,6 @@ public class Server {
     }, 0, 5, TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
       refreshCache(eventOprsCache);
-      refreshCache(eventWltCache);
       refreshCache(Controller.teamStatisticsCache());
     }, 0, 5, TimeUnit.MINUTES);
     LOGGER.info("Daemon services running");

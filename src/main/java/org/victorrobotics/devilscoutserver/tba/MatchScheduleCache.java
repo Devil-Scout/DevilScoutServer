@@ -6,14 +6,15 @@ import org.victorrobotics.bluealliance.Match;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class MatchScheduleCache<S extends AllianceStatistics>
+public class MatchScheduleCache<S extends ScoreBreakdown>
     extends BlueAllianceCache<String, List<Match>, MatchSchedule<S>> {
-  private final Function<Match.ScoreBreakdown, S> statsFunction;
-  private final Function<Collection<S>, S>        statsMergeFunction;
+  private final BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction;
+  private final Function<Collection<S>, S>                   statsMergeFunction;
 
-  public MatchScheduleCache(Function<Match.ScoreBreakdown, S> statsFunction,
+  public MatchScheduleCache(BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction,
                             Function<Collection<S>, S> statsMergeFunction) {
     super(TimeUnit.HOURS.toMillis(8));
     this.statsFunction = statsFunction;

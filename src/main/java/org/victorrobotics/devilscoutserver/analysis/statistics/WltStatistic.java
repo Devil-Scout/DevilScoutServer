@@ -1,14 +1,16 @@
 package org.victorrobotics.devilscoutserver.analysis.statistics;
 
-public class WltStatistic extends Statistic {
-  public final int wins;
-  public final int losses;
-  public final int ties;
+import org.victorrobotics.devilscoutserver.tba.ScoreBreakdown;
+import org.victorrobotics.devilscoutserver.tba.ScoreBreakdown.WltRecord;
 
-  public WltStatistic(String name, int wins, int losses, int ties) {
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
+public class WltStatistic extends Statistic {
+  @JsonUnwrapped
+  public final WltRecord wlt;
+
+  public WltStatistic(String name, ScoreBreakdown breakdown) {
     super(StatisticType.WTL, name);
-    this.wins = wins;
-    this.losses = losses;
-    this.ties = ties;
+    this.wlt = breakdown.getWltRecord();
   }
 }
