@@ -9,7 +9,7 @@ import static io.javalin.apibuilder.ApiBuilder.post;
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
 import org.victorrobotics.devilscoutserver.analysis.TeamStatisticsCache;
-import org.victorrobotics.devilscoutserver.analysis._2024.CrescendoAllianceStatistics;
+import org.victorrobotics.devilscoutserver.analysis._2024.CrescendoScoreBreakdown;
 import org.victorrobotics.devilscoutserver.analysis._2024.CrescendoAnalyzer;
 import org.victorrobotics.devilscoutserver.cache.Cache;
 import org.victorrobotics.devilscoutserver.controller.AnalysisController;
@@ -103,8 +103,8 @@ public class Server {
     LOGGER.info("Initializing memory caches...");
     Controller.setEventInfoCache(new EventInfoCache());
     Controller.setEventTeamsCache(new EventTeamListCache());
-    Controller.setMatchScheduleCache(new MatchScheduleCache<>(CrescendoAllianceStatistics::new,
-                                                              CrescendoAllianceStatistics::new));
+    Controller.setMatchScheduleCache(new MatchScheduleCache<>(CrescendoScoreBreakdown::new,
+                                                              CrescendoScoreBreakdown::new));
     EventOprsCache eventOprsCache = new EventOprsCache();
     LOGGER.info("Memory caches ready");
 

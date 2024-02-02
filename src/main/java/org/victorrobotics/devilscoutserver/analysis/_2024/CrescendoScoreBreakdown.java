@@ -5,10 +5,10 @@ import org.victorrobotics.devilscoutserver.tba.ScoreBreakdown;
 
 import java.util.Collection;
 
-public class CrescendoAllianceStatistics implements ScoreBreakdown {
+public class CrescendoScoreBreakdown implements ScoreBreakdown {
   private final WltRecord wltRecord;
 
-  public CrescendoAllianceStatistics(Match.ScoreBreakdown breakdown, Boolean wonMatch) {
+  public CrescendoScoreBreakdown(Match.ScoreBreakdown breakdown, Boolean wonMatch) {
     if (wonMatch == null) {
       this.wltRecord = new WltRecord(0, 0, 1);
     } else if (wonMatch) {
@@ -18,12 +18,12 @@ public class CrescendoAllianceStatistics implements ScoreBreakdown {
     }
   }
 
-  public CrescendoAllianceStatistics(Collection<CrescendoAllianceStatistics> matches) {
+  public CrescendoScoreBreakdown(Collection<CrescendoScoreBreakdown> matches) {
     int wins = 0;
     int losses = 0;
     int ties = 0;
 
-    for (CrescendoAllianceStatistics match : matches) {
+    for (CrescendoScoreBreakdown match : matches) {
       WltRecord matchWlt = match.getWltRecord();
       wins += matchWlt.wins();
       losses += matchWlt.losses();
