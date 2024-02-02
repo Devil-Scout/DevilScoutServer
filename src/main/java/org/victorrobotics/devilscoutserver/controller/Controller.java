@@ -37,9 +37,9 @@ public sealed class Controller
   private static UserDatabase USERS;
   private static TeamDatabase TEAMS;
 
-  private static EventInfoCache     EVENT_INFO_CACHE;
-  private static EventTeamListCache EVENT_TEAMS_CACHE;
-  private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
+  private static EventInfoCache        EVENT_INFO_CACHE;
+  private static EventTeamListCache    EVENT_TEAMS_CACHE;
+  private static MatchScheduleCache<?> MATCH_SCHEDULE_CACHE;
 
   private static EntryDatabase MATCH_ENTRIES;
   private static EntryDatabase PIT_ENTRIES;
@@ -66,7 +66,7 @@ public sealed class Controller
     EVENT_TEAMS_CACHE = cache;
   }
 
-  public static void setMatchScheduleCache(MatchScheduleCache cache) {
+  public static void setMatchScheduleCache(MatchScheduleCache<?> cache) {
     MATCH_SCHEDULE_CACHE = cache;
   }
 
@@ -111,7 +111,7 @@ public sealed class Controller
     return EVENT_TEAMS_CACHE;
   }
 
-  public static MatchScheduleCache matchScheduleCache() {
+  public static MatchScheduleCache<?> matchScheduleCache() {
     return MATCH_SCHEDULE_CACHE;
   }
 
@@ -127,7 +127,7 @@ public sealed class Controller
     return DRIVE_TEAM_ENTRIES;
   }
 
-  public static TeamStatisticsCache teamAnalysisCache() {
+  public static TeamStatisticsCache teamStatisticsCache() {
     return TEAM_ANALYSIS_CACHE;
   }
 

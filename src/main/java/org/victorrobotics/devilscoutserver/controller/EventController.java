@@ -118,7 +118,7 @@ public final class EventController extends Controller {
       throw new NotFoundResponse();
     }
 
-    Value<?, MatchSchedule> entry = matchScheduleCache().get(eventKey);
+    Value<?, ? extends MatchSchedule<?>> entry = matchScheduleCache().get(eventKey);
     long timestamp = entry.lastModified();
     checkIfNoneMatch(ctx, timestamp);
 

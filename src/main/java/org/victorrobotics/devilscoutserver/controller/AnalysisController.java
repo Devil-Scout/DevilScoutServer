@@ -19,6 +19,7 @@ public final class AnalysisController extends Controller {
    * <ul>
    * <li>400 BadRequest</li>
    * <li>401 Unauthorized</li>
+   * <li>404 NotFound</li>
    * </ul>
    */
   public static void teams(Context ctx) {
@@ -31,6 +32,6 @@ public final class AnalysisController extends Controller {
 
     // TODO: verify team is permitted to access event analysis
 
-    ctx.json(teamAnalysisCache().getEvent(eventKey));
+    ctx.json(teamStatisticsCache().getEvent(eventKey));
   }
 }

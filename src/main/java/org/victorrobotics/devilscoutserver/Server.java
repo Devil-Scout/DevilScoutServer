@@ -10,6 +10,7 @@ import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
 import org.victorrobotics.devilscoutserver.analysis.TeamStatisticsCache;
 import org.victorrobotics.devilscoutserver.analysis._2024.CrescendoAnalyzer;
+import org.victorrobotics.devilscoutserver.analysis._2024.CrescendoAllianceStatistics;
 import org.victorrobotics.devilscoutserver.cache.Cache;
 import org.victorrobotics.devilscoutserver.controller.AnalysisController;
 import org.victorrobotics.devilscoutserver.controller.Controller;
@@ -103,14 +104,17 @@ public class Server {
     LOGGER.info("Initializing memory caches...");
     Controller.setEventInfoCache(new EventInfoCache());
     Controller.setEventTeamsCache(new EventTeamListCache());
-    Controller.setMatchScheduleCache(new MatchScheduleCache());
+    Controller.setMatchScheduleCache(new MatchScheduleCache<>(CrescendoAllianceStatistics::new,
+                                                              CrescendoAllianceStatistics::new));
+    EventOprsCache eventOprsCache = new EventOprsCache();
+    EventWltCache eventWltCache = new EventWltCache();
     LOGGER.info("Memory caches ready");
 
     LOGGER.info("Initializing analysis...");
-    EventOprsCache eventOprsCache = new EventOprsCache();
-    EventWltCache eventWltCache = new EventWltCache();
-    Analyzer analyzer = new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
-                                              Controller.driveTeamEntryDB(), eventOprsCache, eventWltCache);
+    Analyzer analyzer =
+        new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
+                              Controller.driveTeamEntryDB(), Controller.matchScheduleCache(),
+                              eventOprsCache, eventWltCache);
     Controller.setTeamStatisticsCache(new TeamStatisticsCache(analyzer));
     LOGGER.info("Analysis ready");
 
@@ -141,12 +145,12 @@ public class Server {
               .removeIf(Session::isExpired);
       LOGGER.info("Purged {} expired sessions in {}ms", size - sessions.size(),
                   System.currentTimeMillis() - start);
-    }, 0, 15, TimeUnit.MINUTES);
+    }, 0, 5, TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
       refreshCache(eventOprsCache);
       refreshCache(eventWltCache);
-      refreshCache(Controller.teamAnalysisCache());
-    }, 0, 15, TimeUnit.MINUTES);
+      refreshCache(Controller.teamStatisticsCache());
+    }, 0, 5, TimeUnit.MINUTES);
     LOGGER.info("Daemon services running");
 
     LOGGER.info("Starting HTTP server...");

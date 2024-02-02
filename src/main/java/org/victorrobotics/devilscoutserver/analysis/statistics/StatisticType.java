@@ -7,5 +7,6 @@ public enum StatisticType {
   OPR,
   PIE_CHART,
   WTL,
-  STRING;
+  STRING,
+  RP;
 }
