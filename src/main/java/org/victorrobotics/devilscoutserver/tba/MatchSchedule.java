@@ -9,16 +9,22 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public class MatchSchedule implements Cacheable<List<Match.Simple>> {
-  public static class MatchInfo {
+public class MatchSchedule<S extends ScoreBreakdown> implements Cacheable<List<Match>> {
+  public static class MatchInfo<S extends ScoreBreakdown> {
     enum MatchLevel {
       QUAL("Qualification"),
       QUARTER("Quarterfinal"),
@@ -53,16 +59,22 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
     private final int        set;
     private final int        number;
 
+    private final BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction;
+
     private int[]   blue;
     private int[]   red;
     private long    time;
     private boolean completed;
 
-    MatchInfo(Match.Simple match) {
+    private S redStatistics;
+    private S blueStatistics;
+
+    MatchInfo(BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction, Match match) {
       this.key = match.key;
       this.level = MatchLevel.of(match.level);
       this.set = match.setNumber;
       this.number = match.matchNumber;
+      this.statsFunction = statsFunction;
 
       String setStr = key.substring(key.lastIndexOf('_') + 1, key.lastIndexOf('m'));
       if (Character.isDigit(setStr.charAt(setStr.length() - 1))) {
@@ -74,7 +86,7 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
       update(match);
     }
 
-    public boolean update(Match.Simple match) {
+    public boolean update(Match match) {
       if (!Objects.equals(key, match.key)) {
         throw new IllegalArgumentException();
       }
@@ -93,7 +105,7 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
         change = true;
       }
 
-      boolean matchIsComplete = match.winner != Color.NONE;
+      boolean matchIsComplete = match.winningAlliance != Color.NONE;
       if (completed != matchIsComplete) {
         completed = matchIsComplete;
         change = true;
@@ -103,6 +115,28 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
       if (time != matchTime) {
         time = matchTime;
         change = true;
+      }
+
+      if (match.blueScore == null) {
+        change |= blueStatistics != null;
+        blueStatistics = null;
+      } else {
+        S blueStats = statsFunction.apply(match.blueScore, wonMatch(match, Color.BLUE));
+        if (!Objects.equals(blueStatistics, blueStats)) {
+          blueStatistics = blueStats;
+          change = true;
+        }
+      }
+
+      if (match.redScore == null) {
+        change |= redStatistics != null;
+        redStatistics = null;
+      } else {
+        S redStats = statsFunction.apply(match.redScore, wonMatch(match, Color.RED));
+        if (!Objects.equals(redStatistics, redStats)) {
+          redStatistics = redStats;
+          change = true;
+        }
       }
 
       return change;
@@ -120,6 +154,16 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
                                             .substring(3));
       }
       return teams;
+    }
+
+    private static Boolean wonMatch(Match match, Color color) {
+      if (match.winningAlliance == null || match.winningAlliance == Color.NONE) {
+        return null;
+      } else if (match.winningAlliance == color) {
+        return Boolean.TRUE;
+      } else {
+        return Boolean.FALSE;
+      }
     }
 
     public String getKey() {
@@ -181,43 +225,77 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
     return Integer.compare(num1, num2);
   };
 
-  private final ConcurrentNavigableMap<String, MatchInfo> matchMap;
-  private final Collection<MatchInfo>                     matches;
+  private final ConcurrentNavigableMap<String, MatchInfo<S>> matchMap;
+  private final ConcurrentMap<Integer, S>                    teamMatches;
+  private final Collection<MatchInfo<S>>                     matches;
+  private final BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction;
+  private final Function<Collection<S>, S>                   statsMergeFunction;
 
-  public MatchSchedule(List<Match.Simple> matches) {
+  public MatchSchedule(BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction,
+                       Function<Collection<S>, S> statsMergeFunction, List<Match> matches) {
     this.matchMap = new ConcurrentSkipListMap<>(MATCH_KEY_COMPARATOR);
     this.matches = Collections.unmodifiableCollection(matchMap.values());
+    this.teamMatches = new ConcurrentHashMap<>();
+    this.statsFunction = statsFunction;
+    this.statsMergeFunction = statsMergeFunction;
     update(matches);
   }
 
   @Override
-  public boolean update(List<Match.Simple> matches) {
+  public boolean update(List<Match> matches) {
     boolean change = false;
-    List<String> matchKeys = new ArrayList<>();
-    for (Match.Simple match : matches) {
+
+    // Update match schedule
+    Collection<String> matchKeys = new ArrayList<>();
+    for (Match match : matches) {
       String key = matchKey(match);
       matchKeys.add(key);
 
-      MatchInfo info = matchMap.get(key);
+      MatchInfo<S> info = matchMap.get(key);
       if (info == null) {
-        matchMap.put(key, new MatchInfo(match));
+        info = new MatchInfo<>(statsFunction, match);
+        matchMap.put(key, info);
         change = true;
       } else {
         change |= info.update(match);
       }
     }
+
     change |= matchMap.keySet()
                       .retainAll(matchKeys);
+    if (!change) return false;
 
-    return change;
+    // If schedule was updated, update team statistics
+    Map<Integer, Collection<S>> stats = new LinkedHashMap<>();
+    for (MatchInfo<S> match : matchMap.values()) {
+      if (match.redStatistics != null) {
+        for (int team : match.red) {
+          stats.computeIfAbsent(team, t -> new ArrayList<>())
+               .add(match.redStatistics);
+        }
+      }
+      if (match.blueStatistics != null) {
+        for (int team : match.blue) {
+          stats.computeIfAbsent(team, t -> new ArrayList<>())
+               .add(match.blueStatistics);
+        }
+      }
+    }
+
+    teamMatches.clear();
+    for (Map.Entry<Integer, Collection<S>> entry : stats.entrySet()) {
+      teamMatches.put(entry.getKey(), statsMergeFunction.apply(entry.getValue()));
+    }
+
+    return true;
   }
 
   @JsonValue
-  public Collection<MatchInfo> matches() {
+  public Collection<MatchInfo<S>> matches() {
     return matches;
   }
 
-  public MatchInfo getMatch(String key) {
+  public MatchInfo<S> getMatch(String key) {
     return matchMap.values()
                    .stream()
                    .filter(e -> e.key.equals(key))
@@ -225,7 +303,11 @@ public class MatchSchedule implements Cacheable<List<Match.Simple>> {
                    .orElseGet(() -> null);
   }
 
-  private static String matchKey(Match.Simple match) {
+  public S getTeamBreakdown(int team) {
+    return teamMatches.get(team);
+  }
+
+  private static String matchKey(Match match) {
     return match.level.ordinal() + "_" + match.setNumber + "_" + match.matchNumber;
   }
 }

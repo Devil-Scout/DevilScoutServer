@@ -18,6 +18,6 @@ public class EventOprsCache extends BlueAllianceCache<String, OPRs, EventOprs> {
 
   @Override
   protected EventOprs createValue(String key, OPRs data) {
-    return new EventOprs(key, data);
+    return new EventOprs(data);
   }
 }

@@ -1,73 +1,156 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
 import org.victorrobotics.devilscoutserver.analysis.statistics.OprStatistic;
-import org.victorrobotics.devilscoutserver.analysis.statistics.Statistic;
-import org.victorrobotics.devilscoutserver.database.Entry;
+import org.victorrobotics.devilscoutserver.analysis.statistics.RankingPointsStatistic;
+import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
+import org.victorrobotics.devilscoutserver.analysis.statistics.WltStatistic;
+import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
-import org.victorrobotics.devilscoutserver.tba.TeamOprsCache;
+import org.victorrobotics.devilscoutserver.database.TeamDatabase;
+import org.victorrobotics.devilscoutserver.tba.EventOprs.TeamOpr;
+import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
+import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
+import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
+import org.victorrobotics.devilscoutserver.tba.ScoreBreakdown;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public abstract sealed class Analyzer permits CrescendoAnalyzer {
+public abstract class Analyzer {
+  private final TeamDatabase       teamDB;
+  private final EventTeamListCache teamListCache;
+
   private final EntryDatabase matchEntryDB;
   private final EntryDatabase pitEntryDB;
   private final EntryDatabase driveTeamEntryDB;
-  private final TeamOprsCache teamOprsCache;
 
-  protected Analyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
-                     EntryDatabase driveTeamEntryDB, TeamOprsCache teamOprsCache) {
+  private final MatchScheduleCache<?> matchScheduleCache;
+  private final EventOprsCache        oprsCache;
+
+  protected Analyzer(TeamDatabase teamDB, EventTeamListCache teamListCache,
+                     EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
+                     EntryDatabase driveTeamEntryDB, MatchScheduleCache<?> matchScheduleCache,
+                     EventOprsCache teamOprsCache) {
+    this.teamDB = teamDB;
+    this.teamListCache = teamListCache;
     this.matchEntryDB = matchEntryDB;
     this.pitEntryDB = pitEntryDB;
     this.driveTeamEntryDB = driveTeamEntryDB;
-    this.teamOprsCache = teamOprsCache;
+    this.matchScheduleCache = matchScheduleCache;
+    this.oprsCache = teamOprsCache;
   }
 
-  protected abstract List<Statistic> computeStatistics(int team);
+  protected abstract List<StatisticsPage> computeStatistics(DataHandle handle);
 
-  protected Map<String, List<Entry>> getMatchEntries(int team) {
-    return entryMap(matchEntryDB, team);
+  public List<StatisticsPage> computeStatistics(DataEntry.Key key) {
+    return computeStatistics(new DataHandle(key));
   }
 
-  protected Map<String, List<Entry>> getPitEntries(int team) {
-    return entryMap(pitEntryDB, team);
-  }
-
-  protected Map<String, List<Entry>> getDriveTeamEntries(int team) {
-    return entryMap(driveTeamEntryDB, team);
-  }
-
-  public Set<Integer> getTeamsToUpdate(long lastUpdate) throws SQLException {
-    Set<Integer> teams = new LinkedHashSet<>();
-    teams.addAll(matchEntryDB.getTeamsSince(lastUpdate));
-    teams.addAll(pitEntryDB.getTeamsSince(lastUpdate));
-    teams.addAll(driveTeamEntryDB.getTeamsSince(lastUpdate));
-    return teams;
-  }
-
-  protected OprStatistic teamOprs(int team) {
-    return new OprStatistic("Total OPRs", teamOprsCache.get(team)
-                                                       .value());
-  }
-
-  private static Map<String, List<Entry>> entryMap(EntryDatabase database, int team) {
-    List<Entry> entries;
+  public Collection<DataEntry.Key> getUpdates() {
     try {
-      entries = database.getEntries(team);
+      return teamDB.getActiveEvents()
+                   .stream()
+                   .flatMap(s -> teamListCache.get(s)
+                                              .value()
+                                              .teams()
+                                              .stream()
+                                              .map(t -> new DataEntry.Key(s, t.getNumber())))
+                   .toList();
     } catch (SQLException e) {
-      throw new IllegalStateException(e);
+      return Set.of();
+    }
+  }
+
+  protected class DataHandle {
+    private final DataEntry.Key key;
+
+    private Collection<List<DataEntry>> matchEntries;
+    private List<DataEntry>             pitEntries;
+    private Collection<List<DataEntry>> driveTeamEntries;
+
+    private TeamOpr        oprs;
+    private ScoreBreakdown breakdown;
+
+    DataHandle(DataEntry.Key key) {
+      this.key = key;
     }
 
-    Map<String, List<Entry>> entryMap = new LinkedHashMap<>();
-    for (Entry entry : entries) {
-      entryMap.computeIfAbsent(entry.matchKey(), s -> new ArrayList<>(1))
-              .add(entry);
+    public OprStatistic oprStatistic() {
+      if (oprs == null) {
+        oprs = oprsCache.get(key.eventKey())
+                        .value()
+                        .get(key.team());
+      }
+      return new OprStatistic(oprs);
     }
-    return entryMap;
+
+    public WltStatistic wltStatistic() {
+      if (breakdown == null) {
+        breakdown = matchScheduleCache.get(key.eventKey())
+                                      .value()
+                                      .getTeamBreakdown(key.team());
+      }
+      return new WltStatistic(breakdown);
+    }
+
+    public RankingPointsStatistic rpStatistic() {
+      if (breakdown == null) {
+        breakdown = matchScheduleCache.get(key.eventKey())
+                                      .value()
+                                      .getTeamBreakdown(key.team());
+      }
+      return new RankingPointsStatistic(breakdown);
+    }
+
+    public List<DataEntry> getPitEntries() {
+      if (pitEntries == null) {
+        try {
+          pitEntries = pitEntryDB.getEntries(key.eventKey(), key.team());
+        } catch (SQLException e) {
+          throw new IllegalStateException(e);
+        }
+      }
+      return pitEntries;
+    }
+
+    public Collection<List<DataEntry>> getMatchEntries() {
+      if (matchEntries == null) {
+        matchEntries = loadEntries(matchEntryDB, key.eventKey(), key.team());
+      }
+      return matchEntries;
+    }
+
+    public Collection<List<DataEntry>> getDriveTeamEntries() {
+      if (driveTeamEntries == null) {
+        driveTeamEntries = loadEntries(driveTeamEntryDB, key.eventKey(), key.team());
+      }
+      return driveTeamEntries;
+    }
+
+    private static Collection<List<DataEntry>> loadEntries(EntryDatabase database, String eventKey,
+                                                           int team) {
+      List<DataEntry> entries;
+      try {
+        entries = database.getEntries(eventKey, team);
+      } catch (SQLException e) {
+        throw new IllegalStateException(e);
+      }
+
+      if (entries.isEmpty()) {
+        return List.of();
+      }
+
+      Map<String, List<DataEntry>> entryMap = new LinkedHashMap<>();
+      for (DataEntry entry : entries) {
+        entryMap.computeIfAbsent(entry.matchKey(), s -> new ArrayList<>(1))
+                .add(entry);
+      }
+      return entryMap.values();
+    }
   }
 }

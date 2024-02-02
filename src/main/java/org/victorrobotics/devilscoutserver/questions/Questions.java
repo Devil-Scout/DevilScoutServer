@@ -8,14 +8,15 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SuppressWarnings("java:S2386")
 public final class Questions {
-  public static final QuestionPage[] MATCH_QUESTIONS;
-  public static final QuestionPage[] PIT_QUESTIONS;
-  public static final Question[]     DRIVE_TEAM_QUESTIONS;
+  public static final List<QuestionPage> MATCH_QUESTIONS;
+  public static final List<QuestionPage> PIT_QUESTIONS;
+  public static final List<Question> DRIVE_TEAM_QUESTIONS;
 
   public static final String MATCH_QUESTIONS_JSON;
   public static final String PIT_QUESTIONS_JSON;
@@ -30,9 +31,10 @@ public final class Questions {
       ObjectMapper json = new ObjectMapper();
       MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
 
-      MATCH_QUESTIONS = jsonResource(json, "/match_questions.json", QuestionPage[].class);
-      PIT_QUESTIONS = jsonResource(json, "/pit_questions.json", QuestionPage[].class);
-      DRIVE_TEAM_QUESTIONS = jsonResource(json, "/drive_team_questions.json", Question[].class);
+      MATCH_QUESTIONS = List.of(jsonResource(json, "/match_questions.json", QuestionPage[].class));
+      PIT_QUESTIONS = List.of(jsonResource(json, "/pit_questions.json", QuestionPage[].class));
+      DRIVE_TEAM_QUESTIONS =
+          List.of(jsonResource(json, "/drive_team_questions.json", Question[].class));
 
       MATCH_QUESTIONS_JSON = json.writeValueAsString(MATCH_QUESTIONS);
       PIT_QUESTIONS_JSON = json.writeValueAsString(PIT_QUESTIONS);

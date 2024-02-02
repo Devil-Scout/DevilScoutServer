@@ -1,13 +1,11 @@
 package org.victorrobotics.devilscoutserver.cache;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class ListCache<K, D, V extends Cacheable<D>> extends Cache<K, D, V> {
   private final boolean implicitRemoval;
 
   protected ListCache(boolean implicitRemoval) {
-    super(ConcurrentHashMap::new);
     this.implicitRemoval = implicitRemoval;
   }
 
@@ -16,7 +14,7 @@ public abstract class ListCache<K, D, V extends Cacheable<D>> extends Cache<K, D
   protected abstract V createValue(K key, D data);
 
   @Override
-  protected CacheValue<D, V> getValue(K key) {
+  protected Value<D, V> getValue(K key) {
     return cacheMap.get(key);
   }
 
@@ -38,9 +36,9 @@ public abstract class ListCache<K, D, V extends Cacheable<D>> extends Cache<K, D
         continue;
       }
 
-      CacheValue<D, V> value = cacheMap.get(key);
+      Value<D, V> value = cacheMap.get(key);
       if (value == null) {
-        cacheMap.put(key, new CacheValue<>(createValue(key, data), this::modified));
+        cacheMap.put(key, new Value<>(createValue(key, data), this::modified));
         modified();
       } else {
         value.update(data);
