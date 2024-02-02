@@ -50,6 +50,7 @@ public class Server {
   public Server() {
     javalin = Javalin.create(config -> {
       config.http.prefer405over404 = true;
+      config.useVirtualThreads = true;
 
       config.bundledPlugins.enableSslRedirects();
       config.registerPlugin(new SslPlugin(sslConfig -> {
