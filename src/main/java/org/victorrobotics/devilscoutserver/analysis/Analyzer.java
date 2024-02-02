@@ -1,11 +1,14 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
+import org.victorrobotics.bluealliance.Event.WinLossRecord;
 import org.victorrobotics.devilscoutserver.analysis.statistics.OprStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
+import org.victorrobotics.devilscoutserver.analysis.statistics.WltStatistic;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
-import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
 import org.victorrobotics.devilscoutserver.tba.EventOprs.TeamOpr;
+import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
+import org.victorrobotics.devilscoutserver.tba.EventWltCache;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -18,17 +21,21 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract class Analyzer {
-  private final EntryDatabase  matchEntryDB;
-  private final EntryDatabase  pitEntryDB;
-  private final EntryDatabase  driveTeamEntryDB;
+  private final EntryDatabase matchEntryDB;
+  private final EntryDatabase pitEntryDB;
+  private final EntryDatabase driveTeamEntryDB;
+
   private final EventOprsCache oprsCache;
+  private final EventWltCache  eventWltCache;
 
   protected Analyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
-                     EntryDatabase driveTeamEntryDB, EventOprsCache teamOprsCache) {
+                     EntryDatabase driveTeamEntryDB, EventOprsCache teamOprsCache,
+                     EventWltCache eventWltCache) {
     this.matchEntryDB = matchEntryDB;
     this.pitEntryDB = pitEntryDB;
     this.driveTeamEntryDB = driveTeamEntryDB;
     this.oprsCache = teamOprsCache;
+    this.eventWltCache = eventWltCache;
   }
 
   protected abstract List<StatisticsPage> computeStatistics(DataHandle handle);
@@ -64,6 +71,16 @@ public abstract class Analyzer {
         return new OprStatistic(name);
       }
       return new OprStatistic(name, oprs.getOpr(), oprs.getDpr(), oprs.getCcwm());
+    }
+
+    public WltStatistic wltStatistic(String name) {
+      WinLossRecord wlt = eventWltCache.get(key.eventKey())
+                                       .value()
+                                       .get(key.team());
+      if (wlt == null) {
+        return new WltStatistic(name, 0, 0, 0);
+      }
+      return new WltStatistic(name, wlt.wins, wlt.losses, wlt.ties);
     }
 
     public List<DataEntry> getPitEntries() {

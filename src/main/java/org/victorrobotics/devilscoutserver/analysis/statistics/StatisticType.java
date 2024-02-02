@@ -6,5 +6,6 @@ public enum StatisticType {
   RADAR,
   OPR,
   PIE_CHART,
+  WTL,
   STRING;
 }

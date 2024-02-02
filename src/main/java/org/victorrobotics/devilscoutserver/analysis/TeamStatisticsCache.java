@@ -21,6 +21,8 @@ public class TeamStatisticsCache
 
   private final Analyzer analyzer;
 
+  private boolean isLoaded;
+
   public TeamStatisticsCache(Analyzer analyzer) {
     eventTeamsMap = new ConcurrentHashMap<>();
     this.analyzer = analyzer;
@@ -33,7 +35,8 @@ public class TeamStatisticsCache
 
   @Override
   public void refresh() {
-    Set<DataEntry.Key> updates = analyzer.getUpdates(lastModified());
+    Set<DataEntry.Key> updates = analyzer.getUpdates(isLoaded ? lastModified() : 0);
+    isLoaded = true;
     if (updates.isEmpty()) return;
 
     for (DataEntry.Key key : updates) {
@@ -60,7 +63,8 @@ public class TeamStatisticsCache
   }
 
   public Collection<Value<List<StatisticsPage>, TeamStatistics>> getEvent(String eventKey) {
-    return Collections.unmodifiableCollection(eventTeamsMap.get(eventKey));
+    SortedSet<Value<List<StatisticsPage>, TeamStatistics>> value = eventTeamsMap.get(eventKey);
+    return value == null ? List.of() : Collections.unmodifiableCollection(value);
   }
 
   protected Map<DataEntry.Key, List<StatisticsPage>> getData() {

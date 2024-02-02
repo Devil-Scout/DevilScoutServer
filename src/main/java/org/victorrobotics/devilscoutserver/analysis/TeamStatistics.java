@@ -16,7 +16,7 @@ public class TeamStatistics implements Cacheable<List<StatisticsPage>>, Comparab
 
   public TeamStatistics(DataEntry.Key key, List<StatisticsPage> data) {
     this.key = key;
-    data = List.copyOf(data);
+    this.data = List.copyOf(data);
   }
 
   @Override
