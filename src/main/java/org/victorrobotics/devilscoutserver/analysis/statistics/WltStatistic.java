@@ -9,8 +9,8 @@ public class WltStatistic extends Statistic {
   @JsonUnwrapped
   public final WltRecord wlt;
 
-  public WltStatistic(String name, ScoreBreakdown breakdown) {
-    super(StatisticType.WTL, name);
+  public WltStatistic(ScoreBreakdown breakdown) {
+    super(StatisticType.WTL, "Event WLT");
     this.wlt = breakdown.getWltRecord();
   }
 }

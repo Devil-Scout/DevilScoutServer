@@ -5,8 +5,8 @@ import org.victorrobotics.devilscoutserver.tba.ScoreBreakdown;
 public class RankingPointsStatistic extends Statistic {
   public final Object rankingPoints;
 
-  public RankingPointsStatistic(String name, ScoreBreakdown stats) {
-    super(StatisticType.RP, name);
+  public RankingPointsStatistic(ScoreBreakdown stats) {
+    super(StatisticType.RP, "Ranking Points");
     if (stats == null) {
       this.rankingPoints = null;
     } else {

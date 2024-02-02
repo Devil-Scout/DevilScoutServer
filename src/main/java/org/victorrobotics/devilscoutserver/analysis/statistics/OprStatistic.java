@@ -8,8 +8,8 @@ public final class OprStatistic extends Statistic {
   @JsonUnwrapped
   public final TeamOpr oprs;
 
-  public OprStatistic(String name, TeamOpr oprs) {
-    super(StatisticType.OPR, name);
+  public OprStatistic(TeamOpr oprs) {
+    super(StatisticType.OPR, "OPRs");
     this.oprs = oprs;
   }
 }

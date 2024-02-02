@@ -71,31 +71,31 @@ public abstract class Analyzer {
       this.key = key;
     }
 
-    public OprStatistic oprStatistic(String name) {
+    public OprStatistic oprStatistic() {
       if (oprs == null) {
         oprs = oprsCache.get(key.eventKey())
                         .value()
                         .get(key.team());
       }
-      return new OprStatistic(name, oprs);
+      return new OprStatistic(oprs);
     }
 
-    public WltStatistic wltStatistic(String name) {
+    public WltStatistic wltStatistic() {
       if (breakdown == null) {
         breakdown = matchScheduleCache.get(key.eventKey())
                                       .value()
                                       .getTeamBreakdown(key.team());
       }
-      return new WltStatistic(name, breakdown);
+      return new WltStatistic(breakdown);
     }
 
-    public RankingPointsStatistic rpStatistic(String name) {
+    public RankingPointsStatistic rpStatistic() {
       if (breakdown == null) {
         breakdown = matchScheduleCache.get(key.eventKey())
                                       .value()
                                       .getTeamBreakdown(key.team());
       }
-      return new RankingPointsStatistic(name, breakdown);
+      return new RankingPointsStatistic(breakdown);
     }
 
     public List<DataEntry> getPitEntries() {
