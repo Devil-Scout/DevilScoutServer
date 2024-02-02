@@ -1,4 +1,4 @@
-package org.victorrobotics.devilscoutserver.analysis._2024;
+package org.victorrobotics.devilscoutserver.years._2024;
 
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
 import org.victorrobotics.devilscoutserver.analysis.statistics.RadarStatistic;

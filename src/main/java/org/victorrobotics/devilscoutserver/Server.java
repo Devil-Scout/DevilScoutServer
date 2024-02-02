@@ -9,8 +9,6 @@ import static io.javalin.apibuilder.ApiBuilder.post;
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
 import org.victorrobotics.devilscoutserver.analysis.TeamStatisticsCache;
-import org.victorrobotics.devilscoutserver.analysis._2024.CrescendoScoreBreakdown;
-import org.victorrobotics.devilscoutserver.analysis._2024.CrescendoAnalyzer;
 import org.victorrobotics.devilscoutserver.cache.Cache;
 import org.victorrobotics.devilscoutserver.controller.AnalysisController;
 import org.victorrobotics.devilscoutserver.controller.Controller;
@@ -29,6 +27,8 @@ import org.victorrobotics.devilscoutserver.tba.EventInfoCache;
 import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
+import org.victorrobotics.devilscoutserver.years._2024.CrescendoAnalyzer;
+import org.victorrobotics.devilscoutserver.years._2024.CrescendoScoreBreakdown;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;

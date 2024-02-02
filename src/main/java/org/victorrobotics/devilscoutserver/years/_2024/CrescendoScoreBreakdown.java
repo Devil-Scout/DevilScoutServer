@@ -1,4 +1,4 @@
-package org.victorrobotics.devilscoutserver.analysis._2024;
+package org.victorrobotics.devilscoutserver.years._2024;
 
 import org.victorrobotics.bluealliance.Match;
 import org.victorrobotics.devilscoutserver.tba.ScoreBreakdown;
