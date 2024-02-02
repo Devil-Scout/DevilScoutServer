@@ -6,22 +6,25 @@ import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
 import org.victorrobotics.devilscoutserver.analysis.statistics.WltStatistic;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
+import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.tba.EventOprs.TeamOpr;
 import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
+import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 import org.victorrobotics.devilscoutserver.tba.ScoreBreakdown;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public abstract class Analyzer {
+  private final TeamDatabase       teamDB;
+  private final EventTeamListCache teamListCache;
+
   private final EntryDatabase matchEntryDB;
   private final EntryDatabase pitEntryDB;
   private final EntryDatabase driveTeamEntryDB;
@@ -29,9 +32,12 @@ public abstract class Analyzer {
   private final MatchScheduleCache<?> matchScheduleCache;
   private final EventOprsCache        oprsCache;
 
-  protected Analyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
+  protected Analyzer(TeamDatabase teamDB, EventTeamListCache teamListCache,
+                     EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
                      EntryDatabase driveTeamEntryDB, MatchScheduleCache<?> matchScheduleCache,
                      EventOprsCache teamOprsCache) {
+    this.teamDB = teamDB;
+    this.teamListCache = teamListCache;
     this.matchEntryDB = matchEntryDB;
     this.pitEntryDB = pitEntryDB;
     this.driveTeamEntryDB = driveTeamEntryDB;
@@ -45,13 +51,16 @@ public abstract class Analyzer {
     return computeStatistics(new DataHandle(key));
   }
 
-  public Set<DataEntry.Key> getUpdates(long lastUpdate) {
+  public Collection<DataEntry.Key> getUpdates() {
     try {
-      Set<DataEntry.Key> keys = new LinkedHashSet<>();
-      keys.addAll(matchEntryDB.getEntryKeysSince(lastUpdate));
-      keys.addAll(pitEntryDB.getEntryKeysSince(lastUpdate));
-      keys.addAll(driveTeamEntryDB.getEntryKeysSince(lastUpdate));
-      return Collections.unmodifiableSet(keys);
+      return teamDB.getActiveEvents()
+                   .stream()
+                   .flatMap(s -> teamListCache.get(s)
+                                              .value()
+                                              .teams()
+                                              .stream()
+                                              .map(t -> new DataEntry.Key(s, t.getNumber())))
+                   .toList();
     } catch (SQLException e) {
       return Set.of();
     }
@@ -130,6 +139,10 @@ public abstract class Analyzer {
         entries = database.getEntries(eventKey, team);
       } catch (SQLException e) {
         throw new IllegalStateException(e);
+      }
+
+      if (entries.isEmpty()) {
+        return List.of();
       }
 
       Map<String, List<DataEntry>> entryMap = new LinkedHashMap<>();

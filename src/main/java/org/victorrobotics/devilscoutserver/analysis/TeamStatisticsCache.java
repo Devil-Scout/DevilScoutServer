@@ -6,10 +6,7 @@ import org.victorrobotics.devilscoutserver.database.DataEntry;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,8 +17,6 @@ public class TeamStatisticsCache
   private final ConcurrentMap<String, SortedSet<Value<List<StatisticsPage>, TeamStatistics>>> eventTeamsMap;
 
   private final Analyzer analyzer;
-
-  private boolean isLoaded;
 
   public TeamStatisticsCache(Analyzer analyzer) {
     eventTeamsMap = new ConcurrentHashMap<>();
@@ -35,8 +30,7 @@ public class TeamStatisticsCache
 
   @Override
   public void refresh() {
-    Set<DataEntry.Key> updates = analyzer.getUpdates(isLoaded ? lastModified() : 0);
-    isLoaded = true;
+    Collection<DataEntry.Key> updates = analyzer.getUpdates();
     if (updates.isEmpty()) return;
 
     for (DataEntry.Key key : updates) {
@@ -49,7 +43,7 @@ public class TeamStatisticsCache
 
       Value<List<StatisticsPage>, TeamStatistics> value = cacheMap.get(key);
       if (value == null) {
-        value = new Value<>(createValue(key, data), this::modified);
+        value = new Value<>(new TeamStatistics(key, data), this::modified);
         cacheMap.put(key, value);
         SortedSet<Value<List<StatisticsPage>, TeamStatistics>> eventTeams =
             eventTeamsMap.computeIfAbsent(key.eventKey(), k -> new TreeSet<>());
@@ -65,21 +59,5 @@ public class TeamStatisticsCache
   public Collection<Value<List<StatisticsPage>, TeamStatistics>> getEvent(String eventKey) {
     SortedSet<Value<List<StatisticsPage>, TeamStatistics>> value = eventTeamsMap.get(eventKey);
     return value == null ? List.of() : Collections.unmodifiableCollection(value);
-  }
-
-  protected Map<DataEntry.Key, List<StatisticsPage>> getData() {
-    Set<DataEntry.Key> updates = analyzer.getUpdates(lastModified());
-    if (updates.isEmpty()) return Map.of();
-
-    Map<DataEntry.Key, List<StatisticsPage>> data = new LinkedHashMap<>();
-    for (DataEntry.Key key : updates) {
-      List<StatisticsPage> statistics = analyzer.computeStatistics(key);
-      data.put(key, statistics);
-    }
-    return data;
-  }
-
-  protected TeamStatistics createValue(DataEntry.Key key, List<StatisticsPage> data) {
-    return new TeamStatistics(key, data);
   }
 }

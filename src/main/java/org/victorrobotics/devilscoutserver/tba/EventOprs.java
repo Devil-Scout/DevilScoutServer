@@ -59,6 +59,12 @@ public class EventOprs implements Cacheable<OPRs> {
   @Override
   @SuppressWarnings("java:S1244") // floating point equality
   public boolean update(OPRs oprs) {
+    if (oprs == null || oprs.offensivePowerRatings == null) {
+      boolean change = !teamOprs.isEmpty();
+      teamOprs.clear();
+      return change;
+    }
+
     Set<Integer> teams = new LinkedHashSet<>();
     oprs.offensivePowerRatings.forEach((teamKey, opr) -> teams.add(parseTeamKey(teamKey)));
     oprs.defensivePowerRatings.forEach((teamKey, opr) -> teams.add(parseTeamKey(teamKey)));

@@ -109,7 +109,8 @@ public class Server {
     LOGGER.info("Memory caches ready");
 
     LOGGER.info("Initializing analysis...");
-    Analyzer analyzer = new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
+    Analyzer analyzer = new CrescendoAnalyzer(Controller.teamDB(), Controller.eventTeamsCache(),
+                                              Controller.matchEntryDB(), Controller.pitEntryDB(),
                                               Controller.driveTeamEntryDB(),
                                               Controller.matchScheduleCache(), eventOprsCache);
     Controller.setTeamStatisticsCache(new TeamStatisticsCache(analyzer));

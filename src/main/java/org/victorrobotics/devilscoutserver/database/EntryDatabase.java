@@ -5,9 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 public final class EntryDatabase extends Database {
   private final String  databaseName;
@@ -34,22 +32,6 @@ public final class EntryDatabase extends Database {
       statement.setObject(index++, json);
 
       statement.execute();
-    }
-  }
-
-  public Set<DataEntry.Key> getEntryKeysSince(long timestamp) throws SQLException {
-    try (Connection connection = getConnection();
-         PreparedStatement statement =
-             connection.prepareStatement(selectNewEntriesEventAndTeam())) {
-      statement.setLong(1, timestamp);
-
-      try (ResultSet resultSet = statement.executeQuery()) {
-        Set<DataEntry.Key> keys = new LinkedHashSet<>();
-        while (resultSet.next()) {
-          keys.add(DataEntry.Key.fromDatabase(resultSet));
-        }
-        return keys;
-      }
     }
   }
 
@@ -83,10 +65,5 @@ public final class EntryDatabase extends Database {
 
   private String selectEntriesByTeamAndYear() {
     return "SELECT * FROM " + databaseName + " WHERE scouted_team = ? AND event_key = ?";
-  }
-
-  private String selectNewEntriesEventAndTeam() {
-    return "SELECT DISTINCT event_key, scouted_team FROM " + databaseName
-        + " WHERE timestamp >= TO_TIMESTAMP(? / 1000.0);";
   }
 }
