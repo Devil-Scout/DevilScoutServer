@@ -4,11 +4,10 @@ import static org.victorrobotics.devilscoutserver.EncodingUtil.jsonEncode;
 
 import org.victorrobotics.bluealliance.Match.Alliance;
 import org.victorrobotics.devilscoutserver.questions.Question;
-import org.victorrobotics.devilscoutserver.questions.QuestionPage;
-import org.victorrobotics.devilscoutserver.questions.Questions;
 import org.victorrobotics.devilscoutserver.tba.MatchSchedule.MatchInfo;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 
 import io.javalin.http.BadRequestResponse;
@@ -17,9 +16,11 @@ import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.NoContentResponse;
 
 public final class SubmissionController extends Controller {
-  private static final String MATCH_KEY_PATH_PARAM = "matchKey";
-  private static final String EVENT_KEY_PATH_PARAM = "eventKey";
+  private static final String MATCH_KEY_PATH_PARAM   = "matchKey";
+  private static final String EVENT_KEY_PATH_PARAM   = "eventKey";
   private static final String TEAM_NUMBER_PATH_PARAM = "teamNum";
+
+  private static final String BAD_SUBMISSION_MESSAGE = "Invalid/expired submission format";
 
   private SubmissionController() {}
 
@@ -41,6 +42,7 @@ public final class SubmissionController extends Controller {
     Session session = getValidSession(ctx);
 
     String matchKey = ctx.pathParam(MATCH_KEY_PATH_PARAM);
+    @SuppressWarnings("java:S1941") // move code later
     int teamNum = ctx.pathParamAsClass(TEAM_NUMBER_PATH_PARAM, Integer.class)
                      .get();
     String teamEvent = teamDB().getTeam(session.getTeam())
@@ -61,8 +63,8 @@ public final class SubmissionController extends Controller {
     }
 
     Map<String, Map<String, Object>> payload = jsonDecode(ctx, Map.class);
-    if (!matchesSchema(payload, Questions.MATCH_QUESTIONS)) {
-      throw new BadRequestResponse("Invalid/expired submission format");
+    if (!matchesSchema(payload, questions().getMatchQuestions())) {
+      throw new BadRequestResponse(BAD_SUBMISSION_MESSAGE);
     }
 
     matchEntryDB().createEntry(teamEvent, matchKey, session.getUser(), session.getTeam(), teamNum,
@@ -87,6 +89,7 @@ public final class SubmissionController extends Controller {
   public static void submitPit(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
 
+    @SuppressWarnings("java:S1941") // move code later
     int teamNum = ctx.pathParamAsClass(TEAM_NUMBER_PATH_PARAM, Integer.class)
                      .get();
     String teamEvent = teamDB().getTeam(session.getTeam())
@@ -96,8 +99,8 @@ public final class SubmissionController extends Controller {
     }
 
     Map<String, Map<String, Object>> payload = jsonDecode(ctx, Map.class);
-    if (!matchesSchema(payload, Questions.PIT_QUESTIONS)) {
-      throw new BadRequestResponse("Invalid/expired submission format");
+    if (!matchesSchema(payload, questions().getPitQuestions())) {
+      throw new BadRequestResponse(BAD_SUBMISSION_MESSAGE);
     }
 
     pitEntryDB().createEntry(teamEvent, null, session.getUser(), session.getTeam(), teamNum,
@@ -165,8 +168,8 @@ public final class SubmissionController extends Controller {
         throw new BadRequestResponse("Team " + scoutedTeam + " not on same alliance in match");
       }
 
-      if (!matchesQuestions(entry.getValue(), Questions.DRIVE_TEAM_QUESTIONS)) {
-        throw new BadRequestResponse("Invalid/expired submission format");
+      if (!matchesQuestions(entry.getValue(), questions().getDriveTeamQuestions())) {
+        throw new BadRequestResponse(BAD_SUBMISSION_MESSAGE);
       }
     }
 
@@ -187,10 +190,10 @@ public final class SubmissionController extends Controller {
   }
 
   private static boolean matchesSchema(Map<String, Map<String, Object>> data,
-                                       QuestionPage[] schema) {
-    if (data.size() != schema.length) return false;
+                                       List<Question.Page> schema) {
+    if (data.size() != schema.size()) return false;
 
-    for (QuestionPage page : schema) {
+    for (Question.Page page : schema) {
       Map<String, Object> pageData = data.get(page.key());
       if (pageData == null) return false;
       if (!matchesQuestions(pageData, page.questions())) return false;
@@ -199,11 +202,11 @@ public final class SubmissionController extends Controller {
     return true;
   }
 
-  private static boolean matchesQuestions(Map<String, Object> data, Question[] questions) {
-    if (data.size() != questions.length) return false;
+  private static boolean matchesQuestions(Map<String, Object> data, List<Question> questions) {
+    if (data.size() != questions.size()) return false;
 
     for (Question question : questions) {
-      Object value = data.get(question.getKey());
+      Object value = data.get(question.key);
       if (value == null) return false;
       if (!question.isValidResponse(value)) return false;
     }

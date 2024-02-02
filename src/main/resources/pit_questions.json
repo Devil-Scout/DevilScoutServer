@@ -102,28 +102,5 @@
         "type": "BOOLEAN"
       }
     ]
-  },
-  {
-    "key": "general",
-    "title": "General",
-    "questions": [
-      {
-        "prompt": "Human Player Location",
-        "key": "human_player",
-        "type": "SINGLE",
-        "options": [
-          "Amp",
-          "Source",
-          "No Preference"
-        ]
-      },
-      {
-        "prompt": "Gracious Professionalism (don't ask)",
-        "key": "professionalism",
-        "type": "RANGE",
-        "min": 1,
-        "max": 5
-      }
-    ]
   }
 ]

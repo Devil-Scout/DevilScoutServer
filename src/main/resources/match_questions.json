@@ -85,16 +85,6 @@
         "type": "RANGE",
         "min": 1,
         "max": 5
-      },
-      {
-        "prompt": "Human Player Location",
-        "key": "human_player",
-        "type": "SINGLE",
-        "options": [
-          "Amp",
-          "Source",
-          "None"
-        ]
       }
     ]
   }
