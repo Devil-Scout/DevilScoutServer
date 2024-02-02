@@ -9,6 +9,7 @@ import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.tba.EventOprs.TeamOpr;
 import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
+import org.victorrobotics.devilscoutserver.tba.ScoreBreakdown;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -59,50 +60,71 @@ public abstract class Analyzer {
   protected class DataHandle {
     private final DataEntry.Key key;
 
+    private Collection<List<DataEntry>> matchEntries;
+    private List<DataEntry>             pitEntries;
+    private Collection<List<DataEntry>> driveTeamEntries;
+
+    private TeamOpr        oprs;
+    private ScoreBreakdown breakdown;
+
     DataHandle(DataEntry.Key key) {
       this.key = key;
     }
 
     public OprStatistic oprStatistic(String name) {
-      TeamOpr oprs = oprsCache.get(key.eventKey())
-                              .value()
-                              .get(key.team());
       if (oprs == null) {
-        return new OprStatistic(name);
+        oprs = oprsCache.get(key.eventKey())
+                        .value()
+                        .get(key.team());
       }
-      return new OprStatistic(name, oprs.getOpr(), oprs.getDpr(), oprs.getCcwm());
+      return new OprStatistic(name, oprs);
     }
 
     public WltStatistic wltStatistic(String name) {
-      return new WltStatistic(name, matchScheduleCache.get(key.eventKey())
-                                                      .value()
-                                                      .getTeamStatistics(key.team()));
+      if (breakdown == null) {
+        breakdown = matchScheduleCache.get(key.eventKey())
+                                      .value()
+                                      .getTeamBreakdown(key.team());
+      }
+      return new WltStatistic(name, breakdown);
     }
 
     public RankingPointsStatistic rpStatistic(String name) {
-      return new RankingPointsStatistic(name, matchScheduleCache.get(key.eventKey())
-                                                                .value()
-                                                                .getTeamStatistics(key.team()));
+      if (breakdown == null) {
+        breakdown = matchScheduleCache.get(key.eventKey())
+                                      .value()
+                                      .getTeamBreakdown(key.team());
+      }
+      return new RankingPointsStatistic(name, breakdown);
     }
 
     public List<DataEntry> getPitEntries() {
-      try {
-        return pitEntryDB.getEntries(key.eventKey(), key.team());
-      } catch (SQLException e) {
-        throw new IllegalStateException(e);
+      if (pitEntries == null) {
+        try {
+          pitEntries = pitEntryDB.getEntries(key.eventKey(), key.team());
+        } catch (SQLException e) {
+          throw new IllegalStateException(e);
+        }
       }
+      return pitEntries;
     }
 
     public Collection<List<DataEntry>> getMatchEntries() {
-      return getEntries(matchEntryDB, key.eventKey(), key.team());
+      if (matchEntries == null) {
+        matchEntries = loadEntries(matchEntryDB, key.eventKey(), key.team());
+      }
+      return matchEntries;
     }
 
     public Collection<List<DataEntry>> getDriveTeamEntries() {
-      return getEntries(driveTeamEntryDB, key.eventKey(), key.team());
+      if (driveTeamEntries == null) {
+        driveTeamEntries = loadEntries(driveTeamEntryDB, key.eventKey(), key.team());
+      }
+      return driveTeamEntries;
     }
 
-    private static Collection<List<DataEntry>> getEntries(EntryDatabase database, String eventKey,
-                                                          int team) {
+    private static Collection<List<DataEntry>> loadEntries(EntryDatabase database, String eventKey,
+                                                           int team) {
       List<DataEntry> entries;
       try {
         entries = database.getEntries(eventKey, team);

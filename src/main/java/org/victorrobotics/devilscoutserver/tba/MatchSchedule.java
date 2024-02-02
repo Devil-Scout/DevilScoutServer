@@ -299,7 +299,7 @@ public class MatchSchedule<S extends ScoreBreakdown> implements Cacheable<List<M
                    .orElseGet(() -> null);
   }
 
-  public S getTeamStatistics(int team) {
+  public S getTeamBreakdown(int team) {
     return teamMatches.get(team);
   }
 

@@ -1,21 +1,15 @@
 package org.victorrobotics.devilscoutserver.analysis.statistics;
 
+import org.victorrobotics.devilscoutserver.tba.EventOprs.TeamOpr;
+
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
 public final class OprStatistic extends Statistic {
-  public final Double opr;
-  public final Double dpr;
-  public final Double ccwm;
+  @JsonUnwrapped
+  public final TeamOpr oprs;
 
-  public OprStatistic(String name) {
+  public OprStatistic(String name, TeamOpr oprs) {
     super(StatisticType.OPR, name);
-    opr = null;
-    dpr = null;
-    ccwm = null;
-  }
-
-  public OprStatistic(String name, Double opr, Double dpr, Double ccwm) {
-    super(StatisticType.OPR, name);
-    this.opr = opr;
-    this.dpr = dpr;
-    this.ccwm = ccwm;
+    this.oprs = oprs;
   }
 }
