@@ -25,6 +25,7 @@ import org.victorrobotics.devilscoutserver.database.Database;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
+import org.victorrobotics.devilscoutserver.questions.Questions;
 import org.victorrobotics.devilscoutserver.tba.EventInfoCache;
 import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
@@ -101,13 +102,17 @@ public class Server {
     Controller.setDriveTeamEntryDB(new EntryDatabase("drive_team_entries", true));
     LOGGER.info("Database connected");
 
-    LOGGER.info("Initializing memory caches...");
+    LOGGER.info("Initializing caches...");
     Controller.setEventInfoCache(new EventInfoCache());
     Controller.setEventTeamsCache(new EventTeamListCache());
     Controller.setMatchScheduleCache(new MatchScheduleCache<>(CrescendoScoreBreakdown::new,
                                                               CrescendoScoreBreakdown::new));
     EventOprsCache eventOprsCache = new EventOprsCache();
-    LOGGER.info("Memory caches ready");
+    LOGGER.info("Caches ready");
+
+    LOGGER.info("Loading questions from disk...");
+    Controller.setQuestions(new Questions());
+    LOGGER.info("Questions loaded");
 
     LOGGER.info("Initializing analysis...");
     Analyzer analyzer = new CrescendoAnalyzer(Controller.teamDB(), Controller.eventTeamsCache(),
@@ -117,7 +122,7 @@ public class Server {
     Controller.setTeamStatisticsCache(new TeamStatisticsCache(analyzer));
     LOGGER.info("Analysis ready");
 
-    LOGGER.info("Starting daemon services...");
+    LOGGER.info("Starting refresh services...");
     ThreadFactory blueAllianceThreads = Thread.ofVirtual()
                                               .name("BlueAlliance-", 0)
                                               .factory();
@@ -149,9 +154,8 @@ public class Server {
       refreshCache(eventOprsCache);
       refreshCache(Controller.teamStatisticsCache());
     }, 0, 5, TimeUnit.MINUTES);
-    LOGGER.info("Daemon services running");
+    LOGGER.info("Refresh services running");
 
-    LOGGER.info("Starting HTTP server...");
     Server server = new Server();
     executor.scheduleAtFixedRate(() -> {
       server.javalin.jettyServer()
@@ -159,7 +163,6 @@ public class Server {
                     .dump();
     }, 0, 1, TimeUnit.MINUTES);
     server.start();
-    LOGGER.info("HTTP server started");
 
     LOGGER.info("DevilScoutServer startup complete, main thread exiting");
   }

@@ -4,6 +4,7 @@ import org.victorrobotics.devilscoutserver.analysis.TeamStatisticsCache;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
+import org.victorrobotics.devilscoutserver.questions.Questions;
 import org.victorrobotics.devilscoutserver.tba.EventInfoCache;
 import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
@@ -48,6 +49,8 @@ public sealed class Controller
   private static TeamStatisticsCache TEAM_ANALYSIS_CACHE;
   private static EventOprsCache      EVENT_OPRS_CACHE;
 
+  private static Questions QUESTIONS;
+
   protected Controller() {}
 
   public static void setUserDB(UserDatabase users) {
@@ -88,6 +91,10 @@ public sealed class Controller
 
   public static void setEventOprsCache(EventOprsCache eventOprsCache) {
     EVENT_OPRS_CACHE = eventOprsCache;
+  }
+
+  public static void setQuestions(Questions questions) {
+    QUESTIONS = questions;
   }
 
   @SuppressWarnings("java:S2384") // copy map
@@ -135,10 +142,14 @@ public sealed class Controller
     return EVENT_OPRS_CACHE;
   }
 
-  @SuppressWarnings("java:S2221") // catch generic exception
-  protected static <T> T jsonDecode(Context ctx, Class<T> clazz) {
+  public static Questions questions() {
+    return QUESTIONS;
+  }
+
+  @SuppressWarnings({"java:S2221", "unchecked"}) // catch generic exception
+  protected static <I, T> T jsonDecode(Context ctx, Class<I> clazz) {
     try {
-      return ctx.bodyAsClass(clazz);
+      return (T) ctx.bodyAsClass(clazz);
     } catch (Exception e) {
       throw new BadRequestResponse("Failed to decode body as " + clazz.getSimpleName());
     }
