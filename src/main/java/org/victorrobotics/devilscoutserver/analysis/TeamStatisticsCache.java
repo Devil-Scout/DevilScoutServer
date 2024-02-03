@@ -1,43 +1,63 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
-import org.victorrobotics.devilscoutserver.analysis.statistics.Statistic;
-import org.victorrobotics.devilscoutserver.cache.ListCache;
+import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
+import org.victorrobotics.devilscoutserver.cache.Cache;
+import org.victorrobotics.devilscoutserver.database.DataEntry;
 
-import java.sql.SQLException;
-import java.util.LinkedHashMap;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-public class TeamStatisticsCache extends ListCache<Integer, List<Statistic>, TeamStatistics> {
+public class TeamStatisticsCache
+    extends Cache<DataEntry.Key, List<StatisticsPage>, TeamStatistics> {
+  private final ConcurrentMap<String, SortedSet<Value<List<StatisticsPage>, TeamStatistics>>> eventTeamsMap;
+
   private final Analyzer analyzer;
 
   public TeamStatisticsCache(Analyzer analyzer) {
-    super(false);
+    eventTeamsMap = new ConcurrentHashMap<>();
     this.analyzer = analyzer;
   }
 
   @Override
-  protected Map<Integer, List<Statistic>> getData() {
-    Set<Integer> teamsToUpdate;
-    try {
-      teamsToUpdate = analyzer.getTeamsToUpdate(lastModified());
-    } catch (SQLException e) {
-      throw new IllegalStateException(e);
-    }
-
-    if (teamsToUpdate.isEmpty()) return Map.of();
-
-    Map<Integer, List<Statistic>> data = new LinkedHashMap<>();
-    for (Integer team : teamsToUpdate) {
-      List<Statistic> statistics = analyzer.computeStatistics(team);
-      data.put(team, statistics);
-    }
-    return data;
+  protected Value<List<StatisticsPage>, TeamStatistics> getValue(DataEntry.Key key) {
+    return cacheMap.get(key);
   }
 
   @Override
-  protected TeamStatistics createValue(Integer key, List<Statistic> data) {
-    return new TeamStatistics(key, data);
+  public void refresh() {
+    Collection<DataEntry.Key> updates = analyzer.getUpdates();
+    if (updates.isEmpty()) return;
+
+    for (DataEntry.Key key : updates) {
+      List<StatisticsPage> data = analyzer.computeStatistics(key);
+
+      if (data == null) {
+        remove(key);
+        continue;
+      }
+
+      Value<List<StatisticsPage>, TeamStatistics> value = cacheMap.get(key);
+      if (value == null) {
+        value = new Value<>(new TeamStatistics(key, data), this::modified);
+        cacheMap.put(key, value);
+        SortedSet<Value<List<StatisticsPage>, TeamStatistics>> eventTeams =
+            eventTeamsMap.computeIfAbsent(key.eventKey(), k -> new TreeSet<>());
+        eventTeams.add(value);
+
+        modified();
+      } else {
+        updateValue(value, data);
+      }
+    }
+  }
+
+  public Collection<Value<List<StatisticsPage>, TeamStatistics>> getEvent(String eventKey) {
+    SortedSet<Value<List<StatisticsPage>, TeamStatistics>> value = eventTeamsMap.get(eventKey);
+    return value == null ? List.of() : Collections.unmodifiableCollection(value);
   }
 }

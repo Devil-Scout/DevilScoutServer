@@ -9,14 +9,29 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public record Entry(String id,
-                    String eventKey,
-                    String matchKey,
-                    String submittingUser,
-                    int submittingTeam,
-                    int scoutedTeam,
-                    JsonNode json,
-                    long timestamp) {
+public record DataEntry(String id,
+                        String eventKey,
+                        String matchKey,
+                        String submittingUser,
+                        int submittingTeam,
+                        int scoutedTeam,
+                        JsonNode json,
+                        long timestamp) {
+  public static record Key(String eventKey,
+                           int team)
+      implements Comparable<Key> {
+    public static Key fromDatabase(ResultSet resultSet) throws SQLException {
+      String eventKey = resultSet.getString(1);
+      int team = resultSet.getInt(2);
+      return new Key(eventKey, team);
+    }
+
+    @Override
+    public int compareTo(Key o) {
+      int compare = eventKey().compareTo(o.eventKey());
+      return compare != 0 ? compare : Integer.compare(team(), o.team());
+    }
+  }
 
   private static final ObjectMapper PARSER = new ObjectMapper();
 
@@ -28,9 +43,9 @@ public record Entry(String id,
   public Boolean getBoolean(String path) {
     JsonNode node = json.at(path);
     return node.isBoolean() ? node.booleanValue() : null;
-
   }
 
+  @SuppressWarnings("java:S1168") // empty list instead of null
   public List<Integer> getIntegers(String path) {
     JsonNode node = json.at(path);
     if (node.isNumber()) return List.of(node.intValue());
@@ -39,15 +54,13 @@ public record Entry(String id,
     List<Integer> values = new ArrayList<>(node.size());
     for (int i = 0; i < node.size(); i++) {
       JsonNode node2 = node.get(i);
-      if (!node2.isNumber()) {
-        return null;
-      }
+      if (!node2.isNumber()) return null;
       values.add(node2.intValue());
     }
     return values;
   }
 
-  public static Entry fromDatabase(ResultSet resultSet) throws SQLException {
+  public static DataEntry fromDatabase(ResultSet resultSet) throws SQLException {
     JsonNode json;
     try {
       String jsonStr = resultSet.getString(6);
@@ -64,11 +77,11 @@ public record Entry(String id,
     long timestamp = resultSet.getTimestamp(7)
                               .getTime();
 
-    return new Entry(id, eventKey, null, submittingUser, submittingTeam, scoutedTeam, json,
-                     timestamp);
+    return new DataEntry(id, eventKey, null, submittingUser, submittingTeam, scoutedTeam, json,
+                         timestamp);
   }
 
-  public static Entry fromDatabaseWithMatch(ResultSet resultSet) throws SQLException {
+  public static DataEntry fromDatabaseWithMatch(ResultSet resultSet) throws SQLException {
     JsonNode json;
     try {
       String jsonStr = resultSet.getString(7);
@@ -86,7 +99,7 @@ public record Entry(String id,
     long timestamp = resultSet.getTimestamp(8)
                               .getTime();
 
-    return new Entry(id, eventKey, matchKey, submittingUser, submittingTeam, scoutedTeam, json,
-                     timestamp);
+    return new DataEntry(id, eventKey, matchKey, submittingUser, submittingTeam, scoutedTeam, json,
+                         timestamp);
   }
 }

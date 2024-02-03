@@ -3,6 +3,10 @@ package org.victorrobotics.devilscoutserver.analysis.statistics;
 public enum StatisticType {
   NUMBER,
   BOOLEAN,
-  PERCENTAGE,
-  OPR;
+  RADAR,
+  OPR,
+  PIE_CHART,
+  WTL,
+  STRING,
+  RP;
 }

@@ -1,13 +1,11 @@
 package org.victorrobotics.devilscoutserver.cache;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class OnDemandCache<K, D, V extends Cacheable<D>> extends Cache<K, D, V> {
   private final long purgeTime;
 
   protected OnDemandCache(long purgeTime) {
-    super(ConcurrentHashMap::new);
     this.purgeTime = purgeTime;
   }
 
@@ -16,12 +14,12 @@ public abstract class OnDemandCache<K, D, V extends Cacheable<D>> extends Cache<
   protected abstract V createValue(K key, D data);
 
   @Override
-  protected CacheValue<D, V> getValue(K key) {
+  protected Value<D, V> getValue(K key) {
     return cacheMap.computeIfAbsent(key, k -> {
       D data = getData(k);
       if (data == null) return null;
 
-      CacheValue<D, V> entry = new CacheValue<>(createValue(k, data), this::modified);
+      Value<D, V> entry = new Value<>(createValue(k, data), this::modified);
       modified();
       return entry;
     });
@@ -35,7 +33,7 @@ public abstract class OnDemandCache<K, D, V extends Cacheable<D>> extends Cache<
       modified();
     }
 
-    for (Map.Entry<K, CacheValue<D, V>> entry : cacheMap.entrySet()) {
+    for (Map.Entry<K, Value<D, V>> entry : cacheMap.entrySet()) {
       D data = getData(entry.getKey());
       if (data == null) continue;
 

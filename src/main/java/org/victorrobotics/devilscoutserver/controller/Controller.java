@@ -9,7 +9,6 @@ import org.victorrobotics.devilscoutserver.tba.EventInfoCache;
 import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
-import org.victorrobotics.devilscoutserver.tba.TeamOprsCache;
 
 import java.security.SecureRandom;
 import java.sql.SQLException;
@@ -39,9 +38,9 @@ public sealed class Controller
   private static UserDatabase USERS;
   private static TeamDatabase TEAMS;
 
-  private static EventInfoCache     EVENT_INFO_CACHE;
-  private static EventTeamListCache EVENT_TEAMS_CACHE;
-  private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
+  private static EventInfoCache        EVENT_INFO_CACHE;
+  private static EventTeamListCache    EVENT_TEAMS_CACHE;
+  private static MatchScheduleCache<?> MATCH_SCHEDULE_CACHE;
 
   private static EntryDatabase MATCH_ENTRIES;
   private static EntryDatabase PIT_ENTRIES;
@@ -49,7 +48,6 @@ public sealed class Controller
 
   private static TeamStatisticsCache TEAM_ANALYSIS_CACHE;
   private static EventOprsCache      EVENT_OPRS_CACHE;
-  private static TeamOprsCache       TEAM_OPRS_CACHE;
 
   private static Questions QUESTIONS;
 
@@ -71,7 +69,7 @@ public sealed class Controller
     EVENT_TEAMS_CACHE = cache;
   }
 
-  public static void setMatchScheduleCache(MatchScheduleCache cache) {
+  public static void setMatchScheduleCache(MatchScheduleCache<?> cache) {
     MATCH_SCHEDULE_CACHE = cache;
   }
 
@@ -93,10 +91,6 @@ public sealed class Controller
 
   public static void setEventOprsCache(EventOprsCache eventOprsCache) {
     EVENT_OPRS_CACHE = eventOprsCache;
-  }
-
-  public static void setTeamStatisticsCache(TeamOprsCache teamOprsCache) {
-    TEAM_OPRS_CACHE = teamOprsCache;
   }
 
   public static void setQuestions(Questions questions) {
@@ -124,7 +118,7 @@ public sealed class Controller
     return EVENT_TEAMS_CACHE;
   }
 
-  public static MatchScheduleCache matchScheduleCache() {
+  public static MatchScheduleCache<?> matchScheduleCache() {
     return MATCH_SCHEDULE_CACHE;
   }
 
@@ -140,16 +134,12 @@ public sealed class Controller
     return DRIVE_TEAM_ENTRIES;
   }
 
-  public static TeamStatisticsCache teamAnalysisCache() {
+  public static TeamStatisticsCache teamStatisticsCache() {
     return TEAM_ANALYSIS_CACHE;
   }
 
   public static EventOprsCache eventOprs() {
     return EVENT_OPRS_CACHE;
-  }
-
-  public static TeamOprsCache teamOprs() {
-    return TEAM_OPRS_CACHE;
   }
 
   public static Questions questions() {

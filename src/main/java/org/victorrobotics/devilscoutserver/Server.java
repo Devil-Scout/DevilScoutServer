@@ -8,8 +8,9 @@ import static io.javalin.apibuilder.ApiBuilder.post;
 
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
-import org.victorrobotics.devilscoutserver.analysis.CrescendoAnalyzer;
 import org.victorrobotics.devilscoutserver.analysis.TeamStatisticsCache;
+import org.victorrobotics.devilscoutserver.analysis._2024.CrescendoScoreBreakdown;
+import org.victorrobotics.devilscoutserver.analysis._2024.CrescendoAnalyzer;
 import org.victorrobotics.devilscoutserver.cache.Cache;
 import org.victorrobotics.devilscoutserver.controller.AnalysisController;
 import org.victorrobotics.devilscoutserver.controller.Controller;
@@ -29,7 +30,6 @@ import org.victorrobotics.devilscoutserver.tba.EventInfoCache;
 import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
-import org.victorrobotics.devilscoutserver.tba.TeamOprsCache;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -51,6 +51,7 @@ public class Server {
   public Server() {
     javalin = Javalin.create(config -> {
       config.http.prefer405over404 = true;
+      config.useVirtualThreads = true;
 
       config.bundledPlugins.enableSslRedirects();
       config.registerPlugin(new SslPlugin(sslConfig -> {
@@ -104,9 +105,9 @@ public class Server {
     LOGGER.info("Initializing caches...");
     Controller.setEventInfoCache(new EventInfoCache());
     Controller.setEventTeamsCache(new EventTeamListCache());
-    Controller.setMatchScheduleCache(new MatchScheduleCache());
+    Controller.setMatchScheduleCache(new MatchScheduleCache<>(CrescendoScoreBreakdown::new,
+                                                              CrescendoScoreBreakdown::new));
     EventOprsCache eventOprsCache = new EventOprsCache();
-    TeamOprsCache teamOprsCache = new TeamOprsCache(eventOprsCache);
     LOGGER.info("Caches ready");
 
     LOGGER.info("Loading questions from disk...");
@@ -114,8 +115,10 @@ public class Server {
     LOGGER.info("Questions loaded");
 
     LOGGER.info("Initializing analysis...");
-    Analyzer analyzer = new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
-                                              Controller.driveTeamEntryDB(), teamOprsCache);
+    Analyzer analyzer = new CrescendoAnalyzer(Controller.teamDB(), Controller.eventTeamsCache(),
+                                              Controller.matchEntryDB(), Controller.pitEntryDB(),
+                                              Controller.driveTeamEntryDB(),
+                                              Controller.matchScheduleCache(), eventOprsCache);
     Controller.setTeamStatisticsCache(new TeamStatisticsCache(analyzer));
     LOGGER.info("Analysis ready");
 
@@ -146,12 +149,11 @@ public class Server {
               .removeIf(Session::isExpired);
       LOGGER.info("Purged {} expired sessions in {}ms", size - sessions.size(),
                   System.currentTimeMillis() - start);
-    }, 0, 15, TimeUnit.MINUTES);
+    }, 0, 5, TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
       refreshCache(eventOprsCache);
-      refreshCache(teamOprsCache);
-      refreshCache(Controller.teamAnalysisCache());
-    }, 0, 15, TimeUnit.MINUTES);
+      refreshCache(Controller.teamStatisticsCache());
+    }, 0, 5, TimeUnit.MINUTES);
     LOGGER.info("Refresh services running");
 
     Server server = new Server();
@@ -167,7 +169,14 @@ public class Server {
 
   private static void refreshCache(Cache<?, ?, ?> cache) {
     long start = System.currentTimeMillis();
-    cache.refresh();
+    try {
+      cache.refresh();
+    } catch (Exception e) {
+      LOGGER.info("Exception while refreshing {}", cache.getClass()
+                                                        .getSimpleName(),
+                  e);
+      return;
+    }
     LOGGER.info("Refreshed {} ({}) in {}ms", cache.getClass()
                                                   .getSimpleName(),
                 cache.size(), System.currentTimeMillis() - start);
@@ -217,6 +226,6 @@ public class Server {
       post("drive-team/{matchKey}", SubmissionController::submitDriveTeam);
     });
 
-    get("analysis/teams", AnalysisController::teams);
+    get("analysis/{eventKey}/teams", AnalysisController::teams);
   }
 }
