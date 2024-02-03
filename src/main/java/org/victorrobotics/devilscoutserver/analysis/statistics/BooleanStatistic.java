@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.function.Function;
 
 public final class BooleanStatistic extends Statistic {
-  public final double percent;
+  public final Double percent;
 
   public BooleanStatistic(String name, Double percent) {
     super(StatisticType.BOOLEAN, name);
