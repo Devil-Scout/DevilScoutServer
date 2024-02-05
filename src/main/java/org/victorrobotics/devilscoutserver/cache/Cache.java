@@ -212,6 +212,7 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
     void update(D data) {
       if (val.update(data)) {
         onModification.run();
+        jsonCache = null;
       }
     }
 
