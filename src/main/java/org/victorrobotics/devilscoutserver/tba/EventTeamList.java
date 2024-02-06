@@ -62,8 +62,8 @@ public class EventTeamList implements Cacheable<List<Team.Simple>> {
     }
   }
 
-  private final ConcurrentNavigableMap<String, TeamInfo> teamMap;
-  private final Collection<TeamInfo>                     teams;
+  private final ConcurrentNavigableMap<Integer, TeamInfo> teamMap;
+  private final Collection<TeamInfo>                      teams;
 
   public EventTeamList(List<Team.Simple> teams) {
     this.teamMap = new ConcurrentSkipListMap<>();
@@ -74,13 +74,13 @@ public class EventTeamList implements Cacheable<List<Team.Simple>> {
   @Override
   public boolean update(List<Team.Simple> teams) {
     boolean change = false;
-    Collection<String> keys = new ArrayList<>();
+    Collection<Integer> keys = new ArrayList<>();
     for (Team.Simple team : teams) {
-      keys.add(team.key);
+      keys.add(team.number);
 
-      TeamInfo info = teamMap.get(team.key);
+      TeamInfo info = teamMap.get(team.number);
       if (info == null) {
-        teamMap.put(team.key, new TeamInfo(team));
+        teamMap.put(team.number, new TeamInfo(team));
         change = true;
       } else {
         change |= info.update(team);
