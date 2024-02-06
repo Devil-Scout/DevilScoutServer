@@ -1,0 +1,1173 @@
+openapi: 3.1.0
+info:
+  title: Devil Scout Server
+  # termsOfService: https://scouting.victorrobotics.org/terms/
+  contact:
+    email: victorrobotics@gmail.com
+  version: v1
+# externalDocs:
+#   description: Learn more
+#   url: https://scouting.victorrobotics.org
+servers:
+  - url: https://scouting.victorrobotics.org/api/v1
+tags:
+  - name: auth
+  - name: teams
+  - name: events
+  - name: questions
+  - name: submit
+  - name: analysis
+paths:
+  /login:
+    post:
+      tags:
+        - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginChallenge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /auth:
+    post:
+      tags:
+        - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRequest"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /logout:
+    delete:
+      tags:
+        - auth
+      security:
+        - sessionKey: []
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /session:
+    get:
+      tags:
+        - auth
+      security:
+        - sessionKey: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /teams/{teamNum}:
+    parameters:
+      - $ref: "#/components/parameters/teamNum"
+    get:
+      tags:
+        - teams
+      security:
+        - sessionKey: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags:
+        - teams
+      security:
+        - sessionKey:
+          - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeamEdits"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /teams/{teamNum}/users:
+    parameters:
+      - $ref: "#/components/parameters/teamNum"
+    get:
+      tags:
+        - teams
+      security:
+        - sessionKey:
+          - admin
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      tags:
+        - teams
+      security:
+        - sessionKey:
+          - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegistration"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /users/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/userId"
+    get:
+      tags:
+        - teams
+      security:
+        - sessionKey: []
+        - sessionKey:
+          - admin
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags:
+        - teams
+      security:
+        - sessionKey: []
+        - sessionKey:
+          - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserEdits"
+        required: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+    delete:
+      tags:
+        - teams
+      security:
+        - sessionKey: []
+        - sessionKey:
+          - admin
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /events:
+    get:
+      tags:
+        - events
+      security:
+        - sessionKey: []
+      parameters:
+        - $ref: "#/components/parameters/ifNoneMatchTimestamp"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventInfo"
+        "304":
+          $ref: "#/components/responses/NotModified"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+      deprecated: false
+  /events/{eventKey}:
+    parameters:
+      - $ref: "#/components/parameters/eventKey"
+    get:
+      tags:
+        - events
+      security:
+        - sessionKey: []
+      parameters:
+        - $ref: "#/components/parameters/ifNoneMatchTimestamp"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventInfo"
+        "304":
+          $ref: "#/components/responses/NotModified"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /events/{eventKey}/teams:
+    parameters:
+      - $ref: "#/components/parameters/eventKey"
+    get:
+      tags:
+        - events
+      security:
+        - sessionKey: []
+      parameters:
+        - $ref: "#/components/parameters/ifNoneMatchTimestamp"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeamInfo"
+        "304":
+          $ref: "#/components/responses/NotModified"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /events/{eventKey}/matches:
+    parameters:
+      - $ref: "#/components/parameters/eventKey"
+    get:
+      tags:
+        - events
+      security:
+        - sessionKey: []
+      parameters:
+        - $ref: "#/components/parameters/ifNoneMatchTimestamp"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MatchInfo"
+        "304":
+          $ref: "#/components/responses/NotModified"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /questions/match:
+    get:
+      tags:
+        - questions
+      security:
+        - sessionKey: []
+      parameters:
+        - $ref: "#/components/parameters/ifNoneMatchHash"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuestionPage"
+        "304":
+          $ref: "#/components/responses/NotModified"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /questions/pit:
+    get:
+      tags:
+        - questions
+      security:
+        - sessionKey: []
+      parameters:
+        - $ref: "#/components/parameters/ifNoneMatchHash"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuestionPage"
+        "304":
+          $ref: "#/components/responses/NotModified"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /questions/drive-team:
+    get:
+      tags:
+        - questions
+      parameters:
+        - $ref: "#/components/parameters/ifNoneMatchHash"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Question"
+        "304":
+          $ref: "#/components/responses/NotModified"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /submissions/match/{matchKey}/{teamNum}:
+    parameters:
+      - $ref: "#/components/parameters/matchKey"
+      - $ref: "#/components/parameters/teamNum"
+    post:
+      tags:
+        - submit
+      security:
+        - sessionKey: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MatchSubmission"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /submissions/pit/{eventKey}/{teamNum}:
+    parameters:
+      - $ref: "#/components/parameters/eventKey"
+      - $ref: "#/components/parameters/teamNum"
+    post:
+      tags:
+        - submit
+      security:
+        - sessionKey: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PitSubmission"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /submissions/drive-team/{matchKey}:
+    parameters:
+      - $ref: "#/components/parameters/matchKey"
+    post:
+      tags:
+        - submit
+      security:
+        - sessionKey: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DriveTeamSubmission"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /analysis/{eventKey}/teams:
+    parameters:
+        - $ref: "#/components/parameters/eventKey"
+    get:
+      tags:
+        - analysis
+      security:
+        - sessionKey: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeamStatistics"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+components:
+  parameters:
+    teamNum:
+      name: teamNum
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/x-hidden/teamNum"
+    sessionKey:
+      name: sessionKey
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/x-hidden/uuid"
+    userId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/x-hidden/uuid"
+    eventKey:
+      name: eventKey
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/x-hidden/eventKey"
+    matchKey:
+      name: matchKey
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/x-hidden/matchKey"
+    ifNoneMatchTimestamp:
+      name: If-None-Match
+      in: header
+      schema:
+        type: integer
+    ifNoneMatchHash:
+      name: If-None-Match
+      in: header
+      schema:
+        $ref: "#/components/x-hidden/base64_256"
+  securitySchemes:
+    sessionKey:
+      type: apiKey
+      name: X-DS-SESSION-KEY
+      in: header
+  responses:
+    NoContent:
+      # 204
+      description: "Success (no content)"
+    NotModified:
+      # 304
+      description: "Not Modified"
+    BadRequest:
+      # 400
+      description: "Bad Request Body"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+            examples:
+              - error: "Failed to parse JSON"
+    Unauthorized:
+      # 401
+      description: "Unauthorized"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+            examples:
+              - error: "Unauthorized"
+    Forbidden:
+      # 403
+      description: "Forbidden"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+            examples:
+              - error: "Forbidden"
+    NotFound:
+      # 404
+      description: "Not Found"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+            examples:
+              - error: "Not Found"
+    Conflict:
+      # 409
+      description: "Conflict"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+            examples:
+              - error: "Conflict"
+  schemas:
+    ApiError:
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    LoginRequest:
+      properties:
+        username:
+          $ref: "#/components/x-hidden/username"
+        team:
+          $ref: "#/components/x-hidden/teamNum"
+        nonce:
+          $ref: "#/components/x-hidden/base64_64"
+          examples:
+            - NYBcbONWh1c=
+      required:
+        - team
+        - username
+        - nonce
+    LoginChallenge:
+      properties:
+        salt:
+          $ref: "#/components/x-hidden/base64_64"
+        nonce:
+          $ref: "#/components/x-hidden/base64_128"
+          examples:
+            - NYBcbONWh1dBrouaDEv66Q==
+      required:
+        - salt
+        - nonce
+    AuthRequest:
+      properties:
+        username:
+          type: string
+        team:
+          $ref: "#/components/x-hidden/teamNum"
+        nonce:
+          $ref: "#/components/x-hidden/base64_128"
+          examples:
+            - NYBcbONWh1dBrouaDEv66Q==
+        proof:
+          $ref: "#/components/x-hidden/base64_256"
+      required:
+        - team
+        - username
+        - nonce
+        - proof
+    AuthResponse:
+      properties:
+        session:
+          $ref: "#/components/schemas/Session"
+        user:
+          $ref: "#/components/schemas/User"
+        team:
+          $ref: "#/components/schemas/Team"
+        signature:
+          $ref: "#/components/x-hidden/base64_256"
+      required:
+        - session
+        - user
+        - team
+        - signature
+    Session:
+      properties:
+        key:
+          $ref: "#/components/x-hidden/uuid"
+        user:
+          $ref: "#/components/x-hidden/uuid"
+        team:
+          $ref: "#/components/x-hidden/teamNum"
+      required:
+        - key
+        - user
+        - team
+    User:
+      properties:
+        id:
+          $ref: "#/components/x-hidden/uuid"
+        username:
+          $ref: "#/components/x-hidden/username"
+        fullName:
+          $ref: "#/components/x-hidden/fullName"
+        team:
+          $ref: "#/components/x-hidden/teamNum"
+        admin:
+          type: boolean
+      required:
+        - id
+        - team
+        - username
+        - fullName
+        - admin
+    UserRegistration:
+      properties:
+        username:
+          $ref: "#/components/x-hidden/username"
+        fullName:
+          $ref: "#/components/x-hidden/fullName"
+        admin:
+          type: boolean
+        password:
+          $ref: "#/components/x-hidden/password"
+      required:
+        - username
+        - fullName
+        - admin
+        - password
+    UserEdits:
+      properties:
+        username:
+          $ref: "#/components/x-hidden/username"
+        fullName:
+          $ref: "#/components/x-hidden/fullName"
+        admin:
+          type: boolean
+        password:
+          $ref: "#/components/x-hidden/password"
+    Team:
+      properties:
+        number:
+          $ref: "#/components/x-hidden/teamNum"
+        name:
+          $ref: "#/components/x-hidden/teamName"
+        eventKey:
+          $ref: "#/components/x-hidden/eventKey"
+      required:
+        - number
+        - name
+        - eventKey
+    TeamEdits:
+      properties:
+        name:
+          $ref: "#/components/x-hidden/teamName"
+        eventKey:
+          $ref: "#/components/x-hidden/eventKey"
+    EventInfo:
+      properties:
+        key:
+          $ref: "#/components/x-hidden/eventKey"
+        name:
+          type: string
+        location:
+          type: string
+        start:
+          type: string
+          format: date
+        end:
+          type: string
+          format: date
+      required:
+        - key
+        - name
+        - location
+        - start
+        - end
+    TeamInfo:
+      properties:
+        number:
+          $ref: "#/components/x-hidden/teamNum"
+        name:
+          type: string
+        location:
+          type: string
+      required:
+        - number
+        - name
+        - location
+    MatchInfo:
+      properties:
+        key:
+          $ref: "#/components/x-hidden/matchKey"
+        name:
+          type: string
+          examples:
+            - Qualification 1
+        level:
+          type: string
+          enum:
+            - QUAL
+            - QUARTER
+            - SEMI
+            - FINAL
+            - null
+        set:
+          type: integer
+          minimum: 1
+          examples:
+            - 1
+        number:
+          type: integer
+          minimum: 1
+          examples:
+            - 1
+        blue:
+          type: array
+          items:
+            $ref: "#/components/x-hidden/teamNum"
+          examples:
+            - - 2228
+              - 1585
+              - 578
+        red:
+          type: array
+          items:
+            type: integer
+          examples:
+            - - 1559
+              - 9996
+              - 5740
+        time:
+          type: integer
+          examples:
+            - 1697891944000
+        completed:
+          type: boolean
+      required:
+        - key
+        - name
+        - level
+        - set
+        - number
+        - blue
+        - red
+        - time
+        - completed
+    QuestionPage:
+      properties:
+        key:
+          type: string
+        title:
+          type: string
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Question"
+      required:
+        - key
+        - title
+        - questions
+    Question:
+      allOf:
+        - properties:
+            key:
+              type: string
+            prompt:
+              type: string
+          required:
+            - key
+            - prompt
+        - oneOf:
+          - title: BooleanQuestion
+            properties:
+              type:
+                type: string
+                enum:
+                  - BOOLEAN
+            required:
+              - type
+          - title: CounterQuestion
+            properties:
+              type:
+                type: string
+                enum:
+                  - COUNTER
+            required:
+              - type
+          - title: MultipleChoiceQuestion
+            properties:
+              type:
+                type: string
+                enum:
+                  - MULTIPLE
+              options:
+                type: array
+                items:
+                  type: string
+            required:
+              - type
+              - options
+          - title: NumberQuestion
+            properties:
+              type:
+                type: string
+                enum:
+                  - NUMBER
+              min:
+                type: integer
+              max:
+                type: integer
+            required:
+              - type
+          - title: RangeQuestion
+            properties:
+              type:
+                type: string
+                enum:
+                  - RANGE
+              min:
+                type: integer
+              max:
+                type: integer
+              increment:
+                type: integer
+                default: 1
+            required:
+              - type
+              - min
+              - max
+          - title: SequenceQuestion
+            properties:
+              type:
+                type: string
+                enum:
+                  - SEQUENCE
+              options:
+                type: array
+                items:
+                  type: string
+            required:
+              - type
+              - options
+          - title: SingleChoiceQuestion
+            properties:
+              type:
+                type: string
+                enum:
+                  - SINGLE
+              options:
+                type: array
+                items:
+                  type: string
+            required:
+              - type
+              - options
+    MatchSubmission:
+      type: object
+      minProperties: 1
+      additionalProperties:
+        type: object
+        minProperties: 1
+        additionalProperties: {}
+    PitSubmission:
+      type: object
+      minProperties: 1
+      additionalProperties:
+        type: object
+        minProperties: 1
+        additionalProperties: {}
+    DriveTeamSubmission:
+      type: object
+      minProperties: 1
+      additionalProperties:
+        type: object
+        minProperties: 1
+        additionalProperties: {}
+    TeamStatistics:
+      properties:
+        team:
+          $ref: "#/components/x-hidden/teamNum"
+        data:
+          type: array
+          items:
+            title: StatisticPage
+            properties:
+              title:
+                type: string
+              statistics:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Statistic"
+      required:
+        - team
+        - data
+    Statistic:
+      allOf:
+        - properties:
+            name:
+              type: string
+          required:
+            - name
+        - oneOf:
+          - title: BooleanStatistic
+            properties:
+              type:
+                type: string
+                enum:
+                  - BOOLEAN
+              percent:
+                type: number
+            required:
+              - type
+          - title: NumberStatistic
+            properties:
+              type:
+                type: string
+                enum:
+                  - NUMBER
+              mean:
+                type: number
+              stddev:
+                type: number
+              max:
+                type: number
+            required:
+              - type
+          - title: OprStatistic
+            properties:
+              type:
+                type: string
+                enum:
+                  - OPR
+              opr:
+                type: number
+              dpr:
+                type: number
+              ccwm:
+                type: number
+            required:
+              - type
+          - title: PieChartStatistic
+            properties:
+              type:
+                type: string
+                enum:
+                  - PIE_CHART
+              total:
+                type: integer
+              slices:
+                type: array
+                items:
+                  properties:
+                    label:
+                      type: string
+                    count:
+                      type: integer
+            required:
+              - type
+              - total
+          - title: RadarStatistic
+            properties:
+              type:
+                type: string
+                enum:
+                  - RADAR
+              max:
+                type: number
+              points:
+                type: array
+                items:
+                  properties:
+                    label:
+                      type: string
+                    value:
+                      type: number
+            required:
+              - type
+              - max
+              - points
+          - title: RankingPointsStatistic
+            properties:
+              type:
+                type: string
+                enum:
+                  - RP
+              rankingPoints:
+                type: object
+            required:
+              - type
+          - title: StringStatistic
+            properties:
+              type:
+                type: string
+                enum:
+                  - STRING
+              value:
+                type: string
+            required:
+              - type
+          - title: WltStatistic
+            properties:
+              type:
+                type: string
+                enum:
+                  - WLT
+              wins:
+                type: integer
+              losses:
+                type: integer
+              ties:
+                type: integer
+            required:
+              - type
+  x-hidden:
+    uuid:
+      type: string
+      format: uuid
+      pattern: ^[\da-fA-F]{8}-(?:[\da-fA-F]{4}-){3}[\da-fA-F]{12}$
+      minLength: 36
+      maxLength: 36
+      examples:
+        - 72ed8c9b-3961-4d41-81c5-13de2b013862
+    teamNum:
+      type: integer
+      minimum: 1
+      maximum: 9999
+      examples:
+        - 1559
+    username:
+      type: string
+      minLength: 1
+      maxLength: 32
+      examples:
+        - xander
+    fullName:
+      type: string
+      minLength: 1
+      maxLength: 64
+      examples:
+        - Xander Bhalla
+    password:
+      type: string
+      format: password
+      minLength: 8
+      examples:
+        - password
+    eventKey:
+      type: string
+      maxLength: 12
+      pattern: ^20\d\d[0-9A-Za-z]{1,8}$
+      examples:
+        - 2023nyrr
+    matchKey:
+      type: string
+      maxLength: 18
+      pattern: ^20\d\d[0-9A-Za-z]{1,8}_(?:q|ef|qf|sf|f)\d?m\d+$
+      examples:
+        - 2023nyrr_qm1
+    teamName:
+      type: string
+      maxLength: 64
+      examples:
+        - Devil Tech
+    base64_64:
+      type: string
+      format: byte
+      minLength: 12
+      maxLength: 12
+      examples:
+        - XHcuVTBJuYg=
+    base64_128:
+      type: string
+      format: byte
+      minLength: 24
+      maxLength: 24
+      examples:
+        - 1OmNNlWx1pcSJL08v6XF0Q==
+    base64_256:
+      type: string
+      format: byte
+      minLength: 44
+      maxLength: 44
+      examples:
+        - qb6PV+ZYWCXgaeZdLStqIe47PZfDB7ONEMB6v5ejAyQ=
