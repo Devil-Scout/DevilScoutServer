@@ -188,6 +188,15 @@ public final class UserController extends Controller {
 
     user = userDB().editUser(userId, edits.username(), edits.fullName(), edits.admin(), authInfo);
 
+    // If permissions are reduced OR password was changed, log out this user
+    // EXCEPT the current session
+    if (Boolean.FALSE.equals(edits.admin()) || authInfo != null) {
+      sessions().values()
+                .removeIf(s -> s.getUser()
+                                .equals(userId)
+                    && s != session);
+    }
+
     ctx.json(user);
   }
 
@@ -222,6 +231,9 @@ public final class UserController extends Controller {
     }
 
     userDB().deleteUser(user.id());
+    sessions().values()
+              .removeIf(s -> s.getUser()
+                              .equals(user.id()));
     throw new NoContentResponse();
   }
 

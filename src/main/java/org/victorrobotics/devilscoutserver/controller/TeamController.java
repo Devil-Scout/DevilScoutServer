@@ -81,6 +81,13 @@ public final class TeamController extends Controller {
     }
 
     team = teamDB().editTeam(teamNum, edits.name(), eventKey);
+
+    // If changing the event, log out all users on that team
+    if (eventKey != null) {
+      sessions().values()
+                .removeIf(s -> s.getTeam() == teamNum);
+    }
+
     ctx.json(team);
   }
 
