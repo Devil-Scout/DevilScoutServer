@@ -24,7 +24,7 @@ public class RadarStatistic extends Statistic {
   @SuppressWarnings("java:S3242") // Iterable instead of List
   public static RadarStatistic directMatch(String name,
                                            Iterable<? extends Collection<DataEntry>> pitEntries,
-                                           double max, List<String> labels, List<String> paths) {
+                                           List<String> paths, double max, List<String> labels) {
     List<Function<DataEntry, Number>> functions = new ArrayList<>();
     for (String path : paths) {
       functions.add(entry -> entry.getInteger(path));
@@ -79,8 +79,8 @@ public class RadarStatistic extends Statistic {
   }
 
   @SuppressWarnings("java:S3242") // Iterable instead of List
-  public static RadarStatistic directPit(String name, Iterable<DataEntry> pitEntries, double max,
-                                         List<String> labels, List<String> paths) {
+  public static RadarStatistic directPit(String name, Iterable<DataEntry> pitEntries,
+                                         List<String> paths, double max, List<String> labels) {
     List<Function<DataEntry, Number>> functions = new ArrayList<>();
     for (String path : paths) {
       functions.add(entry -> entry.getInteger(path));
@@ -91,8 +91,8 @@ public class RadarStatistic extends Statistic {
   public static RadarStatistic computedPit(String name, Iterable<DataEntry> pitEntries, double max,
                                            List<String> labels,
                                            List<Function<DataEntry, Number>> functions) {
-    int[] counts = new int[labels.size()];
-    double[] sums = new double[labels.size()];
+    int[] counts = new int[functions.size()];
+    double[] sums = new double[functions.size()];
     for (DataEntry entry : pitEntries) {
       for (int i = 0; i < sums.length; i++) {
         Number val = functions.get(i)

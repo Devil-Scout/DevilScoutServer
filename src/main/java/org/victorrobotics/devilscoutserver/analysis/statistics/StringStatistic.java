@@ -89,15 +89,19 @@ public class StringStatistic extends Statistic {
     }
 
     int maxCount = 0;
+    int distinctMaxCount = 0;
     String mostFrequent = null;
     for (Map.Entry<String, Integer> entry : counts.entrySet()) {
       if (entry.getValue() > maxCount) {
         maxCount = entry.getValue();
+        distinctMaxCount = 1;
         mostFrequent = entry.getKey();
+      } else if (entry.getValue() == maxCount) {
+        distinctMaxCount++;
       }
     }
 
-    return new StringStatistic(name, mostFrequent);
+    return new StringStatistic(name, distinctMaxCount == 1 ? mostFrequent : null);
   }
 
   private static Integer increment(String keyIgnored, Integer oldValue) {

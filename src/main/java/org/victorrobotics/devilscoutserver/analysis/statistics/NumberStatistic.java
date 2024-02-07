@@ -50,13 +50,15 @@ public final class NumberStatistic extends Statistic {
     return new NumberStatistic(name, mean, stddev, max);
   }
 
-  public static NumberStatistic directMatch(String name, Iterable<? extends Collection<DataEntry>> matchEntries,
+  public static NumberStatistic directMatch(String name,
+                                            Iterable<? extends Collection<DataEntry>> matchEntries,
                                             String path) {
     return computedMatch(name, matchEntries, entry -> entry.getInteger(path));
   }
 
-  public static NumberStatistic computedMatch(String name, Iterable<? extends Collection<DataEntry>> matchEntries,
-                                              Function<DataEntry, Number> function) {
+  public static NumberStatistic
+      computedMatch(String name, Iterable<? extends Collection<DataEntry>> matchEntries,
+                    Function<DataEntry, Number> function) {
     Collection<Double> numbers = new ArrayList<>();
 
     for (Collection<DataEntry> entries : matchEntries) {
