@@ -13,9 +13,9 @@ public final class BooleanStatistic extends Statistic {
     this.percent = percent;
   }
 
-  public static BooleanStatistic
-      directMatch(String name, String path,
-                  Iterable<? extends Collection<DataEntry>> matchEntries) {
+  public static BooleanStatistic directMatch(String name,
+                                             Iterable<? extends Collection<DataEntry>> matchEntries,
+                                             String path) {
     return computedMatch(name, matchEntries, entry -> entry.getBoolean(path));
   }
 
@@ -53,8 +53,8 @@ public final class BooleanStatistic extends Statistic {
     return new BooleanStatistic(name, percent);
   }
 
-  public static BooleanStatistic directPit(String name, String path,
-                                           Iterable<DataEntry> pitEntries) {
+  public static BooleanStatistic directPit(String name, Iterable<DataEntry> pitEntries,
+                                           String path) {
     return computedPit(name, pitEntries, entry -> entry.getBoolean(path));
   }
 

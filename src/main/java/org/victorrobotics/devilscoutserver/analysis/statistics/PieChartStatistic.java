@@ -27,8 +27,8 @@ public final class PieChartStatistic extends Statistic {
   }
 
   public static PieChartStatistic
-      directMatch(String name, Iterable<? extends Collection<DataEntry>> matchEntries,
-                  List<String> labels, String path) {
+      directMatch(String name, Iterable<? extends Collection<DataEntry>> matchEntries, String path,
+                  List<String> labels) {
     return computedMatch(name, matchEntries, labels, entry -> entry.getIntegers(path));
   }
 
@@ -116,7 +116,7 @@ public final class PieChartStatistic extends Statistic {
   }
 
   public static PieChartStatistic directPit(String name, Iterable<DataEntry> pitEntries,
-                                            List<String> labels, String path) {
+                                            String path, List<String> labels) {
     return computedPit(name, pitEntries, labels, entry -> entry.getIntegers(path));
   }
 

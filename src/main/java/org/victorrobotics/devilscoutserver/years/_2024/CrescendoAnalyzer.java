@@ -36,14 +36,15 @@ public final class CrescendoAnalyzer extends Analyzer {
                               List.of(handle.wltStatistic(), handle.rpStatistic(),
                                       handle.oprStatistic(),
                                       RadarStatistic.directMatch("Drive Team",
-                                                                 handle.getDriveTeamEntries(), 5,
-                                                                 List.of("Communication",
-                                                                         "Strategy", "Adaptability",
-                                                                         "Professionalism"),
+                                                                 handle.getDriveTeamEntries(),
                                                                  List.of("/communication",
                                                                          "/strategy",
                                                                          "/adaptability",
-                                                                         "/professionalism"))));
+                                                                         "/professionalism"),
+                                                                 5,
+                                                                 List.of("Communication",
+                                                                         "Strategy", "Adaptability",
+                                                                         "Professionalism"))));
   }
 
   private StatisticsPage specsPage(DataHandle handle) {
@@ -65,11 +66,11 @@ public final class CrescendoAnalyzer extends Analyzer {
     return new StatisticsPage("Auto",
                               List.of(PieChartStatistic.directMatch("Start Position",
                                                                     handle.getMatchEntries(),
+                                                                    "/auto/start_pos",
                                                                     List.of("Next to amp",
                                                                             "Front of speaker",
                                                                             "Next to speaker",
-                                                                            "Next to source"),
-                                                                    "/auto/start_pos"),
+                                                                            "Next to source")),
                                       NumberStatistic.computedMatch("Note Count",
                                                                     handle.getMatchEntries(),
                                                                     CrescendoAnalyzer::matchNoteCount)));
@@ -144,10 +145,10 @@ public final class CrescendoAnalyzer extends Analyzer {
     return new StatisticsPage("Endgame",
                               List.of(PieChartStatistic.directMatch("Final Status",
                                                                     handle.getMatchEntries(),
+                                                                    "/endgame/status",
                                                                     List.of("None", "Parked",
-                                                                            "Onstage", "Harmony"),
-                                                                    "/endgame/status"),
-                                      BooleanStatistic.directMatch("Trap", "/endgame/trap",
-                                                                   handle.getMatchEntries())));
+                                                                            "Onstage", "Harmony")),
+                                      BooleanStatistic.directMatch("Trap", handle.getMatchEntries(),
+                                                                   "/endgame/trap")));
   }
 }
