@@ -85,11 +85,13 @@ public final class CrescendoAnalyzer extends Analyzer {
         case 0, 1:
           scoreCount++;
           break;
+        case 2:
+          break;
         case 3:
           pickupCount++;
           break;
         default:
-          throw new IllegalArgumentException();
+          return null;
       }
     }
     // Can't score more than you pick up
