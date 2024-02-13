@@ -1,6 +1,6 @@
 package org.victorrobotics.devilscoutserver.analysis.statistics;
 
-import org.victorrobotics.devilscoutserver.tba.Oprs.TeamOpr;
+import org.victorrobotics.devilscoutserver.tba.OprsCache.TeamOpr;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 

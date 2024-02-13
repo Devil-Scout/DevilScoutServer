@@ -4,7 +4,7 @@ import static org.victorrobotics.devilscoutserver.EncodingUtil.jsonEncode;
 
 import org.victorrobotics.bluealliance.Match.Alliance;
 import org.victorrobotics.devilscoutserver.questions.Question;
-import org.victorrobotics.devilscoutserver.tba.MatchSchedule.MatchInfo;
+import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache.MatchInfo;
 
 import java.sql.SQLException;
 import java.util.List;

@@ -1136,13 +1136,13 @@ components:
     eventKey:
       type: string
       maxLength: 12
-      pattern: ^20\d\d[0-9A-Za-z]{1,8}$
+      pattern: ^20\d\d[\dA-Za-z]{1,8}$
       examples:
         - 2023nyrr
     matchKey:
       type: string
       maxLength: 18
-      pattern: ^20\d\d[0-9A-Za-z]{1,8}_(?:q|ef|qf|sf|f)\d*m\d+$
+      pattern: ^20\d\d[\dA-Za-z]{1,8}_(?:q|ef|qf|sf|f)\d*m\d+$
       examples:
         - 2023nyrr_qm1
     teamName:
