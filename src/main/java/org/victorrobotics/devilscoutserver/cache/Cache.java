@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Consumer;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -27,10 +28,6 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
     lastModified = System.currentTimeMillis();
   }
 
-  public abstract void refresh();
-
-  protected abstract Value<D, V> getValue(K key);
-
   public long lastModified() {
     return lastModified;
   }
@@ -39,14 +36,13 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
     lastModified = System.currentTimeMillis();
   }
 
+  protected void onModification(Value<D, V> value) {
+    modified();
+  }
+
   @Override
-  @SuppressWarnings("unchecked")
   public Value<D, V> get(Object key) {
-    try {
-      return getValue((K) key);
-    } catch (ClassCastException e) {
-      return null;
-    }
+    return cacheMap.get(key);
   }
 
   @Override
@@ -193,36 +189,29 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
 
   public static class Value<D, V extends Cacheable<D>> implements Comparable<Value<?, V>> {
     private final V        val;
-    private final Runnable onModification;
+    private final Consumer<Value<D, V>> onModification;
 
-    private volatile long lastModified;
-    private volatile long lastAccess;
+    private volatile long   lastModified;
+    private volatile String jsonCache;
 
-    private String jsonCache;
-
-    public Value(V value, Runnable onModification) {
+    public Value(V value, Consumer<Value<D, V>> onModification) {
       this.val = value;
       this.onModification = onModification;
     }
 
     public void update(D data) {
       if (val.update(data)) {
-        onModification.run();
+        onModification.accept(this);
         jsonCache = null;
       }
     }
 
     public V value() {
-      lastAccess = System.currentTimeMillis();
       return val;
     }
 
     public long lastModified() {
       return lastModified;
-    }
-
-    public long lastAccess() {
-      return lastAccess;
     }
 
     @Override

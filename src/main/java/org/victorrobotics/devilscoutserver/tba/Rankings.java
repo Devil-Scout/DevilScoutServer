@@ -1,13 +1,12 @@
 package org.victorrobotics.devilscoutserver.tba;
 
 import org.victorrobotics.bluealliance.Event;
-import org.victorrobotics.bluealliance.Event.Rankings;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
 import org.victorrobotics.devilscoutserver.cache.ListValue;
 
 import java.util.List;
 
-class EventRankings extends ListValue<Integer, Event.Rankings, Event.Rankings.Team, EventRankings.Team> {
+class Rankings extends ListValue<Integer, Event.Rankings, Event.Rankings.Team, Rankings.Team> {
   public static class Team implements Cacheable<Event.Rankings.Team> {
     @Override
     public boolean update(Event.Rankings.Team data) {
@@ -16,7 +15,7 @@ class EventRankings extends ListValue<Integer, Event.Rankings, Event.Rankings.Te
     }
   }
 
-  protected EventRankings(Event.Rankings data) {
+  protected Rankings(Event.Rankings data) {
     super(null, data);
   }
 
@@ -32,7 +31,7 @@ class EventRankings extends ListValue<Integer, Event.Rankings, Event.Rankings.Te
   }
 
   @Override
-  protected List<Event.Rankings.Team> getList(Rankings data) {
+  protected List<Event.Rankings.Team> getList(Event.Rankings data) {
     return data.rankings;
   }
 }

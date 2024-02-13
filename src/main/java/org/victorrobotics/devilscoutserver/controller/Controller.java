@@ -4,9 +4,9 @@ import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.questions.Questions;
-import org.victorrobotics.devilscoutserver.tba.EventInfoCache;
-import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
-import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
+import org.victorrobotics.devilscoutserver.tba.EventCache;
+import org.victorrobotics.devilscoutserver.tba.OprsCache;
+import org.victorrobotics.devilscoutserver.tba.TeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 
 import java.security.SecureRandom;
@@ -37,15 +37,15 @@ public sealed class Controller
   private static UserDatabase USERS;
   private static TeamDatabase TEAMS;
 
-  private static EventInfoCache     EVENT_INFO_CACHE;
-  private static EventTeamListCache EVENT_TEAMS_CACHE;
+  private static EventCache     EVENT_INFO_CACHE;
+  private static TeamListCache EVENT_TEAMS_CACHE;
   private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
 
   private static EntryDatabase MATCH_ENTRIES;
   private static EntryDatabase PIT_ENTRIES;
   private static EntryDatabase DRIVE_TEAM_ENTRIES;
 
-  private static EventOprsCache EVENT_OPRS_CACHE;
+  private static OprsCache EVENT_OPRS_CACHE;
 
   private static Questions QUESTIONS;
 
@@ -59,11 +59,11 @@ public sealed class Controller
     TEAMS = teams;
   }
 
-  public static void setEventInfoCache(EventInfoCache cache) {
+  public static void setEventInfoCache(EventCache cache) {
     EVENT_INFO_CACHE = cache;
   }
 
-  public static void setEventTeamsCache(EventTeamListCache cache) {
+  public static void setEventTeamsCache(TeamListCache cache) {
     EVENT_TEAMS_CACHE = cache;
   }
 
@@ -83,7 +83,7 @@ public sealed class Controller
     DRIVE_TEAM_ENTRIES = driveTeamEntries;
   }
 
-  public static void setEventOprsCache(EventOprsCache eventOprsCache) {
+  public static void setEventOprsCache(OprsCache eventOprsCache) {
     EVENT_OPRS_CACHE = eventOprsCache;
   }
 
@@ -104,11 +104,11 @@ public sealed class Controller
     return TEAMS;
   }
 
-  public static EventInfoCache eventInfoCache() {
+  public static EventCache eventInfoCache() {
     return EVENT_INFO_CACHE;
   }
 
-  public static EventTeamListCache eventTeamsCache() {
+  public static TeamListCache eventTeamsCache() {
     return EVENT_TEAMS_CACHE;
   }
 
@@ -129,7 +129,7 @@ public sealed class Controller
     return DRIVE_TEAM_ENTRIES;
   }
 
-  public static EventOprsCache eventOprs() {
+  public static OprsCache eventOprs() {
     return EVENT_OPRS_CACHE;
   }
 

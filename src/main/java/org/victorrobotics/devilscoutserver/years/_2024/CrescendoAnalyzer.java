@@ -9,7 +9,7 @@ import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StringStatistic;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
-import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
+import org.victorrobotics.devilscoutserver.tba.OprsCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 
 import java.util.List;
@@ -17,7 +17,7 @@ import java.util.List;
 public final class CrescendoAnalyzer extends Analyzer<CrescendoData> {
   public CrescendoAnalyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
                            EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
-                           EventOprsCache teamOprsCache) {
+                           OprsCache teamOprsCache) {
     super(matchEntryDB, pitEntryDB, driveTeamEntryDB, matchScheduleCache, teamOprsCache);
   }
 

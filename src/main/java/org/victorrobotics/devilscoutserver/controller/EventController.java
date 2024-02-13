@@ -1,8 +1,8 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.cache.Cache.Value;
-import org.victorrobotics.devilscoutserver.tba.EventInfo;
-import org.victorrobotics.devilscoutserver.tba.EventTeamList.TeamInfo;
+import org.victorrobotics.devilscoutserver.tba.Event;
+import org.victorrobotics.devilscoutserver.tba.TeamList.TeamInfo;
 import org.victorrobotics.devilscoutserver.tba.MatchSchedule;
 import org.victorrobotics.devilscoutserver.tba.MatchSchedule.MatchInfo;
 
@@ -17,7 +17,7 @@ public final class EventController extends Controller {
   /**
    * GET /events
    * <p>
-   * Success: 200 {@link EventInfo}[]
+   * Success: 200 {@link Event}[]
    * <p>
    * Cached: 304 NotModified ({@code If-None-Match})
    * <p>
@@ -41,7 +41,7 @@ public final class EventController extends Controller {
   /**
    * GET /events/{eventKey}
    * <p>
-   * Success: 200 {@link EventInfo}
+   * Success: 200 {@link Event}
    * <p>
    * Cached: 304 NotModified ({@code If-None-Match})
    * <p>

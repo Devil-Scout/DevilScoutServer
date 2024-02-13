@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public class EventOprs implements Cacheable<OPRs> {
+public class Oprs implements Cacheable<OPRs> {
   public static class TeamOpr {
     private double opr;
     private double dpr;
@@ -51,7 +51,7 @@ public class EventOprs implements Cacheable<OPRs> {
 
   private final Map<Integer, TeamOpr> teamOprs;
 
-  public EventOprs(OPRs oprs) {
+  public Oprs(OPRs oprs) {
     this.teamOprs = new LinkedHashMap<>();
     update(oprs);
   }

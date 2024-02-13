@@ -8,7 +8,6 @@ import static io.javalin.apibuilder.ApiBuilder.post;
 
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
-import org.victorrobotics.devilscoutserver.cache.Cache;
 import org.victorrobotics.devilscoutserver.controller.AnalysisController;
 import org.victorrobotics.devilscoutserver.controller.Controller;
 import org.victorrobotics.devilscoutserver.controller.Controller.Session;
@@ -23,13 +22,15 @@ import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.questions.Questions;
-import org.victorrobotics.devilscoutserver.tba.EventInfoCache;
-import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
+import org.victorrobotics.devilscoutserver.tba.EventCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
+import org.victorrobotics.devilscoutserver.tba.TeamListCache;
 import org.victorrobotics.devilscoutserver.years._2024.CrescendoAnalyzer;
 
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -102,8 +103,8 @@ public class Server {
     LOGGER.info("Database connected");
 
     LOGGER.info("Initializing caches...");
-    Controller.setEventInfoCache(new EventInfoCache());
-    Controller.setEventTeamsCache(new EventTeamListCache());
+    Controller.setEventInfoCache(new EventCache());
+    Controller.setEventTeamsCache(new TeamListCache());
     Controller.setMatchScheduleCache(new MatchScheduleCache());
     LOGGER.info("Caches ready");
 
@@ -127,21 +128,34 @@ public class Server {
     ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, refreshThreads);
 
     // TODO: implement refreshers
-    // refresh list of all events (all supported years) (every hour)
+    // refresh list of all events (all supported years) (every hour) DONE
     // get list of active events (from TeamDB)
     // for each active event:
     // - refresh match schedule - every minute
     // -
 
     executor.scheduleAtFixedRate(() -> {
-      refreshCache(Controller.eventInfoCache());
+      try {
+        long start = System.currentTimeMillis();
+        EventCache cache = Controller.eventInfoCache();
+        cache.refresh();
+        LOGGER.info("Refreshed event list ({}) in {}ms", cache.size(),
+                    System.currentTimeMillis() - start);
+      } catch (Exception e) {
+        LOGGER.warn("Exception throw while refreshing event list:", e);
+      }
     }, 0, 60, TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
-      refreshCache(Controller.matchScheduleCache());
+      try {
+        long start = System.currentTimeMillis();
+        MatchScheduleCache cache = Controller.matchScheduleCache();
+        cache.refreshAll(getActiveEvents());
+        LOGGER.info("Refreshed match schedules for ({}) active events in {}ms", cache.size(),
+                    System.currentTimeMillis() - start);
+      } catch (Exception e) {
+        LOGGER.warn("Exception throw while refreshing match schedules:", e);
+      }
     }, 0, 1, TimeUnit.MINUTES);
-    executor.scheduleAtFixedRate(() -> {
-      refreshCache(Controller.eventTeamsCache());
-    }, 0, 60, TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
       ConcurrentMap<String, Session> sessions = Controller.sessions();
       long start = System.currentTimeMillis();
@@ -162,21 +176,6 @@ public class Server {
     server.start();
 
     LOGGER.info("DevilScoutServer startup complete, main thread exiting");
-  }
-
-  private static void refreshCache(Cache<?, ?, ?> cache) {
-    long start = System.currentTimeMillis();
-    try {
-      cache.refresh();
-    } catch (Exception e) {
-      LOGGER.info("Exception while refreshing {}", cache.getClass()
-                                                        .getSimpleName(),
-                  e);
-      return;
-    }
-    LOGGER.info("Refreshed {} ({}) in {}ms", cache.getClass()
-                                                  .getSimpleName(),
-                cache.size(), System.currentTimeMillis() - start);
   }
 
   private static void registerAnalyzers() {
@@ -235,5 +234,15 @@ public class Server {
     });
 
     get("analysis/{eventKey}/teams", AnalysisController::teams);
+  }
+
+  private static Set<String> getActiveEvents() {
+    try {
+      return Controller.teamDB()
+                       .getActiveEvents();
+    } catch (SQLException e) {
+      LOGGER.warn("");
+      return Set.of();
+    }
   }
 }

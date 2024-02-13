@@ -1,25 +1,26 @@
 package org.victorrobotics.devilscoutserver.tba;
 
-import org.victorrobotics.bluealliance.Event;
+import org.victorrobotics.bluealliance.Event.Simple;
+import org.victorrobotics.bluealliance.Event.Date;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
 import java.util.Objects;
 
-public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo> {
+public class Event implements Cacheable<Simple>, Comparable<Event> {
   private final String key;
 
   private String     name;
   private String     location;
-  private Event.Date start;
-  private Event.Date end;
+  private Date start;
+  private Date end;
 
-  public EventInfo(String eventKey, Event.Simple event) {
+  public Event(String eventKey, Simple event) {
     this.key = eventKey;
     update(event);
   }
 
   @Override
-  public boolean update(Event.Simple event) {
+  public boolean update(Simple event) {
     if (!Objects.equals(key, event.key)) {
       throw new IllegalArgumentException();
     }
@@ -62,16 +63,16 @@ public class EventInfo implements Cacheable<Event.Simple>, Comparable<EventInfo>
     return location;
   }
 
-  public Event.Date getStart() {
+  public Date getStart() {
     return start;
   }
 
-  public Event.Date getEnd() {
+  public Date getEnd() {
     return end;
   }
 
   @Override
-  public int compareTo(EventInfo other) {
+  public int compareTo(Event other) {
     int compare = start.compareTo(other.start);
     if (compare != 0) return compare;
 

@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public class EventTeamList implements Cacheable<List<Team.Simple>> {
+public class TeamList implements Cacheable<List<Team.Simple>> {
   public static class TeamInfo implements Cacheable<Team.Simple>, Comparable<TeamInfo> {
     private final int number;
 
@@ -65,7 +65,7 @@ public class EventTeamList implements Cacheable<List<Team.Simple>> {
   private final ConcurrentNavigableMap<Integer, TeamInfo> teamMap;
   private final Collection<TeamInfo>                      teams;
 
-  public EventTeamList(List<Team.Simple> teams) {
+  public TeamList(List<Team.Simple> teams) {
     this.teamMap = new ConcurrentSkipListMap<>();
     this.teams = Collections.unmodifiableCollection(teamMap.values());
     update(teams);

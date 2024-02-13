@@ -3,7 +3,7 @@ package org.victorrobotics.devilscoutserver.analysis;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
-import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
+import org.victorrobotics.devilscoutserver.tba.OprsCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 
 import java.sql.SQLException;
@@ -19,11 +19,11 @@ public abstract class Analyzer<D extends AnalysisData> {
   private final EntryDatabase driveTeamEntryDB;
 
   private final MatchScheduleCache matchScheduleCache;
-  private final EventOprsCache     oprsCache;
+  private final OprsCache          oprsCache;
 
   protected Analyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
                      EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
-                     EventOprsCache teamOprsCache) {
+                     OprsCache teamOprsCache) {
     this.matchEntryDB = matchEntryDB;
     this.pitEntryDB = pitEntryDB;
     this.driveTeamEntryDB = driveTeamEntryDB;
