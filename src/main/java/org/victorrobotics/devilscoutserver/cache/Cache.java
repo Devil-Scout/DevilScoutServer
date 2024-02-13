@@ -9,10 +9,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Consumer;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cache.Value<D, V>> {
   protected final ConcurrentMap<K, Value<D, V>> cacheMap;
@@ -34,10 +35,6 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
 
   protected void modified() {
     lastModified = System.currentTimeMillis();
-  }
-
-  protected void onModification(Value<D, V> value) {
-    modified();
   }
 
   @Override
@@ -189,19 +186,19 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
 
   public static class Value<D, V extends Cacheable<D>> implements Comparable<Value<?, V>> {
     private final V        val;
-    private final Consumer<Value<D, V>> onModification;
+    private final Runnable onModification;
 
     private volatile long   lastModified;
     private volatile String jsonCache;
 
-    public Value(V value, Consumer<Value<D, V>> onModification) {
+    public Value(V value, Runnable onModification) {
       this.val = value;
       this.onModification = onModification;
     }
 
     public void update(D data) {
       if (val.update(data)) {
-        onModification.accept(this);
+        onModification.run();
         jsonCache = null;
       }
     }
@@ -231,5 +228,9 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
       }
       return jsonCache;
     }
+  }
+
+  protected Logger getLogger() {
+    return LoggerFactory.getLogger(getClass());
   }
 }

@@ -42,7 +42,6 @@ public class MatchScheduleCache
   }
 
   public static class MatchInfo implements Cacheable<Match> {
-
     private final String     key;
     private final String     name;
     private final MatchLevel level;
@@ -165,7 +164,7 @@ public class MatchScheduleCache
     }
   }
 
-  public static class MatchSchedule extends ListValue<String, List<Match>, Match, MatchInfo> {
+  public class MatchSchedule extends ListValue<String, List<Match>, Match, MatchInfo> {
     @SuppressWarnings("java:S5867") // Unicode-aware regex
     private static final Pattern MATCH_KEY_PATTERN =
         Pattern.compile("^(20\\d\\d[\\dA-Za-z]{1,8})_(q|ef|qf|sf|f)(\\d*)m(\\d+)$");
@@ -235,8 +234,12 @@ public class MatchScheduleCache
       return key1.compareTo(key2);
     };
 
-    public MatchSchedule(List<Match> matches) {
-      super(MATCH_KEY_COMPARATOR, matches);
+    private final String eventKey;
+
+    public MatchSchedule(String eventKey, List<Match> matches) {
+      super(MATCH_KEY_COMPARATOR);
+      this.eventKey = eventKey;
+      update(matches);
     }
 
     @Override
@@ -253,6 +256,21 @@ public class MatchScheduleCache
     protected List<Match> getList(List<Match> data) {
       return data;
     }
+
+    @Override
+    public boolean update(List<Match> data) {
+      boolean update = super.update(data);
+      if (update) {
+        oprs.refresh(eventKey);
+      }
+      return update;
+    }
+  }
+
+  private final OprsCache oprs;
+
+  public MatchScheduleCache(OprsCache oprs) {
+    this.oprs = oprs;
   }
 
   @Override
@@ -262,6 +280,6 @@ public class MatchScheduleCache
 
   @Override
   protected MatchSchedule createValue(String key, List<Match> data) {
-    return new MatchSchedule(data);
+    return new MatchSchedule(key, data);
   }
 }

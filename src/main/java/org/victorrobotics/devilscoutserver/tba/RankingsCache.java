@@ -7,19 +7,21 @@ import org.victorrobotics.devilscoutserver.cache.ListValue;
 
 import java.util.List;
 
-public class RankingsCache extends BlueAllianceCache<String, Event.Rankings, RankingsCache.Rankings> {
-  public static class Rankings
-      extends ListValue<Integer, Event.Rankings, Event.Rankings.Team, Rankings.Team> {
-    public static class Team implements Cacheable<Event.Rankings.Team> {
-      @Override
-      public boolean update(Event.Rankings.Team data) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'update'");
-      }
+public class RankingsCache
+    extends BlueAllianceCache<String, Event.Rankings, RankingsCache.Rankings> {
+  public static class Team implements Cacheable<Event.Rankings.Team> {
+    @Override
+    public boolean update(Event.Rankings.Team data) {
+      // TODO Auto-generated method stub
+      throw new UnsupportedOperationException("Unimplemented method 'update'");
     }
+  }
 
+  public static class Rankings
+      extends ListValue<Integer, Event.Rankings, Event.Rankings.Team, Team> {
     protected Rankings(Event.Rankings data) {
-      super(null, data);
+      super(null);
+      update(data);
     }
 
     @Override

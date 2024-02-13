@@ -92,7 +92,7 @@ public class EventCache extends BlueAllianceListCache<String, Simple, EventCache
   }
 
   public EventCache() {
-    super(IntStream.rangeClosed(2023, 2023)
+    super(IntStream.rangeClosed(2023, 2024)
                    .mapToObj(Simple::endpointForYear)
                    .toList());
   }

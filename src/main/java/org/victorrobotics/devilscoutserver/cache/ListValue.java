@@ -14,10 +14,9 @@ public abstract class ListValue<K, D, L, V extends Cacheable<L>> implements Cach
   private final ConcurrentNavigableMap<K, V> map;
   private final Collection<V>                values;
 
-  protected ListValue(Comparator<K> sortOrder, D data) {
+  protected ListValue(Comparator<K> sortOrder) {
     this.map = new ConcurrentSkipListMap<>(sortOrder);
     this.values = Collections.unmodifiableCollection(map.values());
-    update(data);
   }
 
   protected abstract V createValue(K key, L data);

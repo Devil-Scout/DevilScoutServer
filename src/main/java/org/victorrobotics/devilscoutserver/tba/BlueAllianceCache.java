@@ -10,24 +10,39 @@ public abstract class BlueAllianceCache<K, D, V extends Cacheable<D>> extends Ca
   protected abstract V createValue(K key, D data);
 
   public void refresh(K key) {
-    D data = getEndpoint(key).refresh()
-                             .orElse(null);
-
-    if (data == null) {
-      boolean hadKey = containsKey(key);
-      remove(key);
-      if (hadKey) {
-        modified();
-      }
+    if (key == null) {
+      getLogger().warn("Attempted to refresh a null key", new NullPointerException());
       return;
     }
 
-    Value<D, V> value = get(key);
-    if (value == null) {
-      cacheMap.put(key, new Value<>(createValue(key, data), this::onModification));
-      modified();
-    } else {
-      value.update(data);
+    try {
+      long start = System.currentTimeMillis();
+      D data = getEndpoint(key).refresh()
+                               .orElse(null);
+
+      if (data == null) {
+        boolean hadKey = containsKey(key);
+        remove(key);
+        if (hadKey) {
+          modified();
+        }
+        getLogger().info("Removed entry for key {} in {}ms", key,
+                         System.currentTimeMillis() - start);
+        return;
+      }
+
+      Value<D, V> value = get(key);
+      if (value == null) {
+        cacheMap.put(key, new Value<>(createValue(key, data), this::modified));
+        modified();
+        getLogger().info("Added entry for key {} in {}ms", key, System.currentTimeMillis() - start);
+      } else {
+        value.update(data);
+        getLogger().info("Refreshed entry for key {} in {}ms", key,
+                         System.currentTimeMillis() - start);
+      }
+    } catch (Exception e) {
+      getLogger().warn("Exception occured while refreshing key {}:", key, e);
     }
   }
 
