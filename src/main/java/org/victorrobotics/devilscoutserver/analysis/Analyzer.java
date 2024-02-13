@@ -1,17 +1,10 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
-import org.victorrobotics.devilscoutserver.analysis.statistics.OprStatistic;
-import org.victorrobotics.devilscoutserver.analysis.statistics.RankingPointsStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
-import org.victorrobotics.devilscoutserver.analysis.statistics.WltStatistic;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
-import org.victorrobotics.devilscoutserver.database.TeamDatabase;
-import org.victorrobotics.devilscoutserver.tba.EventOprs.TeamOpr;
 import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
-import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
-import org.victorrobotics.devilscoutserver.tba.ScoreBreakdown;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -19,25 +12,18 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-public abstract class Analyzer {
-  private final TeamDatabase       teamDB;
-  private final EventTeamListCache teamListCache;
-
+public abstract class Analyzer<D extends AnalysisData> {
   private final EntryDatabase matchEntryDB;
   private final EntryDatabase pitEntryDB;
   private final EntryDatabase driveTeamEntryDB;
 
-  private final MatchScheduleCache<?> matchScheduleCache;
-  private final EventOprsCache        oprsCache;
+  private final MatchScheduleCache matchScheduleCache;
+  private final EventOprsCache     oprsCache;
 
-  protected Analyzer(TeamDatabase teamDB, EventTeamListCache teamListCache,
-                     EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
-                     EntryDatabase driveTeamEntryDB, MatchScheduleCache<?> matchScheduleCache,
+  protected Analyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
+                     EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
                      EventOprsCache teamOprsCache) {
-    this.teamDB = teamDB;
-    this.teamListCache = teamListCache;
     this.matchEntryDB = matchEntryDB;
     this.pitEntryDB = pitEntryDB;
     this.driveTeamEntryDB = driveTeamEntryDB;
@@ -45,72 +31,31 @@ public abstract class Analyzer {
     this.oprsCache = teamOprsCache;
   }
 
-  protected abstract List<StatisticsPage> computeStatistics(DataHandle handle);
+  protected abstract D computeData(Handle handle);
 
-  public List<StatisticsPage> computeStatistics(DataEntry.Key key) {
-    return computeStatistics(new DataHandle(key));
+  protected abstract List<StatisticsPage> generateStatistics(D data);
+
+  public D computeData(String eventKey, int team) {
+    return computeData(new Handle(eventKey, team));
   }
 
-  public Collection<DataEntry.Key> getUpdates() {
-    try {
-      return teamDB.getActiveEvents()
-                   .stream()
-                   .flatMap(s -> teamListCache.get(s)
-                                              .value()
-                                              .teams()
-                                              .stream()
-                                              .map(t -> new DataEntry.Key(s, t.getNumber())))
-                   .toList();
-    } catch (SQLException e) {
-      return Set.of();
-    }
-  }
-
-  protected class DataHandle {
-    private final DataEntry.Key key;
+  protected class Handle {
+    private final String eventKey;
+    private final int    team;
 
     private Collection<List<DataEntry>> matchEntries;
     private List<DataEntry>             pitEntries;
     private Collection<List<DataEntry>> driveTeamEntries;
 
-    private TeamOpr        oprs;
-    private ScoreBreakdown breakdown;
-
-    DataHandle(DataEntry.Key key) {
-      this.key = key;
-    }
-
-    public OprStatistic oprStatistic() {
-      if (oprs == null) {
-        oprs = oprsCache.get(key.eventKey())
-                        .value()
-                        .get(key.team());
-      }
-      return new OprStatistic(oprs);
-    }
-
-    public WltStatistic wltStatistic() {
-      if (breakdown == null) {
-        breakdown = matchScheduleCache.get(key.eventKey())
-                                      .value()
-                                      .getTeamBreakdown(key.team());
-      }
-      return new WltStatistic(breakdown);
-    }
-
-    public RankingPointsStatistic rpStatistic() {
-      if (breakdown == null) {
-        breakdown = matchScheduleCache.get(key.eventKey())
-                                      .value()
-                                      .getTeamBreakdown(key.team());
-      }
-      return new RankingPointsStatistic(breakdown);
+    Handle(String eventKey, int team) {
+      this.eventKey = eventKey;
+      this.team = team;
     }
 
     public List<DataEntry> getPitEntries() {
       if (pitEntries == null) {
         try {
-          pitEntries = pitEntryDB.getEntries(key.eventKey(), key.team());
+          pitEntries = pitEntryDB.getEntries(eventKey, team);
         } catch (SQLException e) {
           throw new IllegalStateException(e);
         }
@@ -120,14 +65,14 @@ public abstract class Analyzer {
 
     public Collection<List<DataEntry>> getMatchEntries() {
       if (matchEntries == null) {
-        matchEntries = loadEntries(matchEntryDB, key.eventKey(), key.team());
+        matchEntries = loadEntries(matchEntryDB, eventKey, team);
       }
       return matchEntries;
     }
 
     public Collection<List<DataEntry>> getDriveTeamEntries() {
       if (driveTeamEntries == null) {
-        driveTeamEntries = loadEntries(driveTeamEntryDB, key.eventKey(), key.team());
+        driveTeamEntries = loadEntries(driveTeamEntryDB, eventKey, team);
       }
       return driveTeamEntries;
     }

@@ -53,7 +53,7 @@ public final class SubmissionController extends Controller {
 
     MatchInfo match = matchScheduleCache().get(teamEvent)
                                           .value()
-                                          .getMatch(matchKey);
+                                          .get(matchKey);
     if (match == null) {
       throw new BadRequestResponse("Match not found at event");
     }
@@ -135,7 +135,7 @@ public final class SubmissionController extends Controller {
 
     MatchInfo match = matchScheduleCache().get(teamEvent)
                                           .value()
-                                          .getMatch(matchKey);
+                                          .get(matchKey);
     if (match == null) {
       throw new BadRequestResponse("Match not found at event");
     }

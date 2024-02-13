@@ -39,10 +39,6 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
     lastModified = System.currentTimeMillis();
   }
 
-  protected void updateValue(Value<D, V> value, D data) {
-    value.update(data);
-  }
-
   @Override
   @SuppressWarnings("unchecked")
   public Value<D, V> get(Object key) {
@@ -209,7 +205,7 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
       this.onModification = onModification;
     }
 
-    void update(D data) {
+    public void update(D data) {
       if (val.update(data)) {
         onModification.run();
         jsonCache = null;

@@ -9,45 +9,49 @@ import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StringStatistic;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
-import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
-import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 
 import java.util.List;
 
-public final class CrescendoAnalyzer extends Analyzer {
-  public CrescendoAnalyzer(TeamDatabase teamDB, EventTeamListCache teamListCache,
-                           EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
-                           EntryDatabase driveTeamEntryDB, MatchScheduleCache<?> matchScheduleCache,
+public final class CrescendoAnalyzer extends Analyzer<CrescendoData> {
+  public CrescendoAnalyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
+                           EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
                            EventOprsCache teamOprsCache) {
-    super(teamDB, teamListCache, matchEntryDB, pitEntryDB, driveTeamEntryDB, matchScheduleCache,
-          teamOprsCache);
+    super(matchEntryDB, pitEntryDB, driveTeamEntryDB, matchScheduleCache, teamOprsCache);
   }
 
   @Override
-  protected List<StatisticsPage> computeStatistics(DataHandle handle) {
-    return List.of(summaryPage(handle), specsPage(handle), autoPage(handle), teleopPage(handle),
-                   endgamePage(handle));
+  protected CrescendoData computeData(Handle handle) {
+    return null;
   }
 
-  private StatisticsPage summaryPage(DataHandle handle) {
-    return new StatisticsPage("Summary",
-                              List.of(handle.wltStatistic(), handle.rpStatistic(),
-                                      handle.oprStatistic(),
-                                      RadarStatistic.directMatch("Drive Team",
-                                                                 handle.getDriveTeamEntries(),
-                                                                 List.of("/communication",
-                                                                         "/strategy",
-                                                                         "/adaptability",
-                                                                         "/professionalism"),
-                                                                 5,
-                                                                 List.of("Communication",
-                                                                         "Strategy", "Adaptability",
-                                                                         "Professionalism"))));
+  @Override
+  protected List<StatisticsPage> generateStatistics(CrescendoData data) {
+    // return List.of(summaryPage(handle), specsPage(handle), autoPage(handle),
+    // teleopPage(handle), endgamePage(handle));
+    return List.of();
   }
 
-  private StatisticsPage specsPage(DataHandle handle) {
+  private StatisticsPage summaryPage(Handle handle) {
+    return new StatisticsPage("Summary", List.of(
+                                                 // handle.wltStatistic(),
+                                                 // handle.rpStatistic(),
+                                                 // handle.oprStatistic(),
+                                                 RadarStatistic.directMatch("Drive Team",
+                                                                            handle.getDriveTeamEntries(),
+                                                                            List.of("/communication",
+                                                                                    "/strategy",
+                                                                                    "/adaptability",
+                                                                                    "/professionalism"),
+                                                                            5,
+                                                                            List.of("Communication",
+                                                                                    "Strategy",
+                                                                                    "Adaptability",
+                                                                                    "Professionalism"))));
+  }
+
+  private StatisticsPage specsPage(Handle handle) {
     return new StatisticsPage("Specs",
                               List.of(StringStatistic.mostCommonDirectPit("Drivetrain",
                                                                           handle.getPitEntries(),
@@ -65,7 +69,7 @@ public final class CrescendoAnalyzer extends Analyzer {
                                                                   "/general/speed")));
   }
 
-  private StatisticsPage autoPage(DataHandle handle) {
+  private StatisticsPage autoPage(Handle handle) {
     return new StatisticsPage("Auto",
                               List.of(PieChartStatistic.directMatch("Start Position",
                                                                     handle.getMatchEntries(),
@@ -101,7 +105,7 @@ public final class CrescendoAnalyzer extends Analyzer {
     return Math.min(scoreCount, pickupCount + 1);
   }
 
-  private StatisticsPage teleopPage(DataHandle handle) {
+  private StatisticsPage teleopPage(Handle handle) {
     return new StatisticsPage("Teleop",
                               List.of(NumberStatistic.computedMatch("Cycles per Minute",
                                                                     handle.getMatchEntries(),
@@ -146,7 +150,7 @@ public final class CrescendoAnalyzer extends Analyzer {
                    match.getInteger("/teleop/pickup_ground"));
   }
 
-  private StatisticsPage endgamePage(DataHandle handle) {
+  private StatisticsPage endgamePage(Handle handle) {
     return new StatisticsPage("Endgame",
                               List.of(PieChartStatistic.directMatch("Final Status",
                                                                     handle.getMatchEntries(),

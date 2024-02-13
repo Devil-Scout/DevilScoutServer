@@ -1,16 +1,14 @@
 package org.victorrobotics.devilscoutserver.analysis.statistics;
 
-import org.victorrobotics.devilscoutserver.tba.ScoreBreakdown;
+import org.victorrobotics.devilscoutserver.analysis.AnalysisData;
+
+import java.util.Map;
 
 public class RankingPointsStatistic extends Statistic {
-  public final Object rankingPoints;
+  public final Map<String, Integer> rankingPoints;
 
-  public RankingPointsStatistic(ScoreBreakdown stats) {
+  public RankingPointsStatistic(AnalysisData data) {
     super(StatisticType.RP, "Ranking Points");
-    if (stats == null) {
-      this.rankingPoints = null;
-    } else {
-      this.rankingPoints = stats.getRankingPoints();
-    }
+    this.rankingPoints = data == null ? Map.of() : data.getRankingPoints();
   }
 }

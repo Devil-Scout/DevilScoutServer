@@ -8,7 +8,6 @@ import static io.javalin.apibuilder.ApiBuilder.post;
 
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
-import org.victorrobotics.devilscoutserver.analysis.TeamStatisticsCache;
 import org.victorrobotics.devilscoutserver.cache.Cache;
 import org.victorrobotics.devilscoutserver.controller.AnalysisController;
 import org.victorrobotics.devilscoutserver.controller.Controller;
@@ -25,12 +24,12 @@ import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.questions.Questions;
 import org.victorrobotics.devilscoutserver.tba.EventInfoCache;
-import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
 import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 import org.victorrobotics.devilscoutserver.years._2024.CrescendoAnalyzer;
-import org.victorrobotics.devilscoutserver.years._2024.CrescendoScoreBreakdown;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -105,9 +104,7 @@ public class Server {
     LOGGER.info("Initializing caches...");
     Controller.setEventInfoCache(new EventInfoCache());
     Controller.setEventTeamsCache(new EventTeamListCache());
-    Controller.setMatchScheduleCache(new MatchScheduleCache<>(CrescendoScoreBreakdown::new,
-                                                              CrescendoScoreBreakdown::new));
-    EventOprsCache eventOprsCache = new EventOprsCache();
+    Controller.setMatchScheduleCache(new MatchScheduleCache());
     LOGGER.info("Caches ready");
 
     LOGGER.info("Loading questions from disk...");
@@ -115,11 +112,7 @@ public class Server {
     LOGGER.info("Questions loaded");
 
     LOGGER.info("Initializing analysis...");
-    Analyzer analyzer = new CrescendoAnalyzer(Controller.teamDB(), Controller.eventTeamsCache(),
-                                              Controller.matchEntryDB(), Controller.pitEntryDB(),
-                                              Controller.driveTeamEntryDB(),
-                                              Controller.matchScheduleCache(), eventOprsCache);
-    Controller.setTeamStatisticsCache(new TeamStatisticsCache(analyzer));
+    registerAnalyzers();
     LOGGER.info("Analysis ready");
 
     LOGGER.info("Starting refresh services...");
@@ -132,6 +125,14 @@ public class Server {
                                          .name("Refresh-", 0)
                                          .factory();
     ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, refreshThreads);
+
+    // TODO: implement refreshers
+    // refresh list of all events (all supported years) (every hour)
+    // get list of active events (from TeamDB)
+    // for each active event:
+    // - refresh match schedule - every minute
+    // -
+
     executor.scheduleAtFixedRate(() -> {
       refreshCache(Controller.eventInfoCache());
     }, 0, 60, TimeUnit.MINUTES);
@@ -149,10 +150,6 @@ public class Server {
               .removeIf(Session::isExpired);
       LOGGER.info("Purged {} expired sessions in {}ms", size - sessions.size(),
                   System.currentTimeMillis() - start);
-    }, 0, 5, TimeUnit.MINUTES);
-    executor.scheduleAtFixedRate(() -> {
-      refreshCache(eventOprsCache);
-      refreshCache(Controller.teamStatisticsCache());
     }, 0, 5, TimeUnit.MINUTES);
     LOGGER.info("Refresh services running");
 
@@ -180,6 +177,17 @@ public class Server {
     LOGGER.info("Refreshed {} ({}) in {}ms", cache.getClass()
                                                   .getSimpleName(),
                 cache.size(), System.currentTimeMillis() - start);
+  }
+
+  private static void registerAnalyzers() {
+    Map<Integer, Analyzer<?>> analyzers = new HashMap<>();
+    // TODO: TeamOPRs
+    analyzers.put(2024,
+                  new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
+                                        Controller.driveTeamEntryDB(),
+                                        Controller.matchScheduleCache(), null));
+    // TODO: TESTING ONLY
+    analyzers.put(2023, analyzers.get(2024));
   }
 
   private static void endpoints() {

@@ -17,22 +17,6 @@ public record DataEntry(String id,
                         int scoutedTeam,
                         JsonNode json,
                         long timestamp) {
-  public static record Key(String eventKey,
-                           int team)
-      implements Comparable<Key> {
-    public static Key fromDatabase(ResultSet resultSet) throws SQLException {
-      String eventKey = resultSet.getString(1);
-      int team = resultSet.getInt(2);
-      return new Key(eventKey, team);
-    }
-
-    @Override
-    public int compareTo(Key o) {
-      int compare = eventKey().compareTo(o.eventKey());
-      return compare != 0 ? compare : Integer.compare(team(), o.team());
-    }
-  }
-
   private static final ObjectMapper PARSER = new ObjectMapper();
 
   public Integer getInteger(String path) {

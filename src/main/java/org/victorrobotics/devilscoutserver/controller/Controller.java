@@ -1,6 +1,5 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.analysis.TeamStatisticsCache;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
@@ -38,16 +37,15 @@ public sealed class Controller
   private static UserDatabase USERS;
   private static TeamDatabase TEAMS;
 
-  private static EventInfoCache        EVENT_INFO_CACHE;
-  private static EventTeamListCache    EVENT_TEAMS_CACHE;
-  private static MatchScheduleCache<?> MATCH_SCHEDULE_CACHE;
+  private static EventInfoCache     EVENT_INFO_CACHE;
+  private static EventTeamListCache EVENT_TEAMS_CACHE;
+  private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
 
   private static EntryDatabase MATCH_ENTRIES;
   private static EntryDatabase PIT_ENTRIES;
   private static EntryDatabase DRIVE_TEAM_ENTRIES;
 
-  private static TeamStatisticsCache TEAM_ANALYSIS_CACHE;
-  private static EventOprsCache      EVENT_OPRS_CACHE;
+  private static EventOprsCache EVENT_OPRS_CACHE;
 
   private static Questions QUESTIONS;
 
@@ -69,7 +67,7 @@ public sealed class Controller
     EVENT_TEAMS_CACHE = cache;
   }
 
-  public static void setMatchScheduleCache(MatchScheduleCache<?> cache) {
+  public static void setMatchScheduleCache(MatchScheduleCache cache) {
     MATCH_SCHEDULE_CACHE = cache;
   }
 
@@ -83,10 +81,6 @@ public sealed class Controller
 
   public static void setDriveTeamEntryDB(EntryDatabase driveTeamEntries) {
     DRIVE_TEAM_ENTRIES = driveTeamEntries;
-  }
-
-  public static void setTeamStatisticsCache(TeamStatisticsCache teamAnalysisCache) {
-    TEAM_ANALYSIS_CACHE = teamAnalysisCache;
   }
 
   public static void setEventOprsCache(EventOprsCache eventOprsCache) {
@@ -118,7 +112,8 @@ public sealed class Controller
     return EVENT_TEAMS_CACHE;
   }
 
-  public static MatchScheduleCache<?> matchScheduleCache() {
+  @SuppressWarnings("java:S1452") // wildcard in return type
+  public static MatchScheduleCache matchScheduleCache() {
     return MATCH_SCHEDULE_CACHE;
   }
 
@@ -134,10 +129,6 @@ public sealed class Controller
     return DRIVE_TEAM_ENTRIES;
   }
 
-  public static TeamStatisticsCache teamStatisticsCache() {
-    return TEAM_ANALYSIS_CACHE;
-  }
-
   public static EventOprsCache eventOprs() {
     return EVENT_OPRS_CACHE;
   }
@@ -146,7 +137,7 @@ public sealed class Controller
     return QUESTIONS;
   }
 
-  @SuppressWarnings({"java:S2221", "unchecked"}) // catch generic exception
+  @SuppressWarnings({ "java:S2221", "unchecked" }) // catch generic exception
   protected static <I, T> T jsonDecode(Context ctx, Class<I> clazz) {
     try {
       return (T) ctx.bodyAsClass(clazz);

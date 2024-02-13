@@ -1,7 +1,5 @@
 package org.victorrobotics.devilscoutserver.controller;
 
-import org.victorrobotics.devilscoutserver.analysis.TeamStatistics;
-
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
 
@@ -32,6 +30,6 @@ public final class AnalysisController extends Controller {
 
     // TODO: verify team is permitted to access event analysis
 
-    ctx.json(teamStatisticsCache().getEvent(eventKey));
+    // TODO: json(analysis)
   }
 }

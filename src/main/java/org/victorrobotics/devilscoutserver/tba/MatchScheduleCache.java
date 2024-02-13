@@ -3,22 +3,12 @@ package org.victorrobotics.devilscoutserver.tba;
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.bluealliance.Match;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
-public class MatchScheduleCache<S extends ScoreBreakdown>
-    extends BlueAllianceCache<String, List<Match>, MatchSchedule<S>> {
-  private final BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction;
-  private final Function<Collection<S>, S>                   statsMergeFunction;
-
-  public MatchScheduleCache(BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction,
-                            Function<Collection<S>, S> statsMergeFunction) {
+public class MatchScheduleCache extends BlueAllianceCache<String, List<Match>, MatchSchedule> {
+  public MatchScheduleCache() {
     super(TimeUnit.HOURS.toMillis(8));
-    this.statsFunction = statsFunction;
-    this.statsMergeFunction = statsMergeFunction;
   }
 
   @Override
@@ -27,7 +17,7 @@ public class MatchScheduleCache<S extends ScoreBreakdown>
   }
 
   @Override
-  protected MatchSchedule<S> createValue(String key, List<Match> data) {
-    return new MatchSchedule<>(statsFunction, statsMergeFunction, data);
+  protected MatchSchedule createValue(String key, List<Match> data) {
+    return new MatchSchedule(data);
   }
 }

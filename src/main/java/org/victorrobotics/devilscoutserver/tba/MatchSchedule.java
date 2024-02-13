@@ -3,42 +3,29 @@ package org.victorrobotics.devilscoutserver.tba;
 import org.victorrobotics.bluealliance.Match;
 import org.victorrobotics.bluealliance.Match.Alliance.Color;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
+import org.victorrobotics.devilscoutserver.cache.ListValue;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentNavigableMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.function.BiFunction;
-import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
-import com.fasterxml.jackson.annotation.JsonValue;
-
-public class MatchSchedule<S extends ScoreBreakdown> implements Cacheable<List<Match>> {
-  public static class MatchInfo<S extends ScoreBreakdown> {
-    enum MatchLevel {
+public class MatchSchedule extends ListValue<String, List<Match>, Match, MatchSchedule.MatchInfo> {
+  public static class MatchInfo implements Cacheable<Match> {
+    enum Level {
       QUAL("Qualification"),
       QUARTER("Quarterfinal"),
       SEMI("Semifinal"),
       FINAL("Final"),
+      UNKNOWN("???");
 
-      @JsonEnumDefaultValue
-      UNKNOWN("Custom");
-
-      private static final MatchLevel[] VALUES = values();
+      private static final Level[] VALUES = values();
 
       private final String name;
 
-      MatchLevel(String name) {
+      Level(String name) {
         this.name = name;
       }
 
@@ -47,34 +34,31 @@ public class MatchSchedule<S extends ScoreBreakdown> implements Cacheable<List<M
         return name;
       }
 
-      static MatchLevel of(Match.Level level) {
+      static Level of(Match.Level level) {
         int ordinal = level.ordinal();
         return ordinal >= VALUES.length ? VALUES[VALUES.length - 1] : VALUES[ordinal];
       }
     }
 
-    private final String     key;
-    private final String     name;
-    private final MatchLevel level;
-    private final int        set;
-    private final int        number;
-
-    private final BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction;
+    private final String key;
+    private final String name;
+    private final Level  level;
+    private final int    set;
+    private final int    number;
 
     private int[]   blue;
     private int[]   red;
     private long    time;
     private boolean completed;
 
-    private S redStatistics;
-    private S blueStatistics;
+    private Match.ScoreBreakdown redBreakdown;
+    private Match.ScoreBreakdown blueBreakdown;
 
-    MatchInfo(BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction, Match match) {
+    MatchInfo(Match match) {
       this.key = match.key;
-      this.level = MatchLevel.of(match.level);
+      this.level = Level.of(match.level);
       this.set = match.setNumber;
       this.number = match.matchNumber;
-      this.statsFunction = statsFunction;
 
       String setStr = key.substring(key.lastIndexOf('_') + 1, key.lastIndexOf('m'));
       if (Character.isDigit(setStr.charAt(setStr.length() - 1))) {
@@ -117,26 +101,14 @@ public class MatchSchedule<S extends ScoreBreakdown> implements Cacheable<List<M
         change = true;
       }
 
-      if (match.blueScore == null) {
-        change |= blueStatistics != null;
-        blueStatistics = null;
-      } else {
-        S blueStats = statsFunction.apply(match.blueScore, wonMatch(match, Color.BLUE));
-        if (!Objects.equals(blueStatistics, blueStats)) {
-          blueStatistics = blueStats;
-          change = true;
-        }
+      if (!Objects.equals(match.blueScore, blueBreakdown)) {
+        blueBreakdown = match.blueScore;
+        change = true;
       }
 
-      if (match.redScore == null) {
-        change |= redStatistics != null;
-        redStatistics = null;
-      } else {
-        S redStats = statsFunction.apply(match.redScore, wonMatch(match, Color.RED));
-        if (!Objects.equals(redStatistics, redStats)) {
-          redStatistics = redStats;
-          change = true;
-        }
+      if (!Objects.equals(match.redScore, redBreakdown)) {
+        redBreakdown = match.redScore;
+        change = true;
       }
 
       return change;
@@ -156,16 +128,6 @@ public class MatchSchedule<S extends ScoreBreakdown> implements Cacheable<List<M
       return teams;
     }
 
-    private static Boolean wonMatch(Match match, Color color) {
-      if (match.winningAlliance == null || match.winningAlliance == Color.NONE) {
-        return null;
-      } else if (match.winningAlliance == color) {
-        return Boolean.TRUE;
-      } else {
-        return Boolean.FALSE;
-      }
-    }
-
     public String getKey() {
       return key;
     }
@@ -174,7 +136,7 @@ public class MatchSchedule<S extends ScoreBreakdown> implements Cacheable<List<M
       return name;
     }
 
-    public MatchLevel getLevel() {
+    public Level getLevel() {
       return level;
     }
 
@@ -205,109 +167,91 @@ public class MatchSchedule<S extends ScoreBreakdown> implements Cacheable<List<M
     }
   }
 
+  @SuppressWarnings("java:S5867") // Unicode-aware regex
+  private static final Pattern MATCH_KEY_PATTERN =
+      Pattern.compile("^(20\\d\\d[0-9A-Za-z]{1,8})_(q|ef|qf|sf|f)(\\d*)m(\\d+)$");
+
   private static final Comparator<String> MATCH_KEY_COMPARATOR = (key1, key2) -> {
-    int index1 = key1.indexOf("_");
-    int index2 = key2.indexOf("_");
+    // Skip regex for identical keys
+    if (key1.equals(key2)) return 0;
 
-    int level1 = Integer.parseInt(key1.substring(0, index1));
-    int level2 = Integer.parseInt(key2.substring(0, index2));
-    if (level1 != level2) return Integer.compare(level1, level2);
+    Matcher matcher1 = MATCH_KEY_PATTERN.matcher(key1);
+    Matcher matcher2 = MATCH_KEY_PATTERN.matcher(key2);
 
-    int lastIndex1 = key1.lastIndexOf("_");
-    int lastIndex2 = key2.lastIndexOf("_");
+    // If we have invalid keys, sort alphabetically
+    if (!matcher1.matches() || !matcher2.matches()) {
+      return key1.compareTo(key2);
+    }
 
-    int set1 = Integer.parseInt(key1.substring(index1 + 1, lastIndex1));
-    int set2 = Integer.parseInt(key2.substring(index2 + 1, lastIndex2));
-    if (set1 != set2) return Integer.compare(set1, set2);
+    String eventKey1 = matcher1.group(1);
+    String eventKey2 = matcher2.group(1);
+    if (!eventKey1.equals(eventKey2)) {
+      return eventKey1.compareTo(eventKey2);
+    }
 
-    int num1 = Integer.parseInt(key1.substring(lastIndex1 + 1));
-    int num2 = Integer.parseInt(key2.substring(lastIndex2 + 1));
-    return Integer.compare(num1, num2);
+    String compLevel1 = matcher1.group(2);
+    String compLevel2 = matcher2.group(2);
+    if (!compLevel1.equals(compLevel2)) {
+      if ("q".equals(compLevel1)) return -1;
+      if ("q".equals(compLevel2)) return 1;
+
+      if ("ef".equals(compLevel1)) return -1;
+      if ("ef".equals(compLevel2)) return 1;
+
+      if ("qf".equals(compLevel1)) return -1;
+      if ("qf".equals(compLevel2)) return 1;
+
+      if ("sf".equals(compLevel1)) return -1;
+      if ("sf".equals(compLevel2)) return 1;
+
+      if ("f".equals(compLevel1)) return -1;
+      if ("f".equals(compLevel2)) return 1;
+
+      // Unknown level, fail to compare
+      return 0;
+    }
+
+    String set1 = matcher1.group(3);
+    String set2 = matcher2.group(3);
+    if (!set1.equals(set2)) {
+      // Optional, may be empty
+      if (set1.isEmpty()) return -1;
+      if (set2.isEmpty()) return 1;
+
+      int setNum1 = Integer.parseInt(set1);
+      int setNum2 = Integer.parseInt(set2);
+      return Integer.compare(setNum1, setNum2);
+    }
+
+    String match1 = matcher1.group(4);
+    String match2 = matcher2.group(4);
+    if (!match1.equals(match2)) {
+      int matchNum1 = Integer.parseInt(match1);
+      int matchNum2 = Integer.parseInt(match2);
+      return Integer.compare(matchNum1, matchNum2);
+    }
+
+    // Keys are equal, but not equal???
+    // Should never happen
+    return key1.compareTo(key2);
   };
 
-  private final ConcurrentNavigableMap<String, MatchInfo<S>> matchMap;
-  private final ConcurrentMap<Integer, S>                    teamMatches;
-  private final Collection<MatchInfo<S>>                     matches;
-  private final BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction;
-  private final Function<Collection<S>, S>                   statsMergeFunction;
-
-  public MatchSchedule(BiFunction<Match.ScoreBreakdown, Boolean, S> statsFunction,
-                       Function<Collection<S>, S> statsMergeFunction, List<Match> matches) {
-    this.matchMap = new ConcurrentSkipListMap<>(MATCH_KEY_COMPARATOR);
-    this.matches = Collections.unmodifiableCollection(matchMap.values());
-    this.teamMatches = new ConcurrentHashMap<>();
-    this.statsFunction = statsFunction;
-    this.statsMergeFunction = statsMergeFunction;
-    update(matches);
+  public MatchSchedule(List<Match> matches) {
+    super(MATCH_KEY_COMPARATOR, matches);
   }
 
   @Override
-  public boolean update(List<Match> matches) {
-    boolean change = false;
-
-    // Update match schedule
-    Collection<String> matchKeys = new ArrayList<>();
-    for (Match match : matches) {
-      String key = matchKey(match);
-      matchKeys.add(key);
-
-      MatchInfo<S> info = matchMap.get(key);
-      if (info == null) {
-        info = new MatchInfo<>(statsFunction, match);
-        matchMap.put(key, info);
-        change = true;
-      } else {
-        change |= info.update(match);
-      }
-    }
-
-    change |= matchMap.keySet()
-                      .retainAll(matchKeys);
-    if (!change) return false;
-
-    // If schedule was updated, update team statistics
-    Map<Integer, Collection<S>> stats = new LinkedHashMap<>();
-    for (MatchInfo<S> match : matchMap.values()) {
-      if (match.redStatistics != null) {
-        for (int team : match.red) {
-          stats.computeIfAbsent(team, t -> new ArrayList<>())
-               .add(match.redStatistics);
-        }
-      }
-      if (match.blueStatistics != null) {
-        for (int team : match.blue) {
-          stats.computeIfAbsent(team, t -> new ArrayList<>())
-               .add(match.blueStatistics);
-        }
-      }
-    }
-
-    teamMatches.clear();
-    for (Map.Entry<Integer, Collection<S>> entry : stats.entrySet()) {
-      teamMatches.put(entry.getKey(), statsMergeFunction.apply(entry.getValue()));
-    }
-
-    return true;
+  protected MatchInfo createValue(String key, Match data) {
+    return new MatchInfo(data);
   }
 
-  @JsonValue
-  public Collection<MatchInfo<S>> matches() {
-    return matches;
+  @Override
+  protected String getKey(Match data) {
+    return data.key;
   }
 
-  public MatchInfo<S> getMatch(String key) {
-    return matchMap.values()
-                   .stream()
-                   .filter(e -> e.key.equals(key))
-                   .findFirst()
-                   .orElseGet(() -> null);
-  }
-
-  public S getTeamBreakdown(int team) {
-    return teamMatches.get(team);
-  }
-
-  private static String matchKey(Match match) {
-    return match.level.ordinal() + "_" + match.setNumber + "_" + match.matchNumber;
+  @Override
+  protected List<Match> getList(List<Match> data) {
+    return data;
   }
 }
