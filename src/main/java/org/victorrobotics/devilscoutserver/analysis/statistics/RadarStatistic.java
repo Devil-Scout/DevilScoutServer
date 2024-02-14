@@ -10,7 +10,7 @@ import java.util.function.Function;
 
 public class RadarStatistic extends Statistic {
   public static record RadarPoint(String label,
-                                  Double value) {}
+                                  Number value) {}
 
   public final double           max;
   public final List<RadarPoint> points;

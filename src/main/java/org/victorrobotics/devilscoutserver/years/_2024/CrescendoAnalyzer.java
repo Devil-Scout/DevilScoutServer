@@ -1,55 +1,93 @@
 package org.victorrobotics.devilscoutserver.years._2024;
 
+import org.victorrobotics.bluealliance.Event.WinLossRecord;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
 import org.victorrobotics.devilscoutserver.analysis.statistics.BooleanStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.NumberStatistic;
+import org.victorrobotics.devilscoutserver.analysis.statistics.OprStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.PieChartStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.RadarStatistic;
+import org.victorrobotics.devilscoutserver.analysis.statistics.RadarStatistic.RadarPoint;
+import org.victorrobotics.devilscoutserver.analysis.statistics.RankingPointsStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StringStatistic;
+import org.victorrobotics.devilscoutserver.analysis.statistics.WltStatistic;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
-import org.victorrobotics.devilscoutserver.tba.OprsCache;
-import org.victorrobotics.devilscoutserver.tba.RankingsCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
+import org.victorrobotics.devilscoutserver.tba.OprsCache;
+import org.victorrobotics.devilscoutserver.tba.OprsCache.TeamOpr;
+import org.victorrobotics.devilscoutserver.tba.RankingsCache;
 
 import java.util.List;
+import java.util.Map;
 
-public final class CrescendoAnalyzer extends Analyzer<CrescendoData> {
+public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
+  public static record DriveTeamRadar(Number communication,
+                                      Number strategy,
+                                      Number adaptability,
+                                      Number professionalism) {}
+
+  public static record Data(WinLossRecord wlt,
+                            Map<String, Integer> rankingPoints,
+                            TeamOpr opr,
+                            DriveTeamRadar driveTeamRadar) {}
+
   public CrescendoAnalyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
                            EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
                            OprsCache teamOprsCache, RankingsCache rankingsCache) {
-    super(matchEntryDB, pitEntryDB, driveTeamEntryDB, matchScheduleCache, teamOprsCache, rankingsCache);
+    super(matchEntryDB, pitEntryDB, driveTeamEntryDB, matchScheduleCache, teamOprsCache,
+          rankingsCache);
   }
 
   @Override
-  protected CrescendoData computeData(Handle handle) {
-    return null;
+  protected Data computeData(Handle handle) {
+    return new Data(handle.getRankings()
+                          .getWinLossRecord(),
+                    Map.of(), handle.getOpr(), driveTeamRadar(handle));
+  }
+
+  private static DriveTeamRadar driveTeamRadar(Handle handle) {
+    return new DriveTeamRadar(average(extractDataDeep(handle.getDriveTeamEntries(),
+                                                      "/communication", DataEntry::getInteger,
+                                                      Analyzer::average)),
+                              average(extractDataDeep(handle.getDriveTeamEntries(), "/strategy",
+                                                      DataEntry::getInteger, Analyzer::average)),
+                              average(extractDataDeep(handle.getDriveTeamEntries(), "/adaptability",
+                                                      DataEntry::getInteger, Analyzer::average)),
+                              average(extractDataDeep(handle.getDriveTeamEntries(),
+                                                      "/professionalism", DataEntry::getInteger,
+                                                      Analyzer::average)));
   }
 
   @Override
-  protected List<StatisticsPage> generateStatistics(CrescendoData data) {
+  protected List<StatisticsPage> generateStatistics(Data data) {
     // return List.of(summaryPage(handle), specsPage(handle), autoPage(handle),
     // teleopPage(handle), endgamePage(handle));
-    return List.of();
+    return List.of(summaryPage(data));
   }
 
-  private StatisticsPage summaryPage(Handle handle) {
-    return new StatisticsPage("Summary", List.of(
-                                                 // handle.wltStatistic(),
-                                                 // handle.rpStatistic(),
-                                                 // handle.oprStatistic(),
-                                                 RadarStatistic.directMatch("Drive Team",
-                                                                            handle.getDriveTeamEntries(),
-                                                                            List.of("/communication",
-                                                                                    "/strategy",
-                                                                                    "/adaptability",
-                                                                                    "/professionalism"),
-                                                                            5,
-                                                                            List.of("Communication",
-                                                                                    "Strategy",
-                                                                                    "Adaptability",
-                                                                                    "Professionalism"))));
+  private static StatisticsPage summaryPage(Data data) {
+    return new StatisticsPage("Summary",
+                              List.of(new WltStatistic(data.wlt()),
+                                      new RankingPointsStatistic(data.rankingPoints()),
+                                      new OprStatistic(data.opr()), driveTeamRadar(data)));
+  }
+
+  private static RadarStatistic driveTeamRadar(Data data) {
+    return new RadarStatistic("Drive Team", 5, List.of(
+                                                       new RadarPoint("Communication",
+                                                                      data.driveTeamRadar()
+                                                                          .communication()),
+                                                       new RadarPoint("Strategy",
+                                                                      data.driveTeamRadar()
+                                                                          .strategy()),
+                                                       new RadarPoint("Adaptability",
+                                                                      data.driveTeamRadar()
+                                                                          .adaptability()),
+                                                       new RadarPoint("Professionalism",
+                                                                      data.driveTeamRadar()
+                                                                          .professionalism())));
   }
 
   private StatisticsPage specsPage(Handle handle) {

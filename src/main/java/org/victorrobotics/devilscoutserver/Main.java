@@ -108,7 +108,7 @@ public class Main {
     LOGGER.info("Refresh services running");
 
     LOGGER.info("Starting HTTP server...");
-    DevilScoutServer server = new DevilScoutServer();
+    HttpServer server = new HttpServer();
     executor.scheduleAtFixedRate(() -> {
       server.getInternal()
             .jettyServer()

@@ -41,9 +41,9 @@ public class AnalysisCache {
   private final Map<Integer, Analyzer<?>>     analyzers;
   private final BlockingQueue<DelayedRefresh> refreshQueue;
 
-  private final ConcurrentMap<String, AnalysisData>               individualData;
-  private final ConcurrentMap<String, Map<Integer, AnalysisData>> eventData;
-  private final ConcurrentMap<Integer, Map<String, AnalysisData>> teamData;
+  private final ConcurrentMap<String, Object>               individualData;
+  private final ConcurrentMap<String, Map<Integer, Object>> eventData;
+  private final ConcurrentMap<Integer, Map<String, Object>> teamData;
 
   public AnalysisCache(Map<Integer, Analyzer<?>> analyzers) {
     this.analyzers = analyzers;
@@ -80,7 +80,7 @@ public class AnalysisCache {
     try {
       long start = System.currentTimeMillis();
       Analyzer<?> analyzer = analyzers.get(extractYear(eventKey));
-      AnalysisData data = analyzer.computeData(eventKey, team);
+      Object data = analyzer.computeData(eventKey, team);
       if (data == null) {
         individualData.remove(team + "@" + eventKey);
         Optional.ofNullable(eventData.get(eventKey))
@@ -96,15 +96,15 @@ public class AnalysisCache {
     }
   }
 
-  public AnalysisData get(String eventKey, int team) {
+  public Object get(String eventKey, int team) {
     return individualData.get(team + "@" + eventKey);
   }
 
-  public Map<Integer, AnalysisData> getEvent(String eventKey) {
+  public Map<Integer, Object> getEvent(String eventKey) {
     return unmodifiable(eventData.get(eventKey));
   }
 
-  public Map<String, AnalysisData> getTeam(int team) {
+  public Map<String, Object> getTeam(int team) {
     return unmodifiable(teamData.get(team));
   }
 

@@ -21,12 +21,12 @@ import io.javalin.http.HttpResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DevilScoutServer {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DevilScoutServer.class);
+public class HttpServer {
+  private static final Logger LOGGER = LoggerFactory.getLogger(HttpServer.class);
 
   private final Javalin javalin;
 
-  public DevilScoutServer() {
+  public HttpServer() {
     javalin = Javalin.create(config -> {
       config.http.prefer405over404 = true;
       config.useVirtualThreads = true;

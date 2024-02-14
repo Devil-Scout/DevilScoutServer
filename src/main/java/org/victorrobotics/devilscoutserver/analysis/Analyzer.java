@@ -8,8 +8,8 @@ import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache.MatchInfo;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache.MatchSchedule;
 import org.victorrobotics.devilscoutserver.tba.OprsCache;
-import org.victorrobotics.devilscoutserver.tba.RankingsCache;
 import org.victorrobotics.devilscoutserver.tba.OprsCache.TeamOpr;
+import org.victorrobotics.devilscoutserver.tba.RankingsCache;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -17,8 +17,10 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
-public abstract class Analyzer<D extends AnalysisData> {
+public abstract class Analyzer<D> {
   private final EntryDatabase matchEntryDB;
   private final EntryDatabase pitEntryDB;
   private final EntryDatabase driveTeamEntryDB;
@@ -157,5 +159,39 @@ public abstract class Analyzer<D extends AnalysisData> {
       }
       return entryMap.values();
     }
+  }
+
+  protected static <T> Collection<T> extractData(Collection<DataEntry> entries, String path,
+                                                 BiFunction<DataEntry, String, T> extractor) {
+    return entries.stream()
+                  .map(e -> extractor.apply(e, path))
+                  .toList();
+  }
+
+  protected static <I, T>
+      Collection<T>
+      extractDataDeep(Collection<? extends Collection<DataEntry>> entries, String path,
+                      BiFunction<DataEntry, String, I> extractor,
+                      Function<Collection<I>, T> reducer) {
+    return entries.stream()
+                  .map(e -> extractData(e, path, extractor))
+                  .map(reducer)
+                  .toList();
+  }
+
+  protected static Number average(Iterable<? extends Number> data) {
+    int count = 0;
+    double sum = 0;
+    for (Number num : data) {
+      if (num != null) {
+        sum += num.doubleValue();
+        count++;
+      }
+    }
+    return count == 0 ? null : Double.valueOf(sum / count);
+  }
+
+  public static void main(String[] args) {
+    average(extractDataDeep(new ArrayList<>(), "/communication", DataEntry::getInteger, Analyzer::average));
   }
 }
