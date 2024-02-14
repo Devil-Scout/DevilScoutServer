@@ -9,6 +9,6 @@ public class RankingPointsStatistic extends Statistic {
 
   public RankingPointsStatistic(AnalysisData data) {
     super(StatisticType.RP, "Ranking Points");
-    this.rankingPoints = data == null ? Map.of() : data.getRankingPoints();
+    this.rankingPoints = data == null ? Map.of() : data.rankingPoints();
   }
 }

@@ -69,6 +69,7 @@ public final class SubmissionController extends Controller {
 
     matchEntryDB().createEntry(teamEvent, matchKey, session.getUser(), session.getTeam(), teamNum,
                                jsonEncode(payload));
+    analysisCache().scheduleRefresh(teamEvent, teamNum);
     throw new NoContentResponse();
   }
 
@@ -105,6 +106,7 @@ public final class SubmissionController extends Controller {
 
     pitEntryDB().createEntry(teamEvent, null, session.getUser(), session.getTeam(), teamNum,
                              jsonEncode(payload));
+    analysisCache().scheduleRefresh(teamEvent, teamNum);
     throw new NoContentResponse();
   }
 
@@ -174,9 +176,10 @@ public final class SubmissionController extends Controller {
     }
 
     for (Map.Entry<String, Map<String, Object>> entry : payload.entrySet()) {
+      int teamNum = Integer.parseInt(entry.getKey());
       driveTeamEntryDB().createEntry(teamEvent, matchKey, session.getUser(), session.getTeam(),
-                                     Integer.parseInt(entry.getKey()),
-                                     jsonEncode(entry.getValue()));
+                                     teamNum, jsonEncode(entry.getValue()));
+      analysisCache().scheduleRefresh(teamEvent, teamNum);
     }
 
     throw new NoContentResponse();

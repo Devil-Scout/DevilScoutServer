@@ -1,10 +1,14 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
+import org.victorrobotics.bluealliance.Match.ScoreBreakdown;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
-import org.victorrobotics.devilscoutserver.tba.OprsCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
+import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache.MatchInfo;
+import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache.MatchSchedule;
+import org.victorrobotics.devilscoutserver.tba.OprsCache;
+import org.victorrobotics.devilscoutserver.tba.OprsCache.TeamOpr;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -47,6 +51,9 @@ public abstract class Analyzer<D extends AnalysisData> {
     private List<DataEntry>             pitEntries;
     private Collection<List<DataEntry>> driveTeamEntries;
 
+    private Collection<ScoreBreakdown> scoreBreakdowns;
+    private TeamOpr                    opr;
+
     Handle(String eventKey, int team) {
       this.eventKey = eventKey;
       this.team = team;
@@ -65,20 +72,60 @@ public abstract class Analyzer<D extends AnalysisData> {
 
     public Collection<List<DataEntry>> getMatchEntries() {
       if (matchEntries == null) {
-        matchEntries = loadEntries(matchEntryDB, eventKey, team);
+        matchEntries = loadEntriesByMatch(matchEntryDB, eventKey, team);
       }
       return matchEntries;
     }
 
     public Collection<List<DataEntry>> getDriveTeamEntries() {
       if (driveTeamEntries == null) {
-        driveTeamEntries = loadEntries(driveTeamEntryDB, eventKey, team);
+        driveTeamEntries = loadEntriesByMatch(driveTeamEntryDB, eventKey, team);
       }
       return driveTeamEntries;
     }
 
-    private static Collection<List<DataEntry>> loadEntries(EntryDatabase database, String eventKey,
-                                                           int team) {
+    public TeamOpr getOpr() {
+      if (opr == null) {
+        opr = oprsCache.get(eventKey)
+                       .value()
+                       .get(team);
+      }
+      return opr;
+    }
+
+    public Collection<ScoreBreakdown> getScoreBreakdowns() {
+      if (scoreBreakdowns == null) {
+        scoreBreakdowns = new ArrayList<>();
+        MatchSchedule schedule = matchScheduleCache.get(eventKey)
+                                                   .value();
+        for (MatchInfo match : schedule.values()) {
+          ScoreBreakdown breakdown = getBreakdown(match);
+          if (breakdown != null) {
+            scoreBreakdowns.add(breakdown);
+          }
+        }
+      }
+      return scoreBreakdowns;
+    }
+
+    private ScoreBreakdown getBreakdown(MatchInfo match) {
+      for (int t : match.getRed()) {
+        if (t == team) {
+          return match.getRedBreakdown();
+        }
+      }
+
+      for (int t : match.getBlue()) {
+        if (t == team) {
+          return match.getBlueBreakdown();
+        }
+      }
+
+      return null;
+    }
+
+    private static Collection<List<DataEntry>> loadEntriesByMatch(EntryDatabase database,
+                                                                  String eventKey, int team) {
       List<DataEntry> entries;
       try {
         entries = database.getEntries(eventKey, team);

@@ -3,6 +3,7 @@ package org.victorrobotics.devilscoutserver.tba;
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.bluealliance.Match;
 import org.victorrobotics.bluealliance.Match.Alliance.Color;
+import org.victorrobotics.devilscoutserver.analysis.AnalysisCache;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
 import org.victorrobotics.devilscoutserver.cache.ListValue;
 
@@ -41,8 +42,9 @@ public class MatchScheduleCache
     }
   }
 
-  public static class MatchInfo implements Cacheable<Match> {
+  public class MatchInfo implements Cacheable<Match> {
     private final String     key;
+    private final String     eventKey;
     private final String     name;
     private final MatchLevel level;
     private final int        set;
@@ -58,6 +60,7 @@ public class MatchScheduleCache
 
     MatchInfo(Match match) {
       this.key = match.key;
+      this.eventKey = match.eventKey;
       this.level = MatchLevel.of(match.level);
       this.set = match.setNumber;
       this.number = match.matchNumber;
@@ -106,11 +109,17 @@ public class MatchScheduleCache
       if (!Objects.equals(match.blueScore, blueBreakdown)) {
         blueBreakdown = match.blueScore;
         change = true;
+        for (int team : blue) {
+          analysis.scheduleRefresh(eventKey, team);
+        }
       }
 
       if (!Objects.equals(match.redScore, redBreakdown)) {
         redBreakdown = match.redScore;
         change = true;
+        for (int team : red) {
+          analysis.scheduleRefresh(eventKey, team);
+        }
       }
 
       return change;
@@ -161,6 +170,14 @@ public class MatchScheduleCache
 
     public boolean isCompleted() {
       return completed;
+    }
+
+    public Match.ScoreBreakdown getRedBreakdown() {
+      return redBreakdown;
+    }
+
+    public Match.ScoreBreakdown getBlueBreakdown() {
+      return blueBreakdown;
     }
   }
 
@@ -267,10 +284,12 @@ public class MatchScheduleCache
     }
   }
 
-  private final OprsCache oprs;
+  private final OprsCache     oprs;
+  private final AnalysisCache analysis;
 
-  public MatchScheduleCache(OprsCache oprs) {
+  public MatchScheduleCache(OprsCache oprs, AnalysisCache analysis) {
     this.oprs = oprs;
+    this.analysis = analysis;
   }
 
   @Override

@@ -4,10 +4,4 @@ import org.victorrobotics.devilscoutserver.analysis.AnalysisData;
 
 import java.util.Map;
 
-public class CrescendoData implements AnalysisData {
-  @Override
-  public Map<String, Integer> getRankingPoints() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getRankingPoints'");
-  }
-}
+public record CrescendoData(Map<String, Integer> rankingPoints) implements AnalysisData {}

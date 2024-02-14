@@ -76,7 +76,7 @@ public final class TeamController extends Controller {
     TeamEdits edits = jsonDecode(ctx, TeamEdits.class);
 
     String eventKey = edits.eventKey();
-    if (eventKey != null && !"".equals(eventKey) && eventInfoCache().get(eventKey) == null) {
+    if (eventKey != null && !"".equals(eventKey) && eventsCache().get(eventKey) == null) {
       throw new NotFoundResponse();
     }
 

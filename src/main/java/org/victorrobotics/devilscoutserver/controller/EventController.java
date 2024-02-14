@@ -29,11 +29,11 @@ public final class EventController extends Controller {
   public static void getAllEvents(Context ctx) {
     getValidSession(ctx);
 
-    long timestamp = eventInfoCache().lastModified();
+    long timestamp = eventsCache().lastModified();
     checkIfNoneMatch(ctx, timestamp);
 
     setResponseEtag(ctx, timestamp);
-    ctx.writeJsonStream(eventInfoCache().values()
+    ctx.writeJsonStream(eventsCache().values()
                                         .stream()
                                         .sorted());
   }
@@ -55,7 +55,7 @@ public final class EventController extends Controller {
     getValidSession(ctx);
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
 
-    Value<?, ?> entry = eventInfoCache().get(eventKey);
+    Value<?, ?> entry = eventsCache().get(eventKey);
     if (entry == null) {
       throw new NotFoundResponse();
     }
@@ -84,11 +84,11 @@ public final class EventController extends Controller {
     getValidSession(ctx);
 
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
-    if (eventInfoCache().get(eventKey) == null) {
+    if (eventsCache().get(eventKey) == null) {
       throw new NotFoundResponse();
     }
 
-    Value<?, ?> entry = eventTeamsCache().get(eventKey);
+    Value<?, ?> entry = teamListsCache().get(eventKey);
     long timestamp = entry.lastModified();
     checkIfNoneMatch(ctx, timestamp);
 
@@ -113,7 +113,7 @@ public final class EventController extends Controller {
     getValidSession(ctx);
 
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
-    if (eventInfoCache().get(eventKey) == null) {
+    if (eventsCache().get(eventKey) == null) {
       throw new NotFoundResponse();
     }
 

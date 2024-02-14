@@ -2,6 +2,7 @@ package org.victorrobotics.devilscoutserver.analysis;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -9,13 +10,16 @@ import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class AnalysisCache {
   private static record DelayedRefresh(String eventKey,
-                                       int team,
+                                       Integer team,
                                        long delayEnd)
       implements Delayed {
 
-    private static final long DELAY = TimeUnit.SECONDS.toMillis(30);
+    private static final long DELAY = TimeUnit.SECONDS.toMillis(5);
 
     DelayedRefresh(String eventKey, int team) {
       this(eventKey, team, System.currentTimeMillis() + DELAY);
@@ -31,6 +35,8 @@ public class AnalysisCache {
       return Long.compare(getDelay(TimeUnit.MILLISECONDS), o.getDelay(TimeUnit.MILLISECONDS));
     }
   }
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(AnalysisCache.class);
 
   private final Map<Integer, Analyzer<?>>     analyzers;
   private final BlockingQueue<DelayedRefresh> refreshQueue;
@@ -49,29 +55,47 @@ public class AnalysisCache {
   }
 
   public void scheduleRefresh(String eventKey, int team) {
-    refreshQueue.removeIf(q -> q.eventKey.equals(eventKey) && q.team == team);
+    boolean removal = refreshQueue.removeIf(q -> q.eventKey.equals(eventKey) && q.team == team);
     refreshQueue.add(new DelayedRefresh(eventKey, team));
+    if (removal) {
+      LOGGER.info("Rescheduled refresh for {} at {}", team, eventKey);
+    } else {
+      LOGGER.info("Scheduled refresh for {} at {}", team, eventKey);
+    }
   }
 
   @SuppressWarnings("java:S2189") // intentional infinite loop
   public void refreshLoop() {
     while (true) {
+      DelayedRefresh refresh;
       try {
-        DelayedRefresh refresh = refreshQueue.take();
-        refresh(refresh.eventKey(), refresh.team());
-      } catch (Exception e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        refresh = refreshQueue.take();
+      } catch (InterruptedException e) {
+        continue;
       }
+
+      refresh(refresh.eventKey(), refresh.team());
     }
   }
 
   private void refresh(String eventKey, int team) {
-    Analyzer<?> analyzer = analyzers.get(extractYear(eventKey));
-    AnalysisData data = analyzer.computeData(eventKey, team);
-    individualData.put(team + "@" + eventKey, data);
-    eventData.computeIfAbsent(eventKey, x -> new ConcurrentHashMap<>(0))
-             .put(team, data);
+    try {
+      long start = System.currentTimeMillis();
+      Analyzer<?> analyzer = analyzers.get(extractYear(eventKey));
+      AnalysisData data = analyzer.computeData(eventKey, team);
+      if (data == null) {
+        individualData.remove(team + "@" + eventKey);
+        Optional.ofNullable(eventData.get(eventKey))
+                .ifPresent(m -> m.remove(team));
+      } else {
+        individualData.put(team + "@" + eventKey, data);
+        eventData.computeIfAbsent(eventKey, x -> new ConcurrentHashMap<>(0))
+                 .put(team, data);
+      }
+      LOGGER.info("Refreshed {} at {} in {}ms", team, eventKey, System.currentTimeMillis() - start);
+    } catch (Exception e) {
+      LOGGER.warn("Exception while refreshing {} at {}:", team, eventKey, e);
+    }
   }
 
   public AnalysisData get(String eventKey, int team) {

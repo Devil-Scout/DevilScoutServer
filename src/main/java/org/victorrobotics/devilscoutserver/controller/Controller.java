@@ -1,13 +1,14 @@
 package org.victorrobotics.devilscoutserver.controller;
 
+import org.victorrobotics.devilscoutserver.analysis.AnalysisCache;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.questions.Questions;
 import org.victorrobotics.devilscoutserver.tba.EventCache;
+import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 import org.victorrobotics.devilscoutserver.tba.OprsCache;
 import org.victorrobotics.devilscoutserver.tba.TeamListCache;
-import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 
 import java.security.SecureRandom;
 import java.sql.SQLException;
@@ -37,17 +38,18 @@ public sealed class Controller
   private static UserDatabase USERS;
   private static TeamDatabase TEAMS;
 
-  private static EventCache     EVENT_INFO_CACHE;
-  private static TeamListCache EVENT_TEAMS_CACHE;
+  private static EventCache         EVENT_CACHE;
+  private static TeamListCache      TEAM_LIST_CACHE;
   private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
+  private static OprsCache          OPRS_CACHE;
+
+  private static Questions QUESTIONS;
 
   private static EntryDatabase MATCH_ENTRIES;
   private static EntryDatabase PIT_ENTRIES;
   private static EntryDatabase DRIVE_TEAM_ENTRIES;
 
-  private static OprsCache EVENT_OPRS_CACHE;
-
-  private static Questions QUESTIONS;
+  private static AnalysisCache ANALYSIS_CACHE;
 
   protected Controller() {}
 
@@ -59,16 +61,24 @@ public sealed class Controller
     TEAMS = teams;
   }
 
-  public static void setEventInfoCache(EventCache cache) {
-    EVENT_INFO_CACHE = cache;
+  public static void setEventCache(EventCache cache) {
+    EVENT_CACHE = cache;
   }
 
-  public static void setEventTeamsCache(TeamListCache cache) {
-    EVENT_TEAMS_CACHE = cache;
+  public static void setTeamListCache(TeamListCache cache) {
+    TEAM_LIST_CACHE = cache;
   }
 
   public static void setMatchScheduleCache(MatchScheduleCache cache) {
     MATCH_SCHEDULE_CACHE = cache;
+  }
+
+  public static void setOprsCache(OprsCache eventOprsCache) {
+    OPRS_CACHE = eventOprsCache;
+  }
+
+  public static void setQuestions(Questions questions) {
+    QUESTIONS = questions;
   }
 
   public static void setMatchEntryDB(EntryDatabase matchEntries) {
@@ -83,12 +93,8 @@ public sealed class Controller
     DRIVE_TEAM_ENTRIES = driveTeamEntries;
   }
 
-  public static void setEventOprsCache(OprsCache eventOprsCache) {
-    EVENT_OPRS_CACHE = eventOprsCache;
-  }
-
-  public static void setQuestions(Questions questions) {
-    QUESTIONS = questions;
+  public static void setAnalysisCache(AnalysisCache analysisCache) {
+    ANALYSIS_CACHE = analysisCache;
   }
 
   @SuppressWarnings("java:S2384") // copy map
@@ -104,17 +110,25 @@ public sealed class Controller
     return TEAMS;
   }
 
-  public static EventCache eventInfoCache() {
-    return EVENT_INFO_CACHE;
+  public static EventCache eventsCache() {
+    return EVENT_CACHE;
   }
 
-  public static TeamListCache eventTeamsCache() {
-    return EVENT_TEAMS_CACHE;
+  public static TeamListCache teamListsCache() {
+    return TEAM_LIST_CACHE;
   }
 
   @SuppressWarnings("java:S1452") // wildcard in return type
   public static MatchScheduleCache matchScheduleCache() {
     return MATCH_SCHEDULE_CACHE;
+  }
+
+  public static OprsCache oprsCache() {
+    return OPRS_CACHE;
+  }
+
+  public static Questions questions() {
+    return QUESTIONS;
   }
 
   public static EntryDatabase matchEntryDB() {
@@ -129,12 +143,8 @@ public sealed class Controller
     return DRIVE_TEAM_ENTRIES;
   }
 
-  public static OprsCache eventOprs() {
-    return EVENT_OPRS_CACHE;
-  }
-
-  public static Questions questions() {
-    return QUESTIONS;
+  public static AnalysisCache analysisCache() {
+    return ANALYSIS_CACHE;
   }
 
   @SuppressWarnings({ "java:S2221", "unchecked" }) // catch generic exception

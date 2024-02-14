@@ -1,6 +1,7 @@
 package org.victorrobotics.devilscoutserver;
 
 import org.victorrobotics.bluealliance.Endpoint;
+import org.victorrobotics.devilscoutserver.analysis.AnalysisCache;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
 import org.victorrobotics.devilscoutserver.controller.Controller;
 import org.victorrobotics.devilscoutserver.controller.Controller.Session;
@@ -43,25 +44,27 @@ public class Main {
     Controller.setDriveTeamEntryDB(new EntryDatabase("drive_team_entries", true));
     LOGGER.info("Database connected");
 
-    LOGGER.info("Initializing caches...");
-    OprsCache oprsCache = new OprsCache();
-    Controller.setEventInfoCache(new EventCache());
-    Controller.setEventTeamsCache(new TeamListCache());
-    Controller.setMatchScheduleCache(new MatchScheduleCache(oprsCache));
-    LOGGER.info("Caches ready");
-
-    LOGGER.info("Loading questions from disk...");
-    Controller.setQuestions(new Questions());
-    LOGGER.info("Questions loaded");
-
     LOGGER.info("Initializing analysis...");
+    OprsCache oprsCache = new OprsCache();
     Map<Integer, Analyzer<?>> analyzers = new HashMap<>();
     analyzers.put(2024,
                   new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
                                         Controller.driveTeamEntryDB(),
                                         Controller.matchScheduleCache(), oprsCache));
     analyzers.put(2023, analyzers.get(2024));
+    AnalysisCache analysisCache = new AnalysisCache(analyzers);
+    Controller.setAnalysisCache(analysisCache);
     LOGGER.info("Analysis ready");
+
+    LOGGER.info("Initializing caches...");
+    Controller.setEventCache(new EventCache());
+    Controller.setTeamListCache(new TeamListCache());
+    Controller.setMatchScheduleCache(new MatchScheduleCache(oprsCache, analysisCache));
+    LOGGER.info("Caches ready");
+
+    LOGGER.info("Loading questions from disk...");
+    Controller.setQuestions(new Questions());
+    LOGGER.info("Questions loaded");
 
     LOGGER.info("Starting refresh services...");
     ThreadFactory blueAllianceThreads = Thread.ofVirtual()
@@ -74,12 +77,15 @@ public class Main {
                                          .factory();
     ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, refreshThreads);
 
+    Thread.ofPlatform()
+          .name("Analysis")
+          .start(analysisCache::refreshLoop);
     executor.scheduleAtFixedRate(() -> {
-      Controller.eventInfoCache()
+      Controller.eventsCache()
                 .refresh();
     }, 0, 60, TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
-      Controller.eventTeamsCache()
+      Controller.teamListsCache()
                 .refreshAll(getActiveEvents());
     }, 0, 60, TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {

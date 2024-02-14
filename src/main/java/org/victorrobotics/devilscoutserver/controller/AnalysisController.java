@@ -24,7 +24,7 @@ public final class AnalysisController extends Controller {
     getValidSession(ctx);
 
     String eventKey = ctx.pathParam(EVENT_KEY_PATH_PARAM);
-    if (!eventInfoCache().containsKey(eventKey)) {
+    if (!eventsCache().containsKey(eventKey)) {
       throw new NotFoundResponse();
     }
 
