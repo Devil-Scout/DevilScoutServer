@@ -279,16 +279,19 @@ public class MatchScheduleCache
       boolean update = super.update(data);
       if (update) {
         oprs.refresh(eventKey);
+        rankings.refresh(eventKey);
       }
       return update;
     }
   }
 
   private final OprsCache     oprs;
+  private final RankingsCache rankings;
   private final AnalysisCache analysis;
 
-  public MatchScheduleCache(OprsCache oprs, AnalysisCache analysis) {
+  public MatchScheduleCache(OprsCache oprs, RankingsCache rankings, AnalysisCache analysis) {
     this.oprs = oprs;
+    this.rankings = rankings;
     this.analysis = analysis;
   }
 

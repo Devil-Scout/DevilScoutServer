@@ -13,6 +13,7 @@ import org.victorrobotics.devilscoutserver.questions.Questions;
 import org.victorrobotics.devilscoutserver.tba.EventCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 import org.victorrobotics.devilscoutserver.tba.OprsCache;
+import org.victorrobotics.devilscoutserver.tba.RankingsCache;
 import org.victorrobotics.devilscoutserver.tba.TeamListCache;
 import org.victorrobotics.devilscoutserver.years._2024.CrescendoAnalyzer;
 
@@ -45,21 +46,24 @@ public class Main {
     LOGGER.info("Database connected");
 
     LOGGER.info("Initializing analysis...");
-    OprsCache oprsCache = new OprsCache();
     Map<Integer, Analyzer<?>> analyzers = new HashMap<>();
+    AnalysisCache analysisCache = new AnalysisCache(analyzers);
+    Controller.setAnalysisCache(analysisCache);
+
+    OprsCache oprsCache = new OprsCache();
+    RankingsCache rankingsCache = new RankingsCache(analysisCache);
     analyzers.put(2024,
                   new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
                                         Controller.driveTeamEntryDB(),
-                                        Controller.matchScheduleCache(), oprsCache));
+                                        Controller.matchScheduleCache(), oprsCache, rankingsCache));
     analyzers.put(2023, analyzers.get(2024));
-    AnalysisCache analysisCache = new AnalysisCache(analyzers);
-    Controller.setAnalysisCache(analysisCache);
     LOGGER.info("Analysis ready");
 
     LOGGER.info("Initializing caches...");
     Controller.setEventCache(new EventCache());
     Controller.setTeamListCache(new TeamListCache());
-    Controller.setMatchScheduleCache(new MatchScheduleCache(oprsCache, analysisCache));
+    Controller.setMatchScheduleCache(new MatchScheduleCache(oprsCache, rankingsCache,
+                                                            analysisCache));
     LOGGER.info("Caches ready");
 
     LOGGER.info("Loading questions from disk...");
@@ -103,6 +107,7 @@ public class Main {
     }, 0, 5, TimeUnit.MINUTES);
     LOGGER.info("Refresh services running");
 
+    LOGGER.info("Starting HTTP server...");
     DevilScoutServer server = new DevilScoutServer();
     executor.scheduleAtFixedRate(() -> {
       server.getInternal()
@@ -111,6 +116,7 @@ public class Main {
             .dump();
     }, 0, 1, TimeUnit.MINUTES);
     server.start();
+    LOGGER.info("Listening for client connections");
 
     LOGGER.info("Startup complete, main thread exiting");
   }

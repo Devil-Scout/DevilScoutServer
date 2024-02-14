@@ -46,7 +46,7 @@ public class AnalysisCache {
   private final ConcurrentMap<Integer, Map<String, AnalysisData>> teamData;
 
   public AnalysisCache(Map<Integer, Analyzer<?>> analyzers) {
-    this.analyzers = Map.copyOf(analyzers);
+    this.analyzers = analyzers;
     this.refreshQueue = new DelayQueue<>();
 
     individualData = new ConcurrentHashMap<>(0);
@@ -57,9 +57,7 @@ public class AnalysisCache {
   public void scheduleRefresh(String eventKey, int team) {
     boolean removal = refreshQueue.removeIf(q -> q.eventKey.equals(eventKey) && q.team == team);
     refreshQueue.add(new DelayedRefresh(eventKey, team));
-    if (removal) {
-      LOGGER.info("Rescheduled refresh for {} at {}", team, eventKey);
-    } else {
+    if (!removal) {
       LOGGER.info("Scheduled refresh for {} at {}", team, eventKey);
     }
   }

@@ -8,6 +8,7 @@ import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache.MatchInfo;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache.MatchSchedule;
 import org.victorrobotics.devilscoutserver.tba.OprsCache;
+import org.victorrobotics.devilscoutserver.tba.RankingsCache;
 import org.victorrobotics.devilscoutserver.tba.OprsCache.TeamOpr;
 
 import java.sql.SQLException;
@@ -24,15 +25,17 @@ public abstract class Analyzer<D extends AnalysisData> {
 
   private final MatchScheduleCache matchScheduleCache;
   private final OprsCache          oprsCache;
+  private final RankingsCache      rankingsCache;
 
   protected Analyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
                      EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
-                     OprsCache teamOprsCache) {
+                     OprsCache teamOprsCache, RankingsCache rankingsCache) {
     this.matchEntryDB = matchEntryDB;
     this.pitEntryDB = pitEntryDB;
     this.driveTeamEntryDB = driveTeamEntryDB;
     this.matchScheduleCache = matchScheduleCache;
     this.oprsCache = teamOprsCache;
+    this.rankingsCache = rankingsCache;
   }
 
   protected abstract D computeData(Handle handle);
@@ -53,6 +56,7 @@ public abstract class Analyzer<D extends AnalysisData> {
 
     private Collection<ScoreBreakdown> scoreBreakdowns;
     private TeamOpr                    opr;
+    private RankingsCache.Team         rankings;
 
     Handle(String eventKey, int team) {
       this.eventKey = eventKey;
@@ -122,6 +126,15 @@ public abstract class Analyzer<D extends AnalysisData> {
       }
 
       return null;
+    }
+
+    public RankingsCache.Team getRankings() {
+      if (rankings == null) {
+        rankings = rankingsCache.get(eventKey)
+                                .value()
+                                .get(team);
+      }
+      return rankings;
     }
 
     private static Collection<List<DataEntry>> loadEntriesByMatch(EntryDatabase database,
