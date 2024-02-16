@@ -2,6 +2,7 @@ package org.victorrobotics.devilscoutserver.years._2024;
 
 import org.victorrobotics.bluealliance.Event.WinLossRecord;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
+import org.victorrobotics.devilscoutserver.analysis.data.NumberSummary;
 import org.victorrobotics.devilscoutserver.analysis.statistics.BooleanStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.NumberStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.OprStatistic;
@@ -37,15 +38,20 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
       this.value = value;
     }
 
+    @Override
+    public String toString() {
+      return value;
+    }
+
     static DrivetrainType of(Integer index) {
       return index == null ? null : VALUES[index];
     }
   }
 
-  static record DriveTeamRadar(Number communication,
-                               Number strategy,
-                               Number adaptability,
-                               Number professionalism) {}
+  static record DriveTeamRadar(Double communication,
+                               Double strategy,
+                               Double adaptability,
+                               Double professionalism) {}
 
   static record Data(WinLossRecord wlt,
                      Map<String, Integer> rankingPoints,
@@ -53,7 +59,8 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                      DriveTeamRadar driveTeamRadar,
                      DrivetrainType drivetrain,
                      Integer weight,
-                     Integer size) {}
+                     Integer size,
+                     NumberSummary speed) {}
 
   public CrescendoAnalyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
                            EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
@@ -73,7 +80,9 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                     mostCommon(extractData(handle.getPitEntries(), "/specs/weight",
                                            DataEntry::getInteger)),
                     mostCommon(extractData(handle.getPitEntries(), "/specs/size",
-                                           DataEntry::getInteger)));
+                                           DataEntry::getInteger)),
+                    summarizeNumbers(extractDataDeep(handle.getMatchEntries(), "/general/speed",
+                                                     DataEntry::getInteger, Analyzer::average)));
   }
 
   private static DriveTeamRadar driveTeamRadar(Handle handle) {
@@ -94,7 +103,11 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
     return List.of(new StatisticsPage("Summary",
                                       List.of(new WltStatistic(data.wlt()),
                                               new RankingPointsStatistic(data.rankingPoints()),
-                                              new OprStatistic(data.opr()), driveTeamRadar(data))));
+                                              new OprStatistic(data.opr()), driveTeamRadar(data))),
+                   new StatisticsPage("Specs",
+                                      List.of(new StringStatistic("Drivetrain", data.drivetrain),
+                                              new StringStatistic("Weight", data.weight, " lbs"),
+                                              new StringStatistic("Size", data.size, " in"))));
   }
 
   private static RadarStatistic driveTeamRadar(Data data) {
@@ -111,24 +124,6 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                                                        new RadarPoint("Professionalism",
                                                                       data.driveTeamRadar()
                                                                           .professionalism())));
-  }
-
-  private StatisticsPage specsPage(Handle handle) {
-    return new StatisticsPage("Specs",
-                              List.of(StringStatistic.mostCommonDirectPit("Drivetrain",
-                                                                          handle.getPitEntries(),
-                                                                          "/specs/drivetrain",
-                                                                          List.of("Swerve", "Tank",
-                                                                                  "Mecanum",
-                                                                                  "Other")),
-                                      StringStatistic.mostCommonDirectPit("Weight",
-                                                                          handle.getPitEntries(),
-                                                                          "/specs/weight"),
-                                      StringStatistic.mostCommonDirectPit("Chassis Size",
-                                                                          handle.getPitEntries(),
-                                                                          "/specs/size"),
-                                      NumberStatistic.directMatch("Speed", handle.getMatchEntries(),
-                                                                  "/general/speed")));
   }
 
   private StatisticsPage autoPage(Handle handle) {

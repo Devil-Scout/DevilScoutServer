@@ -8,12 +8,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class StringStatistic extends Statistic {
+  @JsonProperty()
   public final String value;
 
   public StringStatistic(String name, String value) {
     super(StatisticType.STRING, name);
     this.value = value;
+  }
+
+  public StringStatistic(String name, Object value) {
+    this(name, value == null ? null : value.toString());
+  }
+
+  public StringStatistic(String name, Object value, String suffix) {
+    this(name, value == null ? null : (value.toString() + suffix));
   }
 
   public static StringStatistic

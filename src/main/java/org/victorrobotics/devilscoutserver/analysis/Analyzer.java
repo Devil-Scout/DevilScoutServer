@@ -1,6 +1,7 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
 import org.victorrobotics.bluealliance.Match.ScoreBreakdown;
+import org.victorrobotics.devilscoutserver.analysis.data.NumberSummary;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
@@ -180,7 +181,7 @@ public abstract class Analyzer<D> {
                   .toList();
   }
 
-  protected static Number average(Iterable<? extends Number> data) {
+  protected static Double average(Iterable<? extends Number> data) {
     int count = 0;
     double sum = 0;
     for (Number num : data) {
@@ -204,5 +205,38 @@ public abstract class Analyzer<D> {
       }
     }
     return mostCommon;
+  }
+
+  protected static NumberSummary summarizeNumbers(Iterable<? extends Number> data) {
+    int count = 0;
+    double min = Double.POSITIVE_INFINITY;
+    double max = Double.NEGATIVE_INFINITY;
+    double sum = 0;
+    double sumSquared = 0;
+
+    for (Number number : data) {
+      if (number == null) continue;
+
+      double val = number.doubleValue();
+      sum += val;
+      sumSquared += val * val;
+      count++;
+
+      if (val > max) {
+        max = val;
+      }
+      if (val < min) {
+        min = val;
+      }
+    }
+
+    if (count == 0) {
+      return NumberSummary.NO_DATA;
+    }
+
+    double mean = sum / count;
+    double stddev = Math.sqrt(Math.abs(sumSquared - (sum * sum / count)) / count);
+
+    return new NumberSummary(count, min, max, mean, stddev);
   }
 }
