@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -165,8 +166,13 @@ public abstract class Analyzer<D> {
 
   protected static <T> Collection<T> extractData(Collection<DataEntry> entries, String path,
                                                  BiFunction<DataEntry, String, T> extractor) {
+    return extractData(entries, e -> extractor.apply(e, path));
+  }
+
+  protected static <T> Collection<T> extractData(Collection<DataEntry> entries,
+                                                 Function<DataEntry, T> extractor) {
     return entries.stream()
-                  .map(e -> extractor.apply(e, path))
+                  .map(extractor::apply)
                   .toList();
   }
 
@@ -175,8 +181,15 @@ public abstract class Analyzer<D> {
       extractDataDeep(Collection<? extends Collection<DataEntry>> entries, String path,
                       BiFunction<DataEntry, String, I> extractor,
                       Function<Collection<I>, T> reducer) {
+    return extractDataDeep(entries, e -> extractor.apply(e, path), reducer);
+  }
+
+  protected static <I, T>
+      Collection<T>
+      extractDataDeep(Collection<? extends Collection<DataEntry>> entries,
+                      Function<DataEntry, I> extractor, Function<Collection<I>, T> reducer) {
     return entries.stream()
-                  .map(e -> extractData(e, path, extractor))
+                  .map(e -> extractData(e, extractor))
                   .map(reducer)
                   .toList();
   }
@@ -238,5 +251,14 @@ public abstract class Analyzer<D> {
     double stddev = Math.sqrt(Math.abs(sumSquared - (sum * sum / count)) / count);
 
     return new NumberSummary(count, min, max, mean, stddev);
+  }
+
+  // Reason for wildcard: Gradle can't resolve type constraint
+  protected static <T extends Comparable<?>> Map<T, Integer> countDistinct(Iterable<T> data) {
+    Map<T, Integer> map = new ConcurrentSkipListMap<>(); // for sorted keys
+    for (T item : data) {
+      map.compute(item, (k, count) -> count == null ? 1 : (count + 1));
+    }
+    return map;
   }
 }

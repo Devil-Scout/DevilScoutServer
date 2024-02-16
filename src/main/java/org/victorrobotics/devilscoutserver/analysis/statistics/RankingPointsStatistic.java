@@ -7,6 +7,6 @@ public class RankingPointsStatistic extends Statistic {
 
   public RankingPointsStatistic(Map<String, Integer> rankingPoints) {
     super(StatisticType.RP, "Ranking Points");
-    this.rankingPoints = rankingPoints == null ? Map.of() : rankingPoints;
+    this.rankingPoints = rankingPoints;
   }
 }

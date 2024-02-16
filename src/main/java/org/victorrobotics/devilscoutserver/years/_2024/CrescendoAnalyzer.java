@@ -3,7 +3,6 @@ package org.victorrobotics.devilscoutserver.years._2024;
 import org.victorrobotics.bluealliance.Event.WinLossRecord;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
 import org.victorrobotics.devilscoutserver.analysis.data.NumberSummary;
-import org.victorrobotics.devilscoutserver.analysis.statistics.BooleanStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.NumberStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.OprStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.PieChartStatistic;
@@ -60,7 +59,9 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                      DrivetrainType drivetrain,
                      Integer weight,
                      Integer size,
-                     NumberSummary speed) {}
+                     NumberSummary speed,
+                     Map<Integer, Integer> autoStartPositions,
+                     NumberSummary autoNotes) {}
 
   public CrescendoAnalyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
                            EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
@@ -73,7 +74,7 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
   protected Data computeData(Handle handle) {
     return new Data(handle.getRankings()
                           .getWinLossRecord(),
-                    Map.of(), handle.getOpr(), driveTeamRadar(handle),
+                    null, handle.getOpr(), driveTeamRadar(handle),
                     DrivetrainType.of(mostCommon(extractData(handle.getPitEntries(),
                                                              "/specs/drivetrain",
                                                              DataEntry::getInteger))),
@@ -82,7 +83,12 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                     mostCommon(extractData(handle.getPitEntries(), "/specs/size",
                                            DataEntry::getInteger)),
                     summarizeNumbers(extractDataDeep(handle.getMatchEntries(), "/general/speed",
-                                                     DataEntry::getInteger, Analyzer::average)));
+                                                     DataEntry::getInteger, Analyzer::average)),
+                    countDistinct(extractDataDeep(handle.getMatchEntries(), "/auto/start_pos",
+                                                  DataEntry::getInteger, Analyzer::mostCommon)),
+                    summarizeNumbers(extractDataDeep(handle.getMatchEntries(),
+                                                     CrescendoAnalyzer::autoNoteCount,
+                                                     Analyzer::average)));
   }
 
   private static DriveTeamRadar driveTeamRadar(Handle handle) {
@@ -105,9 +111,18 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                                               new RankingPointsStatistic(data.rankingPoints()),
                                               new OprStatistic(data.opr()), driveTeamRadar(data))),
                    new StatisticsPage("Specs",
-                                      List.of(new StringStatistic("Drivetrain", data.drivetrain),
-                                              new StringStatistic("Weight", data.weight, " lbs"),
-                                              new StringStatistic("Size", data.size, " in"))));
+                                      List.of(new StringStatistic("Drivetrain", data.drivetrain()),
+                                              new StringStatistic("Weight", data.weight(), " lbs"),
+                                              new StringStatistic("Size", data.size(), " in"))),
+                   new StatisticsPage("Auto",
+                                      List.of(new PieChartStatistic("Start Position",
+                                                                    data.autoStartPositions(),
+                                                                    List.of("Next to amp",
+                                                                            "Front of speaker",
+                                                                            "Next to speaker",
+                                                                            "Next to source")),
+                                              new NumberStatistic("Note Count",
+                                                                  data.autoNotes()))));
   }
 
   private static RadarStatistic driveTeamRadar(Data data) {
@@ -126,21 +141,7 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                                                                           .professionalism())));
   }
 
-  private StatisticsPage autoPage(Handle handle) {
-    return new StatisticsPage("Auto",
-                              List.of(PieChartStatistic.directMatch("Start Position",
-                                                                    handle.getMatchEntries(),
-                                                                    "/auto/start_pos",
-                                                                    List.of("Next to amp",
-                                                                            "Front of speaker",
-                                                                            "Next to speaker",
-                                                                            "Next to source")),
-                                      NumberStatistic.computedMatch("Note Count",
-                                                                    handle.getMatchEntries(),
-                                                                    CrescendoAnalyzer::matchNoteCount)));
-  }
-
-  private static Integer matchNoteCount(DataEntry match) {
+  private static Integer autoNoteCount(DataEntry match) {
     List<Integer> actions = match.getIntegers("/auto/routine");
     int scoreCount = 0;
     int pickupCount = 0;
@@ -162,59 +163,62 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
     return Math.min(scoreCount, pickupCount + 1);
   }
 
-  private StatisticsPage teleopPage(Handle handle) {
-    return new StatisticsPage("Teleop",
-                              List.of(NumberStatistic.computedMatch("Cycles per Minute",
-                                                                    handle.getMatchEntries(),
-                                                                    CrescendoAnalyzer::matchCyclesPerMinute),
-                                      PieChartStatistic.computedMatchCounts("Score Locations",
-                                                                            handle.getMatchEntries(),
-                                                                            List.of("Speaker",
-                                                                                    "Amp"),
-                                                                            CrescendoAnalyzer::matchScoreLocations),
-                                      PieChartStatistic.computedMatchCounts("Score Accuracy",
-                                                                            handle.getMatchEntries(),
-                                                                            List.of("Successful",
-                                                                                    "Missed"),
-                                                                            CrescendoAnalyzer::matchScoreAccuracy),
-                                      PieChartStatistic.computedMatchCounts("Pickup Locations",
-                                                                            handle.getMatchEntries(),
-                                                                            List.of("Source",
-                                                                                    "Ground"),
-                                                                            CrescendoAnalyzer::matchPickupLocations)));
-  }
+  // private StatisticsPage teleopPage(Handle handle) {
+  // return new StatisticsPage("Teleop",
+  // List.of(NumberStatistic.computedMatch("Cycles per Minute",
+  // handle.getMatchEntries(),
+  // CrescendoAnalyzer::matchCyclesPerMinute),
+  // PieChartStatistic.computedMatchCounts("Score Locations",
+  // handle.getMatchEntries(),
+  // List.of("Speaker",
+  // "Amp"),
+  // CrescendoAnalyzer::matchScoreLocations),
+  // PieChartStatistic.computedMatchCounts("Score Accuracy",
+  // handle.getMatchEntries(),
+  // List.of("Successful",
+  // "Missed"),
+  // CrescendoAnalyzer::matchScoreAccuracy),
+  // PieChartStatistic.computedMatchCounts("Pickup Locations",
+  // handle.getMatchEntries(),
+  // List.of("Source",
+  // "Ground"),
+  // CrescendoAnalyzer::matchPickupLocations)));
+  // }
 
-  private static Double matchCyclesPerMinute(DataEntry match) {
-    // We are assuming 2 minutes of play time
-    return (match.getInteger("/teleop/score_amp") + match.getInteger("/teleop/score_speaker"))
-        / 2.0;
-  }
+  // private static Double matchCyclesPerMinute(DataEntry match) {
+  // // We are assuming 2 minutes of play time
+  // return (match.getInteger("/teleop/score_amp") +
+  // match.getInteger("/teleop/score_speaker"))
+  // / 2.0;
+  // }
 
-  private static List<Integer> matchScoreLocations(DataEntry match) {
-    return List.of(match.getInteger("/teleop/score_speaker"),
-                   match.getInteger("/teleop/score_amp"));
-  }
+  // private static List<Integer> matchScoreLocations(DataEntry match) {
+  // return List.of(match.getInteger("/teleop/score_speaker"),
+  // match.getInteger("/teleop/score_amp"));
+  // }
 
-  private static List<Integer> matchScoreAccuracy(DataEntry match) {
-    int scores = match.getInteger("/teleop/score_speaker") + match.getInteger("/teleop/score_amp");
-    int attempts =
-        match.getInteger("/teleop/pickup_source") + match.getInteger("/teleop/pickup_ground");
-    return List.of(scores, attempts - scores);
-  }
+  // private static List<Integer> matchScoreAccuracy(DataEntry match) {
+  // int scores = match.getInteger("/teleop/score_speaker") +
+  // match.getInteger("/teleop/score_amp");
+  // int attempts =
+  // match.getInteger("/teleop/pickup_source") +
+  // match.getInteger("/teleop/pickup_ground");
+  // return List.of(scores, attempts - scores);
+  // }
 
-  private static List<Integer> matchPickupLocations(DataEntry match) {
-    return List.of(match.getInteger("/teleop/pickup_source"),
-                   match.getInteger("/teleop/pickup_ground"));
-  }
+  // private static List<Integer> matchPickupLocations(DataEntry match) {
+  // return List.of(match.getInteger("/teleop/pickup_source"),
+  // match.getInteger("/teleop/pickup_ground"));
+  // }
 
-  private StatisticsPage endgamePage(Handle handle) {
-    return new StatisticsPage("Endgame",
-                              List.of(PieChartStatistic.directMatch("Final Status",
-                                                                    handle.getMatchEntries(),
-                                                                    "/endgame/status",
-                                                                    List.of("None", "Parked",
-                                                                            "Onstage", "Harmony")),
-                                      BooleanStatistic.directMatch("Trap", handle.getMatchEntries(),
-                                                                   "/endgame/trap")));
-  }
+  // private StatisticsPage endgamePage(Handle handle) {
+  // return new StatisticsPage("Endgame",
+  // List.of(PieChartStatistic.directMatch("Final Status",
+  // handle.getMatchEntries(),
+  // "/endgame/status",
+  // List.of("None", "Parked",
+  // "Onstage", "Harmony")),
+  // BooleanStatistic.directMatch("Trap", handle.getMatchEntries(),
+  // "/endgame/trap")));
+  // }
 }
