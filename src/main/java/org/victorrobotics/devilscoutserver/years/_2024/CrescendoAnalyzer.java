@@ -23,15 +23,37 @@ import java.util.List;
 import java.util.Map;
 
 public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
-  public static record DriveTeamRadar(Number communication,
-                                      Number strategy,
-                                      Number adaptability,
-                                      Number professionalism) {}
+  enum DrivetrainType {
+    SWERVE("Swerve"),
+    TANK("Tank"),
+    MECANUM("Mecanum"),
+    OTHER("Other");
 
-  public static record Data(WinLossRecord wlt,
-                            Map<String, Integer> rankingPoints,
-                            TeamOpr opr,
-                            DriveTeamRadar driveTeamRadar) {}
+    static final DrivetrainType[] VALUES = values();
+
+    final String value;
+
+    DrivetrainType(String value) {
+      this.value = value;
+    }
+
+    static DrivetrainType of(Integer index) {
+      return index == null ? null : VALUES[index];
+    }
+  }
+
+  static record DriveTeamRadar(Number communication,
+                               Number strategy,
+                               Number adaptability,
+                               Number professionalism) {}
+
+  static record Data(WinLossRecord wlt,
+                     Map<String, Integer> rankingPoints,
+                     TeamOpr opr,
+                     DriveTeamRadar driveTeamRadar,
+                     DrivetrainType drivetrain,
+                     Integer weight,
+                     Integer size) {}
 
   public CrescendoAnalyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
                            EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
@@ -44,7 +66,14 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
   protected Data computeData(Handle handle) {
     return new Data(handle.getRankings()
                           .getWinLossRecord(),
-                    Map.of(), handle.getOpr(), driveTeamRadar(handle));
+                    Map.of(), handle.getOpr(), driveTeamRadar(handle),
+                    DrivetrainType.of(mostCommon(extractData(handle.getPitEntries(),
+                                                             "/specs/drivetrain",
+                                                             DataEntry::getInteger))),
+                    mostCommon(extractData(handle.getPitEntries(), "/specs/weight",
+                                           DataEntry::getInteger)),
+                    mostCommon(extractData(handle.getPitEntries(), "/specs/size",
+                                           DataEntry::getInteger)));
   }
 
   private static DriveTeamRadar driveTeamRadar(Handle handle) {
@@ -62,16 +91,10 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
 
   @Override
   protected List<StatisticsPage> generateStatistics(Data data) {
-    // return List.of(summaryPage(handle), specsPage(handle), autoPage(handle),
-    // teleopPage(handle), endgamePage(handle));
-    return List.of(summaryPage(data));
-  }
-
-  private static StatisticsPage summaryPage(Data data) {
-    return new StatisticsPage("Summary",
-                              List.of(new WltStatistic(data.wlt()),
-                                      new RankingPointsStatistic(data.rankingPoints()),
-                                      new OprStatistic(data.opr()), driveTeamRadar(data)));
+    return List.of(new StatisticsPage("Summary",
+                                      List.of(new WltStatistic(data.wlt()),
+                                              new RankingPointsStatistic(data.rankingPoints()),
+                                              new OprStatistic(data.opr()), driveTeamRadar(data))));
   }
 
   private static RadarStatistic driveTeamRadar(Data data) {

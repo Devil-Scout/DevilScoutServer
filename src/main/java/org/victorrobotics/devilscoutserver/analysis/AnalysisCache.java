@@ -1,11 +1,13 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
-import java.util.Collections;
+import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
+
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
@@ -41,17 +43,16 @@ public class AnalysisCache {
   private final Map<Integer, Analyzer<?>>     analyzers;
   private final BlockingQueue<DelayedRefresh> refreshQueue;
 
-  private final ConcurrentMap<String, Object>               individualData;
-  private final ConcurrentMap<String, Map<Integer, Object>> eventData;
-  private final ConcurrentMap<Integer, Map<String, Object>> teamData;
+  private final ConcurrentMap<String, Object> individualData;
+
+  private final ConcurrentMap<String, Map<Integer, List<StatisticsPage>>> eventTeamStatistics;
 
   public AnalysisCache(Map<Integer, Analyzer<?>> analyzers) {
     this.analyzers = analyzers;
     this.refreshQueue = new DelayQueue<>();
 
-    individualData = new ConcurrentHashMap<>(0);
-    eventData = new ConcurrentHashMap<>(0);
-    teamData = new ConcurrentHashMap<>(0);
+    individualData = new ConcurrentHashMap<>();
+    eventTeamStatistics = new ConcurrentHashMap<>();
   }
 
   public void scheduleRefresh(String eventKey, int team) {
@@ -76,20 +77,31 @@ public class AnalysisCache {
     }
   }
 
-  private void refresh(String eventKey, int team) {
+  private <D> void refresh(String eventKey, int team) {
     try {
       long start = System.currentTimeMillis();
-      Analyzer<?> analyzer = analyzers.get(extractYear(eventKey));
-      Object data = analyzer.computeData(eventKey, team);
+      @SuppressWarnings("unchecked") // SHOULD be safe
+      Analyzer<D> analyzer = (Analyzer<D>) analyzers.get(extractYear(eventKey));
+      D data = analyzer.computeData(eventKey, team);
+
       if (data == null) {
         individualData.remove(team + "@" + eventKey);
-        Optional.ofNullable(eventData.get(eventKey))
-                .ifPresent(m -> m.remove(team));
+
+        Map<Integer, List<StatisticsPage>> teamStatistics = eventTeamStatistics.get(eventKey);
+        if (teamStatistics != null) {
+          teamStatistics.remove(team);
+          if (teamStatistics.isEmpty()) {
+            eventTeamStatistics.remove(eventKey);
+          }
+        }
       } else {
         individualData.put(team + "@" + eventKey, data);
-        eventData.computeIfAbsent(eventKey, x -> new ConcurrentHashMap<>(0))
-                 .put(team, data);
+
+        List<StatisticsPage> uiStats = analyzer.generateStatistics(data);
+        eventTeamStatistics.computeIfAbsent(eventKey, x -> new ConcurrentSkipListMap<>())
+                           .put(team, uiStats);
       }
+
       LOGGER.info("Refreshed {} at {} in {}ms", team, eventKey, System.currentTimeMillis() - start);
     } catch (Exception e) {
       LOGGER.warn("Exception while refreshing {} at {}:", team, eventKey, e);
@@ -100,19 +112,11 @@ public class AnalysisCache {
     return individualData.get(team + "@" + eventKey);
   }
 
-  public Map<Integer, Object> getEvent(String eventKey) {
-    return unmodifiable(eventData.get(eventKey));
-  }
-
-  public Map<String, Object> getTeam(int team) {
-    return unmodifiable(teamData.get(team));
+  public Map<Integer, List<StatisticsPage>> getStatistics(String eventKey) {
+    return eventTeamStatistics.get(eventKey);
   }
 
   private static int extractYear(String eventKey) {
     return Integer.parseInt(eventKey.substring(0, 4));
-  }
-
-  private static <K, V> Map<K, V> unmodifiable(Map<K, V> source) {
-    return source == null ? null : Collections.unmodifiableMap(source);
   }
 }

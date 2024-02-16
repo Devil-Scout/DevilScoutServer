@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public abstract class Analyzer<D> {
   private final EntryDatabase matchEntryDB;
@@ -191,7 +192,17 @@ public abstract class Analyzer<D> {
     return count == 0 ? null : Double.valueOf(sum / count);
   }
 
-  public static void main(String[] args) {
-    average(extractDataDeep(new ArrayList<>(), "/communication", DataEntry::getInteger, Analyzer::average));
+  protected static <T> T mostCommon(Collection<T> data) {
+    Map<T, Long> counts = data.stream()
+                              .collect(Collectors.groupingBy(x -> x, Collectors.counting()));
+    T mostCommon = null;
+    long maxCount = 0;
+    for (Map.Entry<T, Long> entry : counts.entrySet()) {
+      if (entry.getValue() > maxCount) {
+        maxCount = entry.getValue();
+        mostCommon = entry.getKey();
+      }
+    }
+    return mostCommon;
   }
 }

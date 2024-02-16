@@ -21,15 +21,18 @@ public final class AnalysisController extends Controller {
    * </ul>
    */
   public static void teams(Context ctx) {
-    getValidSession(ctx);
+    Session session = getValidSession(ctx);
 
     String eventKey = ctx.pathParam(EVENT_KEY_PATH_PARAM);
     if (!eventsCache().containsKey(eventKey)) {
       throw new NotFoundResponse();
     }
 
-    // TODO: verify team is permitted to access event analysis
+    verifyAnalysisAccess(eventKey, session);
+    ctx.json(analysisCache().getStatistics(eventKey));
+  }
 
-    // TODO: json(analysis)
+  private static void verifyAnalysisAccess(String eventKey, Session session) {
+    // TODO: verify team is permitted to access event analysis
   }
 }

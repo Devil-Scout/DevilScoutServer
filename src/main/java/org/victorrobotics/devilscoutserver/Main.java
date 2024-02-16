@@ -46,11 +46,12 @@ public class Main {
     LOGGER.info("Database connected");
 
     LOGGER.info("Initializing analysis...");
+    // Hack to pass circular references on final members
     Map<Integer, Analyzer<?>> analyzers = new HashMap<>();
     AnalysisCache analysisCache = new AnalysisCache(analyzers);
     Controller.setAnalysisCache(analysisCache);
 
-    OprsCache oprsCache = new OprsCache();
+    OprsCache oprsCache = new OprsCache(analysisCache);
     RankingsCache rankingsCache = new RankingsCache(analysisCache);
     analyzers.put(2024,
                   new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),

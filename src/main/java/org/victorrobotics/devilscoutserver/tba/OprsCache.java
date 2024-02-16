@@ -3,6 +3,7 @@ package org.victorrobotics.devilscoutserver.tba;
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.bluealliance.Event;
 import org.victorrobotics.bluealliance.Event.OPRs;
+import org.victorrobotics.devilscoutserver.analysis.AnalysisCache;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
 import org.victorrobotics.devilscoutserver.tba.OprsCache.Oprs;
 
@@ -50,18 +51,20 @@ public class OprsCache extends BlueAllianceCache<String, OPRs, Oprs> {
           && Double.doubleToLongBits(dpr) == Double.doubleToLongBits(other.dpr)
           && Double.doubleToLongBits(ccwm) == Double.doubleToLongBits(other.ccwm);
     }
+
   }
 
-  public static class Oprs implements Cacheable<OPRs> {
+  public class Oprs implements Cacheable<OPRs> {
+    private final String                eventKey;
     private final Map<Integer, TeamOpr> teamOprs;
 
-    public Oprs(OPRs oprs) {
+    public Oprs(String eventKey, OPRs oprs) {
+      this.eventKey = eventKey;
       this.teamOprs = new LinkedHashMap<>();
       update(oprs);
     }
 
     @Override
-    @SuppressWarnings("java:S1244") // floating point equality
     public boolean update(OPRs oprs) {
       if (oprs == null || oprs.offensivePowerRatings == null) {
         boolean change = !teamOprs.isEmpty();
@@ -78,34 +81,38 @@ public class OprsCache extends BlueAllianceCache<String, OPRs, Oprs> {
                              .retainAll(teams);
 
       for (int team : teams) {
-        TeamOpr teamOpr = teamOprs.get(team);
-        String key = "frc" + team;
-        if (teamOpr == null) {
-          teamOpr = new TeamOpr();
-          teamOpr.opr = oprs.offensivePowerRatings.get(key);
-          teamOpr.dpr = oprs.defensivePowerRatings.get(key);
-          teamOpr.ccwm = oprs.contributionsToWinMargin.get(key);
-          teamOprs.put(team, teamOpr);
-          continue;
-        }
-
-        double opr = oprs.offensivePowerRatings.get(key);
-        if (teamOpr.opr != opr) {
-          teamOpr.opr = opr;
+        if (updateTeam(team, oprs)) {
           mods = true;
+          analysis.scheduleRefresh(eventKey, team);
         }
+        mods |= updateTeam(team, oprs);
+      }
 
-        double dpr = oprs.defensivePowerRatings.get(key);
-        if (teamOpr.dpr != dpr) {
-          teamOpr.dpr = dpr;
-          mods = true;
-        }
+      return mods;
+    }
 
-        double ccwm = oprs.contributionsToWinMargin.get(key);
-        if (teamOpr.ccwm != ccwm) {
-          teamOpr.ccwm = ccwm;
-          mods = true;
-        }
+    @SuppressWarnings("java:S1244") // floating point equality
+    private boolean updateTeam(int team, OPRs oprs) {
+      String teamKey = "frc" + team;
+      TeamOpr teamOpr = teamOprs.computeIfAbsent(team, t -> new TeamOpr());
+      boolean mods = false;
+
+      Double opr = oprs.offensivePowerRatings.get(teamKey);
+      if (opr != null && opr != teamOpr.opr) {
+        teamOpr.opr = opr;
+        mods = true;
+      }
+
+      Double dpr = oprs.defensivePowerRatings.get(teamKey);
+      if (dpr != null && dpr != teamOpr.dpr) {
+        teamOpr.dpr = dpr;
+        mods = true;
+      }
+
+      Double ccwm = oprs.contributionsToWinMargin.get(teamKey);
+      if (ccwm != null && ccwm != teamOpr.ccwm) {
+        teamOpr.ccwm = ccwm;
+        mods = true;
       }
 
       return mods;
@@ -124,6 +131,12 @@ public class OprsCache extends BlueAllianceCache<String, OPRs, Oprs> {
     }
   }
 
+  private final AnalysisCache analysis;
+
+  public OprsCache(AnalysisCache analysis) {
+    this.analysis = analysis;
+  }
+
   @Override
   protected Endpoint<OPRs> getEndpoint(String eventKey) {
     return Event.OPRs.endpointForEvent(eventKey);
@@ -131,6 +144,6 @@ public class OprsCache extends BlueAllianceCache<String, OPRs, Oprs> {
 
   @Override
   protected Oprs createValue(String key, OPRs data) {
-    return new Oprs(data);
+    return new Oprs(key, data);
   }
 }
