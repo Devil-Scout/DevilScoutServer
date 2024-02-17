@@ -11,16 +11,12 @@ public class RadarStatistic extends Statistic {
     super(StatisticType.RADAR, name);
     this.max = max;
 
-    if (points.isEmpty()) {
-      this.points = null;
-    } else {
-      // Fixed iteration order
-      this.points = new LinkedHashMap<>();
-      for (Map.Entry<?, Number> point : points.entrySet()) {
-        this.points.put(point.getKey()
-                             .toString(),
-                        point.getValue());
-      }
+    // Fixed iteration order
+    this.points = new LinkedHashMap<>();
+    for (Map.Entry<?, Number> point : points.entrySet()) {
+      this.points.put(point.getKey()
+                           .toString(),
+                      point.getValue());
     }
   }
 }
