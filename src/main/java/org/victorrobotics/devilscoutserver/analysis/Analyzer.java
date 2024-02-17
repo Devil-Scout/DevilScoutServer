@@ -257,7 +257,9 @@ public abstract class Analyzer<D> {
   protected static <T extends Comparable<?>> Map<T, Integer> countDistinct(Iterable<T> data) {
     Map<T, Integer> map = new ConcurrentSkipListMap<>(); // for sorted keys
     for (T item : data) {
-      map.compute(item, (k, count) -> count == null ? 1 : (count + 1));
+      if (item != null) {
+        map.compute(item, (k, count) -> count == null ? 1 : (count + 1));
+      }
     }
     return map;
   }

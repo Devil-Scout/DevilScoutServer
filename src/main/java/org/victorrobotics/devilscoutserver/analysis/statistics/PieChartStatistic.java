@@ -15,6 +15,6 @@ public final class PieChartStatistic extends Statistic {
 
   public PieChartStatistic(String name, Map<?, Integer> slices) {
     super(StatisticType.PIE_CHART, name);
-    this.slices = Map.copyOf(slices);
+    this.slices = slices.isEmpty() ? null : Map.copyOf(slices);
   }
 }

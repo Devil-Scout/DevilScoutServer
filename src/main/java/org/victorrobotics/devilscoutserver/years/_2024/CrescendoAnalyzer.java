@@ -101,6 +101,25 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
     }
   }
 
+  enum FinalStatus {
+    NONE("None"),
+    PARK("Parked"),
+    ONSTAGE("Onstage"),
+    HARMONY("Harmony");
+
+    static final FinalStatus[] VALUES = values();
+
+    final String value;
+
+    FinalStatus(String value) {
+      this.value = value;
+    }
+
+    static FinalStatus of(Integer index) {
+      return index == null ? null : VALUES[index];
+    }
+  }
+
   static record Data(WinLossRecord wlt,
                      Map<String, Integer> rankingPoints,
                      TeamOpr opr,
@@ -117,7 +136,9 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                      NumberSummary teleopCyclesPerMinute,
                      Double teleopScoreAccuracy,
                      Map<ScoreLocation, Integer> teleopScoreCounts,
-                     Map<PickupLocation, Integer> teleopPickupCounts) {}
+                     Map<PickupLocation, Integer> teleopPickupCounts,
+                     Map<FinalStatus, Integer> endgameStatusCounts,
+                     Double trapRate) {}
 
   public CrescendoAnalyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
                            EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
@@ -165,7 +186,13 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                                               Analyzer::averageCounts)),
                     sumCounts(extractDataDeep(handle.getMatchEntries(),
                                               CrescendoAnalyzer::teleopPickupLocations,
-                                              Analyzer::averageCounts)));
+                                              Analyzer::averageCounts)),
+                    countDistinct(map(extractDataDeep(handle.getMatchEntries(), "/auto/start_pos",
+                                                      DataEntry::getInteger, Analyzer::mostCommon),
+                                      FinalStatus::of)),
+                    average(map(extractDataDeep(handle.getMatchEntries(), "/endgame/trap",
+                                                DataEntry::getBoolean, Analyzer::mostCommon),
+                                b -> b ? 1 : 0)));
   }
 
   @Override
@@ -190,7 +217,11 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                                               new PieChartStatistic("Score Locations",
                                                                     data.teleopScoreCounts()),
                                               new PieChartStatistic("Pickup Locations",
-                                                                    data.teleopPickupCounts()))));
+                                                                    data.teleopPickupCounts()))),
+                   new StatisticsPage("Endgame",
+                                      List.of(new PieChartStatistic("Final Status",
+                                                                    data.endgameStatusCounts()),
+                                              new BooleanStatistic("Trap Rate", data.trapRate()))));
   }
 
   private static RadarStatistic driveTeamRadar(Data data) {
@@ -272,15 +303,4 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
     return Map.of(PickupLocation.GROUND, match.getInteger("/teleop/pickup_ground"),
                   PickupLocation.SOURCE, match.getInteger("/teleop/pickup_source"));
   }
-
-  // private StatisticsPage endgamePage(Handle handle) {
-  // return new StatisticsPage("Endgame",
-  // List.of(PieChartStatistic.directMatch("Final Status",
-  // handle.getMatchEntries(),
-  // "/endgame/status",
-  // List.of("None", "Parked",
-  // "Onstage", "Harmony")),
-  // BooleanStatistic.directMatch("Trap", handle.getMatchEntries(),
-  // "/endgame/trap")));
-  // }
 }
