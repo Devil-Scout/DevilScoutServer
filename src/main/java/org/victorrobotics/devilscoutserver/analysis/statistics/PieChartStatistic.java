@@ -1,20 +1,14 @@
 package org.victorrobotics.devilscoutserver.analysis.statistics;
 
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 public final class PieChartStatistic extends Statistic {
-  public static record LabeledCount(String label,
-                                    int count) {}
+  public final SortedMap<Comparable<?>, Number> slices;
 
-  public final Map<Object, Integer> slices;
-
-  public PieChartStatistic(String name) {
+  public PieChartStatistic(String name, Map<? extends Comparable<?>, ? extends Number> slices) {
     super(StatisticType.PIE_CHART, name);
-    this.slices = null;
-  }
-
-  public PieChartStatistic(String name, Map<?, Integer> slices) {
-    super(StatisticType.PIE_CHART, name);
-    this.slices = slices.isEmpty() ? null : Map.copyOf(slices);
+    this.slices = slices.isEmpty() ? null : new TreeMap<>(slices);
   }
 }

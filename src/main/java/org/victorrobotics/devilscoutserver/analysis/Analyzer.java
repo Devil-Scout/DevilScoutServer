@@ -18,7 +18,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -178,16 +178,16 @@ public abstract class Analyzer<D> {
 
   protected static <I, T>
       Collection<T>
-      extractDataDeep(Collection<? extends Collection<DataEntry>> entries, String path,
-                      BiFunction<DataEntry, String, I> extractor,
-                      Function<Collection<I>, T> reducer) {
-    return extractDataDeep(entries, e -> extractor.apply(e, path), reducer);
+      extractMergeData(Collection<? extends Collection<DataEntry>> entries, String path,
+                       BiFunction<DataEntry, String, I> extractor,
+                       Function<Collection<I>, T> reducer) {
+    return extractMergeData(entries, e -> extractor.apply(e, path), reducer);
   }
 
   protected static <I, T>
       Collection<T>
-      extractDataDeep(Collection<? extends Collection<DataEntry>> entries,
-                      Function<DataEntry, I> extractor, Function<Collection<I>, T> reducer) {
+      extractMergeData(Collection<? extends Collection<DataEntry>> entries,
+                       Function<DataEntry, I> extractor, Function<Collection<I>, T> reducer) {
     return entries.stream()
                   .map(e -> extractData(e, extractor))
                   .map(reducer)
@@ -253,9 +253,8 @@ public abstract class Analyzer<D> {
     return new NumberSummary(count, min, max, mean, stddev);
   }
 
-  // Reason for wildcard: Gradle can't resolve type constraint
-  protected static <T extends Comparable<?>> Map<T, Integer> countDistinct(Iterable<T> data) {
-    Map<T, Integer> map = new ConcurrentSkipListMap<>(); // for sorted keys
+  protected static <T extends Comparable<T>> Map<T, Integer> countDistinct(Iterable<T> data) {
+    Map<T, Integer> map = new TreeMap<>(); // for sorted keys
     for (T item : data) {
       if (item != null) {
         map.compute(item, (k, count) -> count == null ? 1 : (count + 1));

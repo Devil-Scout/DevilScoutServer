@@ -500,7 +500,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/TeamStatistics"
+                  $ref: "#/components/schemas/EventTeamStatistics"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -963,21 +963,20 @@ components:
         type: object
         minProperties: 1
         additionalProperties: {}
-    TeamStatistics:
-      properties:
-        team:
-          $ref: "#/components/x-hidden/teamNum"
-        data:
-          type: array
-          items:
-            title: StatisticPage
-            properties:
-              title:
-                type: string
-              statistics:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Statistic"
+    EventTeamStatistics:
+      propertyNames:
+        $ref: "#/components/x-hidden/teamNum"
+      additionalProperties:
+        type: array
+        items:
+          title: StatisticPage
+          properties:
+            title:
+              type: string
+            statistics:
+              type: array
+              items:
+                $ref: "#/components/schemas/Statistic"
       required:
         - team
         - data
@@ -1005,11 +1004,13 @@ components:
                 type: string
                 enum:
                   - NUMBER
+              min:
+                type: number
+              max:
+                type: number
               mean:
                 type: number
               stddev:
-                type: number
-              max:
                 type: number
             required:
               - type
@@ -1033,19 +1034,12 @@ components:
                 type: string
                 enum:
                   - PIE_CHART
-              total:
-                type: integer
               slices:
-                type: array
-                items:
-                  properties:
-                    label:
-                      type: string
-                    count:
-                      type: integer
+                type: object
+                additionalProperties:
+                  type: number
             required:
               - type
-              - total
           - title: RadarStatistic
             properties:
               type:
@@ -1062,6 +1056,8 @@ components:
                       type: string
                     value:
                       type: number
+                  required:
+                    - label
             required:
               - type
               - max
@@ -1074,6 +1070,8 @@ components:
                   - RP
               rankingPoints:
                 type: object
+                additionalProperties:
+                  type: integer
             required:
               - type
           - title: StringStatistic

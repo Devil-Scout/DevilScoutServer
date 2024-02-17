@@ -4,7 +4,11 @@ import java.util.List;
 
 public class RadarStatistic extends Statistic {
   public static record RadarPoint(String label,
-                                  Number value) {}
+                                  double value) {
+    public static RadarPoint of(String label, Number value) {
+      return value == null ? null : new RadarPoint(label, value.doubleValue());
+    }
+  }
 
   public final double           max;
   public final List<RadarPoint> points;

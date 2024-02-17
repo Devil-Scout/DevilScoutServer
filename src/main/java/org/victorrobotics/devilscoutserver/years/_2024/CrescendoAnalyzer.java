@@ -23,6 +23,7 @@ import org.victorrobotics.devilscoutserver.tba.RankingsCache;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("java:S1192") // repeating paths is more clear here
 public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
   enum DrivetrainType {
     SWERVE("Swerve"),
@@ -152,14 +153,14 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
     return new Data(handle.getRankings()
                           .getWinLossRecord(),
                     null, handle.getOpr(),
-                    average(extractDataDeep(handle.getDriveTeamEntries(), "/communication",
-                                            DataEntry::getInteger, Analyzer::average)),
-                    average(extractDataDeep(handle.getDriveTeamEntries(), "/strategy",
-                                            DataEntry::getInteger, Analyzer::average)),
-                    average(extractDataDeep(handle.getDriveTeamEntries(), "/adaptability",
-                                            DataEntry::getInteger, Analyzer::average)),
-                    average(extractDataDeep(handle.getDriveTeamEntries(), "/professionalism",
-                                            DataEntry::getInteger, Analyzer::average)),
+                    average(extractMergeData(handle.getDriveTeamEntries(), "/communication",
+                                             DataEntry::getInteger, Analyzer::average)),
+                    average(extractMergeData(handle.getDriveTeamEntries(), "/strategy",
+                                             DataEntry::getInteger, Analyzer::average)),
+                    average(extractMergeData(handle.getDriveTeamEntries(), "/adaptability",
+                                             DataEntry::getInteger, Analyzer::average)),
+                    average(extractMergeData(handle.getDriveTeamEntries(), "/professionalism",
+                                             DataEntry::getInteger, Analyzer::average)),
                     mostCommon(map(extractData(handle.getPitEntries(), "/specs/drivetrain",
                                                DataEntry::getInteger),
                                    DrivetrainType::of)),
@@ -167,31 +168,31 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                                            DataEntry::getInteger)),
                     mostCommon(extractData(handle.getPitEntries(), "/specs/size",
                                            DataEntry::getInteger)),
-                    summarizeNumbers(extractDataDeep(handle.getMatchEntries(), "/general/speed",
-                                                     DataEntry::getInteger, Analyzer::average)),
-                    countDistinct(map(extractDataDeep(handle.getMatchEntries(), "/auto/start_pos",
-                                                      DataEntry::getInteger, Analyzer::mostCommon),
+                    summarizeNumbers(extractMergeData(handle.getMatchEntries(), "/general/speed",
+                                                      DataEntry::getInteger, Analyzer::average)),
+                    countDistinct(map(extractMergeData(handle.getMatchEntries(), "/auto/start_pos",
+                                                       DataEntry::getInteger, Analyzer::mostCommon),
                                       StartLocation::of)),
-                    summarizeNumbers(extractDataDeep(handle.getMatchEntries(),
-                                                     CrescendoAnalyzer::autoNoteCount,
-                                                     Analyzer::average)),
-                    summarizeNumbers(extractDataDeep(handle.getMatchEntries(),
-                                                     CrescendoAnalyzer::teleopCyclesPerMinute,
-                                                     Analyzer::average)),
-                    average(extractDataDeep(handle.getMatchEntries(),
-                                            CrescendoAnalyzer::teleopScoreAccuracy,
-                                            Analyzer::average)),
-                    sumCounts(extractDataDeep(handle.getMatchEntries(),
-                                              CrescendoAnalyzer::teleopScoreLocations,
-                                              Analyzer::averageCounts)),
-                    sumCounts(extractDataDeep(handle.getMatchEntries(),
-                                              CrescendoAnalyzer::teleopPickupLocations,
-                                              Analyzer::averageCounts)),
-                    countDistinct(map(extractDataDeep(handle.getMatchEntries(), "/auto/start_pos",
-                                                      DataEntry::getInteger, Analyzer::mostCommon),
+                    summarizeNumbers(extractMergeData(handle.getMatchEntries(),
+                                                      CrescendoAnalyzer::autoNoteCount,
+                                                      Analyzer::average)),
+                    summarizeNumbers(extractMergeData(handle.getMatchEntries(),
+                                                      CrescendoAnalyzer::teleopCyclesPerMinute,
+                                                      Analyzer::average)),
+                    average(extractMergeData(handle.getMatchEntries(),
+                                             CrescendoAnalyzer::teleopScoreAccuracy,
+                                             Analyzer::average)),
+                    sumCounts(extractMergeData(handle.getMatchEntries(),
+                                               CrescendoAnalyzer::teleopScoreLocations,
+                                               Analyzer::averageCounts)),
+                    sumCounts(extractMergeData(handle.getMatchEntries(),
+                                               CrescendoAnalyzer::teleopPickupLocations,
+                                               Analyzer::averageCounts)),
+                    countDistinct(map(extractMergeData(handle.getMatchEntries(), "/auto/start_pos",
+                                                       DataEntry::getInteger, Analyzer::mostCommon),
                                       FinalStatus::of)),
-                    average(map(extractDataDeep(handle.getMatchEntries(), "/endgame/trap",
-                                                DataEntry::getBoolean, Analyzer::mostCommon),
+                    average(map(extractMergeData(handle.getMatchEntries(), "/endgame/trap",
+                                                 DataEntry::getBoolean, Analyzer::mostCommon),
                                 b -> b ? 1 : 0)));
   }
 
@@ -226,12 +227,11 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
 
   private static RadarStatistic driveTeamRadar(Data data) {
     return new RadarStatistic("Drive Team", 5,
-                              List.of(new RadarPoint("Communication",
-                                                     data.driveTeamCommunication()),
-                                      new RadarPoint("Strategy", data.driveTeamStrategy()),
-                                      new RadarPoint("Adaptability", data.driveTeamAdaptability()),
-                                      new RadarPoint("Professionalism",
-                                                     data.driveTeamProfessionalism())));
+                              List.of(RadarPoint.of("Communication", data.driveTeamCommunication()),
+                                      RadarPoint.of("Strategy", data.driveTeamStrategy()),
+                                      RadarPoint.of("Adaptability", data.driveTeamAdaptability()),
+                                      RadarPoint.of("Professionalism",
+                                                    data.driveTeamProfessionalism())));
   }
 
   private static Integer autoNoteCount(DataEntry match) {
