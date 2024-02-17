@@ -1053,6 +1053,7 @@ components:
             required:
               - type
               - max
+              - points
           - title: RankingPointsStatistic
             properties:
               type:
