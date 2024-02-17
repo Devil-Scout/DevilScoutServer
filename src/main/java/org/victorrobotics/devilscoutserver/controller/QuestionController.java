@@ -1,14 +1,18 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.questions.Question;
+import org.victorrobotics.devilscoutserver.questions.Questions;
 
 import io.javalin.http.Context;
+import io.javalin.http.NotFoundResponse;
 
 public final class QuestionController extends Controller {
+  private static final String EVENT_KEY_PATH_PARAM = "eventKey";
+
   private QuestionController() {}
 
   /**
-   * GET /questions/match
+   * GET /questions/{eventKey}/match
    * <p>
    * Success: 200 {@link Question.Page}[]
    * <p>
@@ -21,14 +25,21 @@ public final class QuestionController extends Controller {
    */
   public static void matchQuestions(Context ctx) {
     getValidSession(ctx);
-    checkIfNoneMatch(ctx, questions().getMatchQuestionsHash());
 
-    ctx.json(questions().getMatchQuestionsJson());
-    setResponseEtag(ctx, questions().getMatchQuestionsHash());
+    String eventKey = ctx.pathParam(EVENT_KEY_PATH_PARAM);
+    if (!eventsCache().containsKey(eventKey)) {
+      throw new NotFoundResponse();
+    }
+
+    Questions questions = questions(eventKey);
+    checkIfNoneMatch(ctx, questions.getMatchQuestionsHash());
+
+    ctx.json(questions.getMatchQuestionsJson());
+    setResponseEtag(ctx, questions.getMatchQuestionsHash());
   }
 
   /**
-   * GET /questions/pit
+   * GET /questions/{eventKey}/pit
    * <p>
    * Success: 200 {@link Question.Page}[]
    * <p>
@@ -41,14 +52,21 @@ public final class QuestionController extends Controller {
    */
   public static void pitQuestions(Context ctx) {
     getValidSession(ctx);
-    checkIfNoneMatch(ctx, questions().getPitQuestionsHash());
 
-    ctx.json(questions().getPitQuestionsJson());
-    setResponseEtag(ctx, questions().getPitQuestionsHash());
+    String eventKey = ctx.pathParam(EVENT_KEY_PATH_PARAM);
+    if (!eventsCache().containsKey(eventKey)) {
+      throw new NotFoundResponse();
+    }
+
+    Questions questions = questions(eventKey);
+    checkIfNoneMatch(ctx, questions.getPitQuestionsHash());
+
+    ctx.json(questions.getPitQuestionsJson());
+    setResponseEtag(ctx, questions.getPitQuestionsHash());
   }
 
   /**
-   * GET /questions/drive-team
+   * GET /questions/{eventKey}/drive-team
    * <p>
    * Success: 200 {@link Question}[]
    * <p>
@@ -61,9 +79,16 @@ public final class QuestionController extends Controller {
    */
   public static void driveTeamQuestions(Context ctx) {
     getValidSession(ctx);
-    checkIfNoneMatch(ctx, questions().getDriveTeamQuestionsHash());
 
-    ctx.json(questions().getDriveTeamQuestionsJson());
-    setResponseEtag(ctx, questions().getDriveTeamQuestionsHash());
+    String eventKey = ctx.pathParam(EVENT_KEY_PATH_PARAM);
+    if (!eventsCache().containsKey(eventKey)) {
+      throw new NotFoundResponse();
+    }
+
+    Questions questions = questions(eventKey);
+    checkIfNoneMatch(ctx, questions.getDriveTeamQuestionsHash());
+
+    ctx.json(questions.getDriveTeamQuestionsJson());
+    setResponseEtag(ctx, questions.getDriveTeamQuestionsHash());
   }
 }

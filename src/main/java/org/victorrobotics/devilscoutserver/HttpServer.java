@@ -69,7 +69,7 @@ public class HttpServer {
           });
         });
 
-        path("questions", () -> {
+        path("questions/{eventKey}", () -> {
           get("match", QuestionController::matchQuestions);
           get("pit", QuestionController::pitQuestions);
           get("drive-team", QuestionController::driveTeamQuestions);

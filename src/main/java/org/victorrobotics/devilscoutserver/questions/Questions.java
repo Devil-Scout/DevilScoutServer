@@ -1,7 +1,6 @@
 package org.victorrobotics.devilscoutserver.questions;
 
 import static org.victorrobotics.devilscoutserver.EncodingUtil.base64Encode;
-import static org.victorrobotics.devilscoutserver.EncodingUtil.jsonDecode;
 import static org.victorrobotics.devilscoutserver.EncodingUtil.jsonEncode;
 
 import java.nio.charset.StandardCharsets;
@@ -9,10 +8,10 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
-public class Questions {
+public abstract class Questions {
   private List<Question.Page> matchQuestions;
   private List<Question.Page> pitQuestions;
-  private List<Question>     driveTeamQuestions;
+  private List<Question>      driveTeamQuestions;
 
   private String matchQuestionsJson;
   private String pitQuestionsJson;
@@ -22,63 +21,96 @@ public class Questions {
   private String pitQuestionsHash;
   private String driveTeamQuestionsHash;
 
-  public Questions() {
+  protected Questions() {
     reloadMatchQuestions();
     reloadPitQuestions();
     reloadDriveTeamQuestions();
   }
 
+  protected abstract List<Question.Page> matchQuestions();
+
+  protected abstract List<Question.Page> pitQuestions();
+
+  protected abstract List<Question> driveTeamQuestions();
+
   public void reloadMatchQuestions() {
-    matchQuestions = loadQuestions("/match_questions.json", Question.Page[].class);
+    matchQuestions = matchQuestions();
     matchQuestionsJson = jsonEncode(matchQuestions);
     matchQuestionsHash = hash(matchQuestionsJson);
   }
 
   public void reloadPitQuestions() {
-    pitQuestions = loadQuestions("/pit_questions.json", Question.Page[].class);
+    pitQuestions = pitQuestions();
     pitQuestionsJson = jsonEncode(pitQuestions);
     pitQuestionsHash = hash(pitQuestionsJson);
   }
 
   public void reloadDriveTeamQuestions() {
-    driveTeamQuestions = loadQuestions("/drive_team_questions.json", Question[].class);
+    driveTeamQuestions = driveTeamQuestions();
     driveTeamQuestionsJson = jsonEncode(driveTeamQuestions);
     driveTeamQuestionsHash = hash(driveTeamQuestionsJson);
   }
 
   public List<Question.Page> getMatchQuestions() {
+    if (matchQuestions == null) {
+      reloadMatchQuestions();
+    }
     return matchQuestions;
   }
 
   public List<Question.Page> getPitQuestions() {
+    if (pitQuestions == null) {
+      reloadPitQuestions();
+    }
     return pitQuestions;
   }
 
   public List<Question> getDriveTeamQuestions() {
+    if (driveTeamQuestions == null) {
+      reloadDriveTeamQuestions();
+    }
     return driveTeamQuestions;
   }
 
   public String getMatchQuestionsJson() {
+    if (matchQuestionsJson == null) {
+      reloadMatchQuestions();
+    }
     return matchQuestionsJson;
   }
 
   public String getPitQuestionsJson() {
+    if (pitQuestionsJson == null) {
+      reloadPitQuestions();
+    }
     return pitQuestionsJson;
   }
 
   public String getDriveTeamQuestionsJson() {
+    if (driveTeamQuestionsJson == null) {
+      reloadDriveTeamQuestions();
+    }
     return driveTeamQuestionsJson;
   }
 
   public String getMatchQuestionsHash() {
+    if (matchQuestionsHash == null) {
+      reloadMatchQuestions();
+    }
     return matchQuestionsHash;
   }
 
   public String getPitQuestionsHash() {
+    if (pitQuestionsHash == null) {
+      reloadPitQuestions();
+    }
     return pitQuestionsHash;
   }
 
   public String getDriveTeamQuestionsHash() {
+    if (driveTeamQuestionsHash == null) {
+      reloadDriveTeamQuestions();
+    }
     return driveTeamQuestionsHash;
   }
 
@@ -89,9 +121,5 @@ public class Questions {
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException(e);
     }
-  }
-
-  private static <T> List<T> loadQuestions(String filename, Class<T[]> clazz) {
-    return List.of(jsonDecode(Questions.class.getResourceAsStream(filename), clazz));
   }
 }

@@ -12,6 +12,7 @@ import org.victorrobotics.devilscoutserver.tba.TeamListCache;
 
 import java.security.SecureRandom;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -43,7 +44,7 @@ public sealed class Controller
   private static MatchScheduleCache MATCH_SCHEDULE_CACHE;
   private static OprsCache          OPRS_CACHE;
 
-  private static Questions QUESTIONS;
+  private static Map<Integer, Questions> QUESTIONS;
 
   private static EntryDatabase MATCH_ENTRIES;
   private static EntryDatabase PIT_ENTRIES;
@@ -77,7 +78,7 @@ public sealed class Controller
     OPRS_CACHE = eventOprsCache;
   }
 
-  public static void setQuestions(Questions questions) {
+  public static void setQuestions(Map<Integer, Questions> questions) {
     QUESTIONS = questions;
   }
 
@@ -127,8 +128,9 @@ public sealed class Controller
     return OPRS_CACHE;
   }
 
-  public static Questions questions() {
-    return QUESTIONS;
+  public static Questions questions(String eventKey) {
+    int year = Integer.parseInt(eventKey.substring(0, 4));
+    return QUESTIONS.get(year);
   }
 
   public static EntryDatabase matchEntryDB() {
