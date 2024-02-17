@@ -1,16 +1,15 @@
 package org.victorrobotics.devilscoutserver.analysis.statistics;
 
-import org.victorrobotics.devilscoutserver.tba.ScoreBreakdown;
-import org.victorrobotics.devilscoutserver.tba.ScoreBreakdown.WltRecord;
+import org.victorrobotics.bluealliance.Event.WinLossRecord;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 public class WltStatistic extends Statistic {
   @JsonUnwrapped
-  public final WltRecord wlt;
+  public final WinLossRecord wlt;
 
-  public WltStatistic(ScoreBreakdown breakdown) {
+  public WltStatistic(WinLossRecord wlt) {
     super(StatisticType.WTL, "Event WLT");
-    this.wlt = breakdown == null ? null : breakdown.getWltRecord();
+    this.wlt = wlt;
   }
 }

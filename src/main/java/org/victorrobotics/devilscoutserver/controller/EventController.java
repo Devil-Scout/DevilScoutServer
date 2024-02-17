@@ -1,11 +1,10 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.cache.Cache.Value;
-import org.victorrobotics.devilscoutserver.tba.EventInfo;
-import org.victorrobotics.devilscoutserver.tba.EventTeamList;
-import org.victorrobotics.devilscoutserver.tba.EventTeamList.TeamInfo;
-import org.victorrobotics.devilscoutserver.tba.MatchSchedule;
-import org.victorrobotics.devilscoutserver.tba.MatchSchedule.MatchInfo;
+import org.victorrobotics.devilscoutserver.tba.EventCache.Event;
+import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache.MatchInfo;
+import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache.MatchSchedule;
+import org.victorrobotics.devilscoutserver.tba.TeamListCache.TeamInfo;
 
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
@@ -18,7 +17,7 @@ public final class EventController extends Controller {
   /**
    * GET /events
    * <p>
-   * Success: 200 {@link EventInfo}[]
+   * Success: 200 {@link Event}[]
    * <p>
    * Cached: 304 NotModified ({@code If-None-Match})
    * <p>
@@ -30,11 +29,11 @@ public final class EventController extends Controller {
   public static void getAllEvents(Context ctx) {
     getValidSession(ctx);
 
-    long timestamp = eventInfoCache().lastModified();
+    long timestamp = eventsCache().lastModified();
     checkIfNoneMatch(ctx, timestamp);
 
     setResponseEtag(ctx, timestamp);
-    ctx.writeJsonStream(eventInfoCache().values()
+    ctx.writeJsonStream(eventsCache().values()
                                         .stream()
                                         .sorted());
   }
@@ -42,7 +41,7 @@ public final class EventController extends Controller {
   /**
    * GET /events/{eventKey}
    * <p>
-   * Success: 200 {@link EventInfo}
+   * Success: 200 {@link Event}
    * <p>
    * Cached: 304 NotModified ({@code If-None-Match})
    * <p>
@@ -56,7 +55,7 @@ public final class EventController extends Controller {
     getValidSession(ctx);
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
 
-    Value<?, EventInfo> entry = eventInfoCache().get(eventKey);
+    Value<?, ?> entry = eventsCache().get(eventKey);
     if (entry == null) {
       throw new NotFoundResponse();
     }
@@ -85,11 +84,11 @@ public final class EventController extends Controller {
     getValidSession(ctx);
 
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
-    if (eventInfoCache().get(eventKey) == null) {
+    if (eventsCache().get(eventKey) == null) {
       throw new NotFoundResponse();
     }
 
-    Value<?, EventTeamList> entry = eventTeamsCache().get(eventKey);
+    Value<?, ?> entry = teamListsCache().get(eventKey);
     long timestamp = entry.lastModified();
     checkIfNoneMatch(ctx, timestamp);
 
@@ -114,11 +113,11 @@ public final class EventController extends Controller {
     getValidSession(ctx);
 
     String eventKey = ctx.pathParam(EVENT_PATH_PARAM);
-    if (eventInfoCache().get(eventKey) == null) {
+    if (eventsCache().get(eventKey) == null) {
       throw new NotFoundResponse();
     }
 
-    Value<?, ? extends MatchSchedule<?>> entry = matchScheduleCache().get(eventKey);
+    Value<?, ? extends MatchSchedule> entry = matchScheduleCache().get(eventKey);
     long timestamp = entry.lastModified();
     checkIfNoneMatch(ctx, timestamp);
 

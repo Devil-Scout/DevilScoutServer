@@ -1,20 +1,52 @@
 package org.victorrobotics.devilscoutserver.tba;
 
 import org.victorrobotics.bluealliance.Endpoint;
+import org.victorrobotics.devilscoutserver.cache.Cache;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
-import org.victorrobotics.devilscoutserver.cache.OnDemandCache;
 
-public abstract class BlueAllianceCache<K, D, V extends Cacheable<D>>
-    extends OnDemandCache<K, D, V> {
-  protected BlueAllianceCache(long purgeTime) {
-    super(purgeTime);
-  }
-
+public abstract class BlueAllianceCache<K, D, V extends Cacheable<D>> extends Cache<K, D, V> {
   protected abstract Endpoint<D> getEndpoint(K key);
 
-  @Override
-  protected D getData(K key) {
-    return getEndpoint(key).refresh()
-                           .orElse(null);
+  protected abstract V createValue(K key, D data);
+
+  public void refresh(K key) {
+    if (key == null) {
+      getLogger().warn("Attempted to refresh a null key", new NullPointerException());
+      return;
+    }
+
+    try {
+      long start = System.currentTimeMillis();
+      D data = getEndpoint(key).refresh()
+                               .orElse(null);
+
+      if (data == null) {
+        boolean hadKey = containsKey(key);
+        remove(key);
+        if (hadKey) {
+          modified();
+        }
+        getLogger().info("Removed entry for key {} in {}ms", key,
+                         System.currentTimeMillis() - start);
+        return;
+      }
+
+      Value<D, V> value = get(key);
+      if (value == null) {
+        cacheMap.put(key, new Value<>(createValue(key, data), this::modified));
+        modified();
+        getLogger().info("Added entry for key {} in {}ms", key, System.currentTimeMillis() - start);
+      } else {
+        value.update(data);
+        getLogger().info("Refreshed entry for key {} in {}ms", key,
+                         System.currentTimeMillis() - start);
+      }
+    } catch (Exception e) {
+      getLogger().warn("Exception occured while refreshing key {}:", key, e);
+    }
+  }
+
+  public void refreshAll(Iterable<? extends K> keys) {
+    keys.forEach(this::refresh);
   }
 }

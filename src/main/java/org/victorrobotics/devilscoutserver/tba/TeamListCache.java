@@ -1,5 +1,6 @@
 package org.victorrobotics.devilscoutserver.tba;
 
+import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.bluealliance.Team;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
@@ -13,7 +14,8 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public class EventTeamList implements Cacheable<List<Team.Simple>> {
+public class TeamListCache
+    extends BlueAllianceCache<String, List<Team.Simple>, TeamListCache.TeamList> {
   public static class TeamInfo implements Cacheable<Team.Simple>, Comparable<TeamInfo> {
     private final int number;
 
@@ -62,38 +64,50 @@ public class EventTeamList implements Cacheable<List<Team.Simple>> {
     }
   }
 
-  private final ConcurrentNavigableMap<Integer, TeamInfo> teamMap;
-  private final Collection<TeamInfo>                      teams;
+  public static class TeamList implements Cacheable<List<Team.Simple>> {
+    private final ConcurrentNavigableMap<Integer, TeamInfo> teamMap;
+    private final Collection<TeamInfo>                      teams;
 
-  public EventTeamList(List<Team.Simple> teams) {
-    this.teamMap = new ConcurrentSkipListMap<>();
-    this.teams = Collections.unmodifiableCollection(teamMap.values());
-    update(teams);
+    public TeamList(List<Team.Simple> teams) {
+      this.teamMap = new ConcurrentSkipListMap<>();
+      this.teams = Collections.unmodifiableCollection(teamMap.values());
+      update(teams);
+    }
+
+    @Override
+    public boolean update(List<Team.Simple> teams) {
+      boolean change = false;
+      Collection<Integer> keys = new ArrayList<>();
+      for (Team.Simple team : teams) {
+        keys.add(team.number);
+
+        TeamInfo info = teamMap.get(team.number);
+        if (info == null) {
+          teamMap.put(team.number, new TeamInfo(team));
+          change = true;
+        } else {
+          change |= info.update(team);
+        }
+      }
+      change |= teamMap.keySet()
+                       .retainAll(keys);
+
+      return change;
+    }
+
+    @JsonValue
+    public Collection<TeamInfo> teams() {
+      return teams;
+    }
   }
 
   @Override
-  public boolean update(List<Team.Simple> teams) {
-    boolean change = false;
-    Collection<Integer> keys = new ArrayList<>();
-    for (Team.Simple team : teams) {
-      keys.add(team.number);
-
-      TeamInfo info = teamMap.get(team.number);
-      if (info == null) {
-        teamMap.put(team.number, new TeamInfo(team));
-        change = true;
-      } else {
-        change |= info.update(team);
-      }
-    }
-    change |= teamMap.keySet()
-                     .retainAll(keys);
-
-    return change;
+  protected Endpoint<List<Team.Simple>> getEndpoint(String eventKey) {
+    return Team.Simple.endpointForEvent(eventKey);
   }
 
-  @JsonValue
-  public Collection<TeamInfo> teams() {
-    return teams;
+  @Override
+  protected TeamList createValue(String eventKey, List<Team.Simple> data) {
+    return new TeamList(data);
   }
 }

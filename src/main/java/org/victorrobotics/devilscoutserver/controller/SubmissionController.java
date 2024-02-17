@@ -4,7 +4,7 @@ import static org.victorrobotics.devilscoutserver.EncodingUtil.jsonEncode;
 
 import org.victorrobotics.bluealliance.Match.Alliance;
 import org.victorrobotics.devilscoutserver.questions.Question;
-import org.victorrobotics.devilscoutserver.tba.MatchSchedule.MatchInfo;
+import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache.MatchInfo;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -53,7 +53,7 @@ public final class SubmissionController extends Controller {
 
     MatchInfo match = matchScheduleCache().get(teamEvent)
                                           .value()
-                                          .getMatch(matchKey);
+                                          .get(matchKey);
     if (match == null) {
       throw new BadRequestResponse("Match not found at event");
     }
@@ -69,6 +69,7 @@ public final class SubmissionController extends Controller {
 
     matchEntryDB().createEntry(teamEvent, matchKey, session.getUser(), session.getTeam(), teamNum,
                                jsonEncode(payload));
+    analysisCache().scheduleRefresh(teamEvent, teamNum);
     throw new NoContentResponse();
   }
 
@@ -105,6 +106,7 @@ public final class SubmissionController extends Controller {
 
     pitEntryDB().createEntry(teamEvent, null, session.getUser(), session.getTeam(), teamNum,
                              jsonEncode(payload));
+    analysisCache().scheduleRefresh(teamEvent, teamNum);
     throw new NoContentResponse();
   }
 
@@ -135,7 +137,7 @@ public final class SubmissionController extends Controller {
 
     MatchInfo match = matchScheduleCache().get(teamEvent)
                                           .value()
-                                          .getMatch(matchKey);
+                                          .get(matchKey);
     if (match == null) {
       throw new BadRequestResponse("Match not found at event");
     }
@@ -174,9 +176,10 @@ public final class SubmissionController extends Controller {
     }
 
     for (Map.Entry<String, Map<String, Object>> entry : payload.entrySet()) {
+      int teamNum = Integer.parseInt(entry.getKey());
       driveTeamEntryDB().createEntry(teamEvent, matchKey, session.getUser(), session.getTeam(),
-                                     Integer.parseInt(entry.getKey()),
-                                     jsonEncode(entry.getValue()));
+                                     teamNum, jsonEncode(entry.getValue()));
+      analysisCache().scheduleRefresh(teamEvent, teamNum);
     }
 
     throw new NoContentResponse();

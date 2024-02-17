@@ -1,13 +1,5 @@
 package org.victorrobotics.devilscoutserver.analysis.statistics;
 
-import org.victorrobotics.devilscoutserver.database.DataEntry;
-
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-
 public class StringStatistic extends Statistic {
   public final String value;
 
@@ -16,105 +8,29 @@ public class StringStatistic extends Statistic {
     this.value = value;
   }
 
-  public static StringStatistic
-      mostCommonDirectMatch(String name, Iterable<? extends Collection<DataEntry>> matchEntries,
-                            String path) {
-    return mostCommonComputedMatch(name, matchEntries, entry -> getPath(entry, path));
+  public StringStatistic(String name, Object value) {
+    this(name, value == null ? null : value.toString());
   }
 
-  public static StringStatistic
-      mostCommonDirectMatch(String name, Iterable<? extends Collection<DataEntry>> matchEntries,
-                            String path, List<String> labels) {
-    return mostCommonComputedMatch(name, matchEntries, entry -> getPath(entry, path, labels));
+  public StringStatistic(String name, Number number, String suffix) {
+    this(name, number == null ? null : (formatNumber(number) + suffix));
   }
 
-  public static StringStatistic
-      mostCommonComputedMatch(String name, Iterable<? extends Collection<DataEntry>> matchEntries,
-                              Function<DataEntry, String> function) {
-    Map<String, Integer> counts = new LinkedHashMap<>();
-    Map<String, Integer> counts2 = new LinkedHashMap<>();
-    for (Collection<DataEntry> entries : matchEntries) {
-      counts2.clear();
-
-      for (DataEntry entry : entries) {
-        String val = function.apply(entry);
-        if (val == null) continue;
-        counts2.compute(val, StringStatistic::increment);
-      }
-
-      int maxCount = 0;
-      String mostFrequent = null;
-      for (Map.Entry<String, Integer> entry : counts2.entrySet()) {
-        if (entry.getValue() > maxCount) {
-          maxCount = entry.getValue();
-          mostFrequent = entry.getKey();
-        }
-      }
-
-      if (mostFrequent != null) {
-        counts2.compute(mostFrequent, StringStatistic::increment);
-      }
+  private static String formatNumber(Number number) {
+    // Integers are always 0 decimal places
+    if (number instanceof Integer || number instanceof Long) {
+      return number.toString();
     }
 
-    int maxCount = 0;
-    String mostFrequent = null;
-    for (Map.Entry<String, Integer> entry : counts.entrySet()) {
-      if (entry.getValue() > maxCount) {
-        maxCount = entry.getValue();
-        mostFrequent = entry.getKey();
-      }
+    double value = number.doubleValue();
+    if (!Double.isFinite(value)) {
+      return "NaN";
+    } else if (Math.abs(value) >= 100) {
+      return Long.toString(Math.round(value));
+    } else if (Math.abs(value) >= 1) {
+      return String.format("%.1f", value);
+    } else {
+      return String.format("%.2f", value);
     }
-
-    return new StringStatistic(name, mostFrequent);
-  }
-
-  public static StringStatistic mostCommonDirectPit(String name, Iterable<DataEntry> pitEntries,
-                                                    String path) {
-    return mostCommonComputedPit(name, pitEntries, entry -> getPath(entry, path));
-  }
-
-  public static StringStatistic mostCommonDirectPit(String name, Iterable<DataEntry> pitEntries,
-                                                    String path, List<String> labels) {
-    return mostCommonComputedPit(name, pitEntries, entry -> getPath(entry, path, labels));
-  }
-
-  public static StringStatistic mostCommonComputedPit(String name, Iterable<DataEntry> pitEntries,
-                                                      Function<DataEntry, String> function) {
-    Map<String, Integer> counts = new LinkedHashMap<>();
-
-    for (DataEntry entry : pitEntries) {
-      String val = function.apply(entry);
-      if (val == null) continue;
-      counts.compute(val, StringStatistic::increment);
-    }
-
-    int maxCount = 0;
-    int distinctMaxCount = 0;
-    String mostFrequent = null;
-    for (Map.Entry<String, Integer> entry : counts.entrySet()) {
-      if (entry.getValue() > maxCount) {
-        maxCount = entry.getValue();
-        distinctMaxCount = 1;
-        mostFrequent = entry.getKey();
-      } else if (entry.getValue() == maxCount) {
-        distinctMaxCount++;
-      }
-    }
-
-    return new StringStatistic(name, distinctMaxCount == 1 ? mostFrequent : null);
-  }
-
-  private static Integer increment(String keyIgnored, Integer oldValue) {
-    return oldValue == null ? 1 : (oldValue + 1);
-  }
-
-  private static String getPath(DataEntry entry, String path) {
-    Integer value = entry.getInteger(path);
-    return value == null ? null : value.toString();
-  }
-
-  private static String getPath(DataEntry entry, String path, List<String> labels) {
-    Integer index = entry.getInteger(path);
-    return index == null ? null : labels.get(index);
   }
 }

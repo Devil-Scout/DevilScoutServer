@@ -11,7 +11,7 @@ java {
 }
 
 application {
-  mainClass = 'org.victorrobotics.devilscoutserver.Server'
+  mainClass = 'org.victorrobotics.devilscoutserver.Main'
 }
 
 repositories {

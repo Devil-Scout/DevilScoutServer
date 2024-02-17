@@ -12,6 +12,8 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cache.Value<D, V>> {
   protected final ConcurrentMap<K, Value<D, V>> cacheMap;
@@ -27,10 +29,6 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
     lastModified = System.currentTimeMillis();
   }
 
-  public abstract void refresh();
-
-  protected abstract Value<D, V> getValue(K key);
-
   public long lastModified() {
     return lastModified;
   }
@@ -39,18 +37,9 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
     lastModified = System.currentTimeMillis();
   }
 
-  protected void updateValue(Value<D, V> value, D data) {
-    value.update(data);
-  }
-
   @Override
-  @SuppressWarnings("unchecked")
   public Value<D, V> get(Object key) {
-    try {
-      return getValue((K) key);
-    } catch (ClassCastException e) {
-      return null;
-    }
+    return cacheMap.get(key);
   }
 
   @Override
@@ -199,17 +188,15 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
     private final V        val;
     private final Runnable onModification;
 
-    private volatile long lastModified;
-    private volatile long lastAccess;
-
-    private String jsonCache;
+    private volatile long   lastModified;
+    private volatile String jsonCache;
 
     public Value(V value, Runnable onModification) {
       this.val = value;
       this.onModification = onModification;
     }
 
-    void update(D data) {
+    public void update(D data) {
       if (val.update(data)) {
         onModification.run();
         jsonCache = null;
@@ -217,16 +204,11 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
     }
 
     public V value() {
-      lastAccess = System.currentTimeMillis();
       return val;
     }
 
     public long lastModified() {
       return lastModified;
-    }
-
-    public long lastAccess() {
-      return lastAccess;
     }
 
     @Override
@@ -246,5 +228,9 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
       }
       return jsonCache;
     }
+  }
+
+  protected Logger getLogger() {
+    return LoggerFactory.getLogger(getClass());
   }
 }

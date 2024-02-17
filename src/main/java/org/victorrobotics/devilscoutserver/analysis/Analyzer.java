@@ -1,17 +1,16 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
-import org.victorrobotics.devilscoutserver.analysis.statistics.OprStatistic;
-import org.victorrobotics.devilscoutserver.analysis.statistics.RankingPointsStatistic;
+import org.victorrobotics.bluealliance.Match.ScoreBreakdown;
+import org.victorrobotics.devilscoutserver.analysis.data.NumberSummary;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
-import org.victorrobotics.devilscoutserver.analysis.statistics.WltStatistic;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
-import org.victorrobotics.devilscoutserver.database.TeamDatabase;
-import org.victorrobotics.devilscoutserver.tba.EventOprs.TeamOpr;
-import org.victorrobotics.devilscoutserver.tba.EventOprsCache;
-import org.victorrobotics.devilscoutserver.tba.EventTeamListCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
-import org.victorrobotics.devilscoutserver.tba.ScoreBreakdown;
+import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache.MatchInfo;
+import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache.MatchSchedule;
+import org.victorrobotics.devilscoutserver.tba.OprsCache;
+import org.victorrobotics.devilscoutserver.tba.OprsCache.TeamOpr;
+import org.victorrobotics.devilscoutserver.tba.RankingsCache;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -19,98 +18,60 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.TreeMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-public abstract class Analyzer {
-  private final TeamDatabase       teamDB;
-  private final EventTeamListCache teamListCache;
-
+public abstract class Analyzer<D> {
   private final EntryDatabase matchEntryDB;
   private final EntryDatabase pitEntryDB;
   private final EntryDatabase driveTeamEntryDB;
 
-  private final MatchScheduleCache<?> matchScheduleCache;
-  private final EventOprsCache        oprsCache;
+  private final MatchScheduleCache matchScheduleCache;
+  private final OprsCache          oprsCache;
+  private final RankingsCache      rankingsCache;
 
-  protected Analyzer(TeamDatabase teamDB, EventTeamListCache teamListCache,
-                     EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
-                     EntryDatabase driveTeamEntryDB, MatchScheduleCache<?> matchScheduleCache,
-                     EventOprsCache teamOprsCache) {
-    this.teamDB = teamDB;
-    this.teamListCache = teamListCache;
+  protected Analyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
+                     EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
+                     OprsCache teamOprsCache, RankingsCache rankingsCache) {
     this.matchEntryDB = matchEntryDB;
     this.pitEntryDB = pitEntryDB;
     this.driveTeamEntryDB = driveTeamEntryDB;
     this.matchScheduleCache = matchScheduleCache;
     this.oprsCache = teamOprsCache;
+    this.rankingsCache = rankingsCache;
   }
 
-  protected abstract List<StatisticsPage> computeStatistics(DataHandle handle);
+  protected abstract D computeData(Handle handle);
 
-  public List<StatisticsPage> computeStatistics(DataEntry.Key key) {
-    return computeStatistics(new DataHandle(key));
+  protected abstract List<StatisticsPage> generateStatistics(D data);
+
+  public D computeData(String eventKey, int team) {
+    return computeData(new Handle(eventKey, team));
   }
 
-  public Collection<DataEntry.Key> getUpdates() {
-    try {
-      return teamDB.getActiveEvents()
-                   .stream()
-                   .flatMap(s -> teamListCache.get(s)
-                                              .value()
-                                              .teams()
-                                              .stream()
-                                              .map(t -> new DataEntry.Key(s, t.getNumber())))
-                   .toList();
-    } catch (SQLException e) {
-      return Set.of();
-    }
-  }
-
-  protected class DataHandle {
-    private final DataEntry.Key key;
+  protected class Handle {
+    private final String eventKey;
+    private final int    team;
 
     private Collection<List<DataEntry>> matchEntries;
     private List<DataEntry>             pitEntries;
     private Collection<List<DataEntry>> driveTeamEntries;
 
-    private TeamOpr        oprs;
-    private ScoreBreakdown breakdown;
+    private Collection<ScoreBreakdown> scoreBreakdowns;
+    private TeamOpr                    opr;
+    private RankingsCache.Team         rankings;
 
-    DataHandle(DataEntry.Key key) {
-      this.key = key;
-    }
-
-    public OprStatistic oprStatistic() {
-      if (oprs == null) {
-        oprs = oprsCache.get(key.eventKey())
-                        .value()
-                        .get(key.team());
-      }
-      return new OprStatistic(oprs);
-    }
-
-    public WltStatistic wltStatistic() {
-      if (breakdown == null) {
-        breakdown = matchScheduleCache.get(key.eventKey())
-                                      .value()
-                                      .getTeamBreakdown(key.team());
-      }
-      return new WltStatistic(breakdown);
-    }
-
-    public RankingPointsStatistic rpStatistic() {
-      if (breakdown == null) {
-        breakdown = matchScheduleCache.get(key.eventKey())
-                                      .value()
-                                      .getTeamBreakdown(key.team());
-      }
-      return new RankingPointsStatistic(breakdown);
+    Handle(String eventKey, int team) {
+      this.eventKey = eventKey;
+      this.team = team;
     }
 
     public List<DataEntry> getPitEntries() {
       if (pitEntries == null) {
         try {
-          pitEntries = pitEntryDB.getEntries(key.eventKey(), key.team());
+          pitEntries = pitEntryDB.getEntries(eventKey, team);
         } catch (SQLException e) {
           throw new IllegalStateException(e);
         }
@@ -120,20 +81,69 @@ public abstract class Analyzer {
 
     public Collection<List<DataEntry>> getMatchEntries() {
       if (matchEntries == null) {
-        matchEntries = loadEntries(matchEntryDB, key.eventKey(), key.team());
+        matchEntries = loadEntriesByMatch(matchEntryDB, eventKey, team);
       }
       return matchEntries;
     }
 
     public Collection<List<DataEntry>> getDriveTeamEntries() {
       if (driveTeamEntries == null) {
-        driveTeamEntries = loadEntries(driveTeamEntryDB, key.eventKey(), key.team());
+        driveTeamEntries = loadEntriesByMatch(driveTeamEntryDB, eventKey, team);
       }
       return driveTeamEntries;
     }
 
-    private static Collection<List<DataEntry>> loadEntries(EntryDatabase database, String eventKey,
-                                                           int team) {
+    public TeamOpr getOpr() {
+      if (opr == null) {
+        opr = oprsCache.get(eventKey)
+                       .value()
+                       .get(team);
+      }
+      return opr;
+    }
+
+    public Collection<ScoreBreakdown> getScoreBreakdowns() {
+      if (scoreBreakdowns == null) {
+        scoreBreakdowns = new ArrayList<>();
+        MatchSchedule schedule = matchScheduleCache.get(eventKey)
+                                                   .value();
+        for (MatchInfo match : schedule.values()) {
+          ScoreBreakdown breakdown = getBreakdown(match);
+          if (breakdown != null) {
+            scoreBreakdowns.add(breakdown);
+          }
+        }
+      }
+      return scoreBreakdowns;
+    }
+
+    private ScoreBreakdown getBreakdown(MatchInfo match) {
+      for (int t : match.getRed()) {
+        if (t == team) {
+          return match.getRedBreakdown();
+        }
+      }
+
+      for (int t : match.getBlue()) {
+        if (t == team) {
+          return match.getBlueBreakdown();
+        }
+      }
+
+      return null;
+    }
+
+    public RankingsCache.Team getRankings() {
+      if (rankings == null) {
+        rankings = rankingsCache.get(eventKey)
+                                .value()
+                                .get(team);
+      }
+      return rankings;
+    }
+
+    private static Collection<List<DataEntry>> loadEntriesByMatch(EntryDatabase database,
+                                                                  String eventKey, int team) {
       List<DataEntry> entries;
       try {
         entries = database.getEntries(eventKey, team);
@@ -151,6 +161,184 @@ public abstract class Analyzer {
                 .add(entry);
       }
       return entryMap.values();
+    }
+  }
+
+  protected static <T> Collection<T> extractData(Collection<DataEntry> entries, String path,
+                                                 BiFunction<DataEntry, String, T> extractor) {
+    return extractData(entries, e -> extractor.apply(e, path));
+  }
+
+  protected static <T> Collection<T> extractData(Collection<DataEntry> entries,
+                                                 Function<DataEntry, T> extractor) {
+    return entries.stream()
+                  .map(extractor::apply)
+                  .toList();
+  }
+
+  protected static <I, T>
+      Collection<T>
+      extractMergeData(Collection<? extends Collection<DataEntry>> entries, String path,
+                       BiFunction<DataEntry, String, I> extractor,
+                       Function<Collection<I>, T> reducer) {
+    return extractMergeData(entries, e -> extractor.apply(e, path), reducer);
+  }
+
+  protected static <I, T>
+      Collection<T>
+      extractMergeData(Collection<? extends Collection<DataEntry>> entries,
+                       Function<DataEntry, I> extractor, Function<Collection<I>, T> reducer) {
+    return entries.stream()
+                  .map(e -> extractData(e, extractor))
+                  .map(reducer)
+                  .toList();
+  }
+
+  protected static Double average(Iterable<? extends Number> data) {
+    int count = 0;
+    double sum = 0;
+    for (Number num : data) {
+      if (num != null) {
+        sum += num.doubleValue();
+        count++;
+      }
+    }
+    return count == 0 ? null : Double.valueOf(sum / count);
+  }
+
+  protected static <T> T mostCommon(Collection<T> data) {
+    Map<T, Long> counts = data.stream()
+                              .collect(Collectors.groupingBy(x -> x, Collectors.counting()));
+    T mostCommon = null;
+    long maxCount = 0;
+    for (Map.Entry<T, Long> entry : counts.entrySet()) {
+      if (entry.getValue() > maxCount) {
+        maxCount = entry.getValue();
+        mostCommon = entry.getKey();
+      }
+    }
+    return mostCommon;
+  }
+
+  protected static NumberSummary summarizeNumbers(Iterable<? extends Number> data) {
+    int count = 0;
+    double min = Double.POSITIVE_INFINITY;
+    double max = Double.NEGATIVE_INFINITY;
+    double sum = 0;
+    double sumSquared = 0;
+
+    for (Number number : data) {
+      if (number == null) continue;
+
+      double val = number.doubleValue();
+      sum += val;
+      sumSquared += val * val;
+      count++;
+
+      if (val > max) {
+        max = val;
+      }
+      if (val < min) {
+        min = val;
+      }
+    }
+
+    if (count == 0) {
+      return NumberSummary.NO_DATA;
+    }
+
+    double mean = sum / count;
+    double stddev = Math.sqrt(Math.abs(sumSquared - (sum * sum / count)) / count);
+
+    return new NumberSummary(count, min, max, mean, stddev);
+  }
+
+  protected static <T extends Comparable<T>> Map<T, Integer> countDistinct(Iterable<T> data) {
+    Map<T, Integer> map = new TreeMap<>(); // for sorted keys
+    for (T item : data) {
+      if (item != null) {
+        map.compute(item, (k, count) -> count == null ? 1 : (count + 1));
+      }
+    }
+    return map;
+  }
+
+  protected static <I, T> Collection<T> map(Iterable<I> data, Function<I, T> mapper) {
+    Collection<T> enums = new ArrayList<>();
+    for (I key : data) {
+      if (key != null) {
+        enums.add(mapper.apply(key));
+      }
+    }
+    return enums;
+  }
+
+  protected static <T> Collection<T> union(Iterable<? extends Collection<T>> data) {
+    Collection<T> result = new ArrayList<>();
+    for (Collection<T> item : data) {
+      if (item != null) {
+        result.addAll(item);
+      }
+    }
+    return result;
+  }
+
+  protected static <T> Map<T, Integer> averageCounts(Collection<Map<T, Integer>> allCounts) {
+    int size = allCounts.size();
+    Map<T, Integer> counts = sumCounts(allCounts);
+    counts.replaceAll((key, count) -> (int) Math.round((count + size * 0.5) / size));
+    return counts;
+  }
+
+  protected static <T> Map<T, Integer> sumCounts(Collection<Map<T, Integer>> allCounts) {
+    Map<T, Integer> counts = new LinkedHashMap<>();
+    for (Map<T, Integer> c : allCounts) {
+      for (Map.Entry<T, Integer> entry : c.entrySet()) {
+        counts.compute(entry.getKey(), (key, count) -> count == null ? entry.getValue()
+            : (count + entry.getValue()));
+      }
+    }
+    return counts;
+  }
+
+  protected static <K, V> Map<K, V> nullableMap(Collection<Map.Entry<K, V>> entries) {
+    if (entries.isEmpty()) {
+      return Map.of();
+    }
+
+    Map<K, V> map = new LinkedHashMap<>();
+    for (Map.Entry<K, V> entry : entries) {
+      map.put(entry.getKey(), entry.getValue());
+    }
+    return map;
+  }
+
+  protected static <K, V> Map.Entry<K, V> nullableMapEntry(K key, V value) {
+    return new MapEntry<>(key, value);
+  }
+
+  static class MapEntry<K, V> implements Map.Entry<K, V> {
+    private final K key;
+    private final V value;
+
+    MapEntry(K key, V value) {
+      this.key = key;
+      this.value = value;
+    }
+
+    @Override
+    public K getKey() {
+      return key;
+    }
+
+    @Override
+    public V getValue() {
+      return value;
+    }
+
+    @Override
+    public V setValue(V value) {
+      throw new UnsupportedOperationException("Immutible");
     }
   }
 }
