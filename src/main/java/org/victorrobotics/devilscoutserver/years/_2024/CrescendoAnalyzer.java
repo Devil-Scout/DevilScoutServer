@@ -227,10 +227,14 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
 
   private static RadarStatistic driveTeamRadar(Data data) {
     return new RadarStatistic("Drive Team", 5,
-                              Map.of("Communication", data.driveTeamCommunication(), "Strategy",
-                                     data.driveTeamStrategy(), "Adaptability",
-                                     data.driveTeamAdaptability(), "Professionalism",
-                                     data.driveTeamProfessionalism()));
+                              nullableMap(List.of(nullableMapEntry("Communication",
+                                                                   data.driveTeamCommunication()),
+                                                  nullableMapEntry("Strategy",
+                                                                   data.driveTeamStrategy()),
+                                                  nullableMapEntry("Adaptability",
+                                                                   data.driveTeamAdaptability()),
+                                                  nullableMapEntry("Professionalism",
+                                                                   data.driveTeamProfessionalism()))));
   }
 
   private static Integer autoNoteCount(DataEntry match) {
