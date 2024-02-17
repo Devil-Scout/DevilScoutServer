@@ -28,15 +28,15 @@ paths:
             schema:
               $ref: "#/components/schemas/LoginRequest"
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/LoginChallenge"
-        "400":
+        '400':
           $ref: "#/components/responses/BadRequest"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
   /auth:
     post:
@@ -48,17 +48,17 @@ paths:
             schema:
               $ref: "#/components/schemas/AuthRequest"
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AuthResponse"
-        "400":
+        '400':
           $ref: "#/components/responses/BadRequest"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
   /logout:
     delete:
@@ -67,9 +67,9 @@ paths:
       security:
         - sessionKey: []
       responses:
-        "204":
+        '204':
           $ref: "#/components/responses/NoContent"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
   /session:
     get:
@@ -78,13 +78,13 @@ paths:
       security:
         - sessionKey: []
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Session"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
   /teams/{teamNum}:
     parameters:
@@ -95,17 +95,17 @@ paths:
       security:
         - sessionKey: []
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Team"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
-        "403":
+        '403':
           $ref: "#/components/responses/Forbidden"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
     patch:
       tags:
@@ -119,19 +119,19 @@ paths:
             schema:
               $ref: "#/components/schemas/TeamEdits"
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Team"
-        "400":
+        '400':
           $ref: "#/components/responses/BadRequest"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
-        "403":
+        '403':
           $ref: "#/components/responses/Forbidden"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
   /teams/{teamNum}/users:
     parameters:
@@ -143,7 +143,7 @@ paths:
         - sessionKey:
           - admin
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
@@ -151,11 +151,11 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/User"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
-        "403":
+        '403':
           $ref: "#/components/responses/Forbidden"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
     post:
       tags:
@@ -169,21 +169,21 @@ paths:
             schema:
               $ref: "#/components/schemas/UserRegistration"
       responses:
-        "201":
+        '201':
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-        "400":
+        '400':
           $ref: "#/components/responses/BadRequest"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
-        "403":
+        '403':
           $ref: "#/components/responses/Forbidden"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
-        "409":
+        '409':
           $ref: "#/components/responses/Conflict"
   /users/{userId}:
     parameters:
@@ -196,17 +196,17 @@ paths:
         - sessionKey:
           - admin
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
-        "403":
+        '403':
           $ref: "#/components/responses/Forbidden"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
     patch:
       tags:
@@ -222,21 +222,21 @@ paths:
               $ref: "#/components/schemas/UserEdits"
         required: false
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-        "400":
+        '400':
           $ref: "#/components/responses/BadRequest"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
-        "403":
+        '403':
           $ref: "#/components/responses/Forbidden"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
-        "409":
+        '409':
           $ref: "#/components/responses/Conflict"
     delete:
       tags:
@@ -246,13 +246,13 @@ paths:
         - sessionKey:
           - admin
       responses:
-        "204":
+        '204':
           $ref: "#/components/responses/NoContent"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
-        "403":
+        '403':
           $ref: "#/components/responses/Forbidden"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
   /events:
     get:
@@ -263,7 +263,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ifNoneMatchTimestamp"
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
@@ -271,9 +271,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/EventInfo"
-        "304":
+        '304':
           $ref: "#/components/responses/NotModified"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
       deprecated: false
   /events/{eventKey}:
@@ -287,17 +287,17 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ifNoneMatchTimestamp"
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventInfo"
-        "304":
+        '304':
           $ref: "#/components/responses/NotModified"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
   /events/{eventKey}/teams:
     parameters:
@@ -310,7 +310,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ifNoneMatchTimestamp"
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
@@ -318,11 +318,11 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TeamInfo"
-        "304":
+        '304':
           $ref: "#/components/responses/NotModified"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
   /events/{eventKey}/matches:
     parameters:
@@ -335,7 +335,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ifNoneMatchTimestamp"
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
@@ -343,11 +343,11 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MatchInfo"
-        "304":
+        '304':
           $ref: "#/components/responses/NotModified"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
   /questions/match:
     get:
@@ -358,7 +358,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ifNoneMatchHash"
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
@@ -366,9 +366,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/QuestionPage"
-        "304":
+        '304':
           $ref: "#/components/responses/NotModified"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
   /questions/pit:
     get:
@@ -379,7 +379,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ifNoneMatchHash"
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
@@ -387,9 +387,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/QuestionPage"
-        "304":
+        '304':
           $ref: "#/components/responses/NotModified"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
   /questions/drive-team:
     get:
@@ -398,7 +398,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ifNoneMatchHash"
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
@@ -406,9 +406,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Question"
-        "304":
+        '304':
           $ref: "#/components/responses/NotModified"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
   /submissions/match/{matchKey}/{teamNum}:
     parameters:
@@ -425,15 +425,15 @@ paths:
             schema:
               $ref: "#/components/schemas/MatchSubmission"
       responses:
-        "204":
+        '204':
           $ref: "#/components/responses/NoContent"
-        "400":
+        '400':
           $ref: "#/components/responses/BadRequest"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
-        "403":
+        '403':
           $ref: "#/components/responses/Forbidden"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
   /submissions/pit/{eventKey}/{teamNum}:
     parameters:
@@ -450,15 +450,15 @@ paths:
             schema:
               $ref: "#/components/schemas/PitSubmission"
       responses:
-        "204":
+        '204':
           $ref: "#/components/responses/NoContent"
-        "400":
+        '400':
           $ref: "#/components/responses/BadRequest"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
-        "403":
+        '403':
           $ref: "#/components/responses/Forbidden"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
   /submissions/drive-team/{matchKey}:
     parameters:
@@ -474,15 +474,15 @@ paths:
             schema:
               $ref: "#/components/schemas/DriveTeamSubmission"
       responses:
-        "204":
+        '204':
           $ref: "#/components/responses/NoContent"
-        "400":
+        '400':
           $ref: "#/components/responses/BadRequest"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
-        "403":
+        '403':
           $ref: "#/components/responses/Forbidden"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
   /analysis/{eventKey}/teams:
     parameters:
@@ -493,7 +493,7 @@ paths:
       security:
         - sessionKey: []
       responses:
-        "200":
+        '200':
           description: ""
           content:
             application/json:
@@ -501,11 +501,11 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/EventTeamStatistics"
-        "401":
+        '401':
           $ref: "#/components/responses/Unauthorized"
-        "403":
+        '403':
           $ref: "#/components/responses/Forbidden"
-        "404":
+        '404':
           $ref: "#/components/responses/NotFound"
 components:
   parameters:
@@ -619,14 +619,14 @@ components:
           $ref: "#/components/x-hidden/username"
         team:
           $ref: "#/components/x-hidden/teamNum"
-        nonce:
+        clientNonce:
           $ref: "#/components/x-hidden/base64_64"
           examples:
             - NYBcbONWh1c=
       required:
         - team
         - username
-        - nonce
+        - clientNonce
     LoginChallenge:
       properties:
         salt:
@@ -648,13 +648,13 @@ components:
           $ref: "#/components/x-hidden/base64_128"
           examples:
             - NYBcbONWh1dBrouaDEv66Q==
-        proof:
+        clientProof:
           $ref: "#/components/x-hidden/base64_256"
       required:
         - team
         - username
         - nonce
-        - proof
+        - clientProof
     AuthResponse:
       properties:
         session:
@@ -663,13 +663,13 @@ components:
           $ref: "#/components/schemas/User"
         team:
           $ref: "#/components/schemas/Team"
-        signature:
+        serverSignature:
           $ref: "#/components/x-hidden/base64_256"
       required:
         - session
         - user
         - team
-        - signature
+        - serverSignature
     Session:
       properties:
         key:
@@ -1049,19 +1049,12 @@ components:
               max:
                 type: number
               points:
-                type: array
-                items:
-                  properties:
-                    label:
-                      type: string
-                    value:
-                      type: number
-                  required:
-                    - label
+                type: object
+                additionalProperties:
+                  type: number
             required:
               - type
               - max
-              - points
           - title: RankingPointsStatistic
             properties:
               type:

@@ -1,21 +1,26 @@
 package org.victorrobotics.devilscoutserver.analysis.statistics;
 
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class RadarStatistic extends Statistic {
-  public static record RadarPoint(String label,
-                                  double value) {
-    public static RadarPoint of(String label, Number value) {
-      return value == null ? null : new RadarPoint(label, value.doubleValue());
-    }
-  }
+  public final double              max;
+  public final Map<String, Number> points;
 
-  public final double           max;
-  public final List<RadarPoint> points;
-
-  public RadarStatistic(String name, double max, List<RadarPoint> points) {
+  public RadarStatistic(String name, double max, Map<?, Number> points) {
     super(StatisticType.RADAR, name);
     this.max = max;
-    this.points = List.copyOf(points);
+
+    if (points.isEmpty()) {
+      this.points = null;
+    } else {
+      // Fixed iteration order
+      this.points = new LinkedHashMap<>();
+      for (Map.Entry<?, Number> point : points.entrySet()) {
+        this.points.put(point.getKey()
+                             .toString(),
+                        point.getValue());
+      }
+    }
   }
 }

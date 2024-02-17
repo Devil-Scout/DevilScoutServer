@@ -8,7 +8,6 @@ import org.victorrobotics.devilscoutserver.analysis.statistics.NumberStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.OprStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.PieChartStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.RadarStatistic;
-import org.victorrobotics.devilscoutserver.analysis.statistics.RadarStatistic.RadarPoint;
 import org.victorrobotics.devilscoutserver.analysis.statistics.RankingPointsStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StringStatistic;
@@ -131,7 +130,7 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                      DrivetrainType drivetrain,
                      Integer weight,
                      Integer size,
-                     NumberSummary speed,
+                     Double speed,
                      Map<StartLocation, Integer> autoStartPositions,
                      NumberSummary autoNotes,
                      NumberSummary teleopCyclesPerMinute,
@@ -168,8 +167,8 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                                            DataEntry::getInteger)),
                     mostCommon(extractData(handle.getPitEntries(), "/specs/size",
                                            DataEntry::getInteger)),
-                    summarizeNumbers(extractMergeData(handle.getMatchEntries(), "/general/speed",
-                                                      DataEntry::getInteger, Analyzer::average)),
+                    average(extractMergeData(handle.getMatchEntries(), "/general/speed",
+                                             DataEntry::getInteger, Analyzer::average)),
                     countDistinct(map(extractMergeData(handle.getMatchEntries(), "/auto/start_pos",
                                                        DataEntry::getInteger, Analyzer::mostCommon),
                                       StartLocation::of)),
@@ -205,7 +204,8 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                    new StatisticsPage("Specs",
                                       List.of(new StringStatistic("Drivetrain", data.drivetrain()),
                                               new StringStatistic("Weight", data.weight(), " lbs"),
-                                              new StringStatistic("Size", data.size(), " in"))),
+                                              new StringStatistic("Size", data.size(), " in"),
+                                              new StringStatistic("Speed", data.speed(), " / 5"))),
                    new StatisticsPage("Auto",
                                       List.of(new PieChartStatistic("Start Position",
                                                                     data.autoStartPositions()),
@@ -227,11 +227,10 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
 
   private static RadarStatistic driveTeamRadar(Data data) {
     return new RadarStatistic("Drive Team", 5,
-                              List.of(RadarPoint.of("Communication", data.driveTeamCommunication()),
-                                      RadarPoint.of("Strategy", data.driveTeamStrategy()),
-                                      RadarPoint.of("Adaptability", data.driveTeamAdaptability()),
-                                      RadarPoint.of("Professionalism",
-                                                    data.driveTeamProfessionalism())));
+                              Map.of("Communication", data.driveTeamCommunication(), "Strategy",
+                                     data.driveTeamStrategy(), "Adaptability",
+                                     data.driveTeamAdaptability(), "Professionalism",
+                                     data.driveTeamProfessionalism()));
   }
 
   private static Integer autoNoteCount(DataEntry match) {

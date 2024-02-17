@@ -1,14 +1,24 @@
 package org.victorrobotics.devilscoutserver.analysis.statistics;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 public final class PieChartStatistic extends Statistic {
-  public final SortedMap<Comparable<?>, Number> slices;
+  public final Map<String, Number> slices;
 
-  public PieChartStatistic(String name, Map<? extends Comparable<?>, ? extends Number> slices) {
+  public PieChartStatistic(String name, Map<?, ? extends Number> slices) {
     super(StatisticType.PIE_CHART, name);
-    this.slices = slices.isEmpty() ? null : new TreeMap<>(slices);
+
+    if (slices.isEmpty()) {
+      this.slices = null;
+    } else {
+      // Fixed iteration order
+      this.slices = new LinkedHashMap<>();
+      for (Map.Entry<?, ? extends Number> point : slices.entrySet()) {
+        this.slices.put(point.getKey()
+                             .toString(),
+                        point.getValue());
+      }
+    }
   }
 }
