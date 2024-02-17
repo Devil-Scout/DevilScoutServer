@@ -1,8 +1,6 @@
 package org.victorrobotics.devilscoutserver.years._2024;
 
-import org.victorrobotics.bluealliance.Event.WinLossRecord;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
-import org.victorrobotics.devilscoutserver.analysis.data.NumberSummary;
 import org.victorrobotics.devilscoutserver.analysis.statistics.BooleanStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.NumberStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.OprStatistic;
@@ -16,150 +14,18 @@ import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 import org.victorrobotics.devilscoutserver.tba.OprsCache;
-import org.victorrobotics.devilscoutserver.tba.OprsCache.TeamOpr;
 import org.victorrobotics.devilscoutserver.tba.RankingsCache;
+import org.victorrobotics.devilscoutserver.years._2024.CrescendoEnums.DrivetrainType;
+import org.victorrobotics.devilscoutserver.years._2024.CrescendoEnums.FinalStatus;
+import org.victorrobotics.devilscoutserver.years._2024.CrescendoEnums.PickupLocation;
+import org.victorrobotics.devilscoutserver.years._2024.CrescendoEnums.ScoreLocation;
+import org.victorrobotics.devilscoutserver.years._2024.CrescendoEnums.StartPosition;
 
 import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("java:S1192") // repeating paths is more clear here
-public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
-  enum DrivetrainType {
-    SWERVE("Swerve"),
-    TANK("Tank"),
-    MECANUM("Mecanum"),
-    OTHER("Other");
-
-    static final DrivetrainType[] VALUES = values();
-
-    final String value;
-
-    DrivetrainType(String value) {
-      this.value = value;
-    }
-
-    @Override
-    public String toString() {
-      return value;
-    }
-
-    static DrivetrainType of(Integer index) {
-      return index == null ? null : VALUES[index];
-    }
-  }
-
-  enum StartLocation {
-    NEXT_TO_AMP("Next to amp"),
-    FRONT_OF_SPEAKER("In front of speaker"),
-    NEXT_TO_SPEAKER("Center, next to speaker"),
-    NEXT_TO_SOURCE("Next to source");
-
-    static final StartLocation[] VALUES = values();
-
-    final String value;
-
-    StartLocation(String value) {
-      this.value = value;
-    }
-
-    @Override
-    public String toString() {
-      return value;
-    }
-
-    static StartLocation of(Integer index) {
-      return index == null ? null : VALUES[index];
-    }
-  }
-
-  enum ScoreLocation {
-    AMP("Amp"),
-    SPEAKER("Speaker");
-
-    static final ScoreLocation[] VALUES = values();
-
-    final String value;
-
-    ScoreLocation(String value) {
-      this.value = value;
-    }
-
-    @Override
-    public String toString() {
-      return value;
-    }
-
-    static ScoreLocation of(Integer index) {
-      return index == null ? null : VALUES[index];
-    }
-  }
-
-  enum PickupLocation {
-    SOURCE("Source"),
-    GROUND("Ground");
-
-    static final PickupLocation[] VALUES = values();
-
-    final String value;
-
-    PickupLocation(String value) {
-      this.value = value;
-    }
-
-    @Override
-    public String toString() {
-      return value;
-    }
-
-    static PickupLocation of(Integer index) {
-      return index == null ? null : VALUES[index];
-    }
-  }
-
-  enum FinalStatus {
-    NONE("None"),
-    PARK("Parked"),
-    ONSTAGE("Onstage"),
-    HARMONY("Harmony");
-
-    static final FinalStatus[] VALUES = values();
-
-    final String value;
-
-    FinalStatus(String value) {
-      this.value = value;
-    }
-
-    @Override
-    public String toString() {
-      return value;
-    }
-
-    static FinalStatus of(Integer index) {
-      return index == null ? null : VALUES[index];
-    }
-  }
-
-  static record Data(WinLossRecord wlt,
-                     Map<String, Integer> rankingPoints,
-                     TeamOpr opr,
-                     Double driveTeamCommunication,
-                     Double driveTeamStrategy,
-                     Double driveTeamAdaptability,
-                     Double driveTeamProfessionalism,
-                     DrivetrainType drivetrain,
-                     Integer weight,
-                     Integer size,
-                     Double speed,
-                     Map<StartLocation, Integer> autoStartPositions,
-                     NumberSummary autoNotes,
-                     NumberSummary teleopCyclesPerMinute,
-                     Double teleopScoreAccuracy,
-                     Map<ScoreLocation, Integer> teleopScoreCounts,
-                     Map<PickupLocation, Integer> teleopPickupCounts,
-                     Map<FinalStatus, Integer> endgameStatusCounts,
-                     Double trapRate) {}
-
+public final class CrescendoAnalyzer extends Analyzer<CrescendoData> {
   public CrescendoAnalyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
                            EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
                            OprsCache teamOprsCache, RankingsCache rankingsCache) {
@@ -168,55 +34,62 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
   }
 
   @Override
-  protected Data computeData(Handle handle) {
-    return new Data(handle.getRankings()
-                          .getWinLossRecord(),
-                    null, handle.getOpr(),
-                    average(extractMergeData(handle.getDriveTeamEntries(), "/communication",
-                                             DataEntry::getInteger, Analyzer::average)),
-                    average(extractMergeData(handle.getDriveTeamEntries(), "/strategy",
-                                             DataEntry::getInteger, Analyzer::average)),
-                    average(extractMergeData(handle.getDriveTeamEntries(), "/adaptability",
-                                             DataEntry::getInteger, Analyzer::average)),
-                    average(extractMergeData(handle.getDriveTeamEntries(), "/professionalism",
-                                             DataEntry::getInteger, Analyzer::average)),
-                    mostCommon(map(extractData(handle.getPitEntries(), "/specs/drivetrain",
-                                               DataEntry::getInteger),
-                                   DrivetrainType::of)),
-                    mostCommon(extractData(handle.getPitEntries(), "/specs/weight",
-                                           DataEntry::getInteger)),
-                    mostCommon(extractData(handle.getPitEntries(), "/specs/size",
-                                           DataEntry::getInteger)),
-                    average(extractMergeData(handle.getMatchEntries(), "/general/speed",
-                                             DataEntry::getInteger, Analyzer::average)),
-                    countDistinct(map(extractMergeData(handle.getMatchEntries(), "/auto/start_pos",
-                                                       DataEntry::getInteger, Analyzer::mostCommon),
-                                      StartLocation::of)),
-                    summarizeNumbers(extractMergeData(handle.getMatchEntries(),
-                                                      CrescendoAnalyzer::autoNoteCount,
+  protected CrescendoData computeData(Handle handle) {
+    return new CrescendoData(handle.getRankings()
+                                   .getWinLossRecord(),
+                             null, handle.getOpr(),
+                             average(extractMergeData(handle.getDriveTeamEntries(),
+                                                      "/communication", DataEntry::getInteger,
                                                       Analyzer::average)),
-                    summarizeNumbers(extractMergeData(handle.getMatchEntries(),
-                                                      CrescendoAnalyzer::teleopCyclesPerMinute,
+                             average(extractMergeData(handle.getDriveTeamEntries(), "/strategy",
+                                                      DataEntry::getInteger, Analyzer::average)),
+                             average(extractMergeData(handle.getDriveTeamEntries(), "/adaptability",
+                                                      DataEntry::getInteger, Analyzer::average)),
+                             average(extractMergeData(handle.getDriveTeamEntries(),
+                                                      "/professionalism", DataEntry::getInteger,
                                                       Analyzer::average)),
-                    average(extractMergeData(handle.getMatchEntries(),
-                                             CrescendoAnalyzer::teleopScoreAccuracy,
-                                             Analyzer::average)),
-                    sumCounts(extractMergeData(handle.getMatchEntries(),
-                                               CrescendoAnalyzer::teleopScoreLocations,
-                                               Analyzer::averageCounts)),
-                    sumCounts(extractMergeData(handle.getMatchEntries(),
-                                               CrescendoAnalyzer::teleopPickupLocations,
-                                               Analyzer::averageCounts)),
-                    countDistinct(map(extractMergeData(handle.getMatchEntries(), "/auto/start_pos",
-                                                       DataEntry::getInteger, Analyzer::mostCommon),
-                                      FinalStatus::of)),
-                    average(map(extractMergeData(handle.getMatchEntries(), "/endgame/trap",
-                                                 DataEntry::getBoolean, Analyzer::mostCommon),
-                                b -> b ? 1 : 0)));
+                             mostCommon(map(extractData(handle.getPitEntries(), "/specs/drivetrain",
+                                                        DataEntry::getInteger),
+                                            DrivetrainType::of)),
+                             mostCommon(extractData(handle.getPitEntries(), "/specs/weight",
+                                                    DataEntry::getInteger)),
+                             mostCommon(extractData(handle.getPitEntries(), "/specs/size",
+                                                    DataEntry::getInteger)),
+                             average(extractMergeData(handle.getMatchEntries(), "/general/speed",
+                                                      DataEntry::getInteger, Analyzer::average)),
+                             countDistinct(map(extractMergeData(handle.getMatchEntries(),
+                                                                "/auto/start_pos",
+                                                                DataEntry::getInteger,
+                                                                Analyzer::mostCommon),
+                                               StartPosition::of)),
+                             summarizeNumbers(extractMergeData(handle.getMatchEntries(),
+                                                               CrescendoAnalyzer::autoNoteCount,
+                                                               Analyzer::average)),
+                             summarizeNumbers(extractMergeData(handle.getMatchEntries(),
+                                                               CrescendoAnalyzer::teleopCyclesPerMinute,
+                                                               Analyzer::average)),
+                             average(extractMergeData(handle.getMatchEntries(),
+                                                      CrescendoAnalyzer::teleopScoreAccuracy,
+                                                      Analyzer::average)),
+                             sumCounts(extractMergeData(handle.getMatchEntries(),
+                                                        CrescendoAnalyzer::teleopScoreLocations,
+                                                        Analyzer::averageCounts)),
+                             sumCounts(extractMergeData(handle.getMatchEntries(),
+                                                        CrescendoAnalyzer::teleopPickupLocations,
+                                                        Analyzer::averageCounts)),
+                             countDistinct(map(extractMergeData(handle.getMatchEntries(),
+                                                                "/auto/start_pos",
+                                                                DataEntry::getInteger,
+                                                                Analyzer::mostCommon),
+                                               FinalStatus::of)),
+                             average(map(extractMergeData(handle.getMatchEntries(), "/endgame/trap",
+                                                          DataEntry::getBoolean,
+                                                          Analyzer::mostCommon),
+                                         b -> b ? 1 : 0)));
   }
 
   @Override
-  protected List<StatisticsPage> generateStatistics(Data data) {
+  protected List<StatisticsPage> generateStatistics(CrescendoData data) {
     return List.of(new StatisticsPage("Summary",
                                       List.of(new WltStatistic(data.wlt()),
                                               new RankingPointsStatistic(data.rankingPoints()),
@@ -245,7 +118,7 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                                               new BooleanStatistic("Trap Rate", data.trapRate()))));
   }
 
-  private static RadarStatistic driveTeamRadar(Data data) {
+  private static RadarStatistic driveTeamRadar(CrescendoData data) {
     return new RadarStatistic("Drive Team", 5,
                               nullableMap(List.of(nullableMapEntry("Communication",
                                                                    data.driveTeamCommunication()),

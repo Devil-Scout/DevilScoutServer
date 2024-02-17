@@ -45,13 +45,13 @@ public final class SubmissionController extends Controller {
     @SuppressWarnings("java:S1941") // move code later
     int teamNum = ctx.pathParamAsClass(TEAM_NUMBER_PATH_PARAM, Integer.class)
                      .get();
-    String teamEvent = teamDB().getTeam(session.getTeam())
-                               .eventKey();
-    if (teamEvent.isEmpty() || !matchKey.startsWith(teamEvent)) {
+    String eventKey = teamDB().getTeam(session.getTeam())
+                              .eventKey();
+    if (eventKey.isEmpty() || !matchKey.startsWith(eventKey)) {
       throw new ForbiddenResponse();
     }
 
-    MatchInfo match = matchScheduleCache().get(teamEvent)
+    MatchInfo match = matchScheduleCache().get(eventKey)
                                           .value()
                                           .get(matchKey);
     if (match == null) {
@@ -63,13 +63,13 @@ public final class SubmissionController extends Controller {
     }
 
     Map<String, Map<String, Object>> payload = jsonDecode(ctx, Map.class);
-    if (!matchesSchema(payload, questions().getMatchQuestions())) {
+    if (!matchesSchema(payload, questions(eventKey).getMatchQuestions())) {
       throw new BadRequestResponse(BAD_SUBMISSION_MESSAGE);
     }
 
-    matchEntryDB().createEntry(teamEvent, matchKey, session.getUser(), session.getTeam(), teamNum,
+    matchEntryDB().createEntry(eventKey, matchKey, session.getUser(), session.getTeam(), teamNum,
                                jsonEncode(payload));
-    analysisCache().scheduleRefresh(teamEvent, teamNum);
+    analysisCache().scheduleRefresh(eventKey, teamNum);
     throw new NoContentResponse();
   }
 
@@ -93,20 +93,20 @@ public final class SubmissionController extends Controller {
     @SuppressWarnings("java:S1941") // move code later
     int teamNum = ctx.pathParamAsClass(TEAM_NUMBER_PATH_PARAM, Integer.class)
                      .get();
-    String teamEvent = teamDB().getTeam(session.getTeam())
-                               .eventKey();
-    if (!teamEvent.equals(ctx.pathParam(EVENT_KEY_PATH_PARAM))) {
+    String eventKey = teamDB().getTeam(session.getTeam())
+                              .eventKey();
+    if (!eventKey.equals(ctx.pathParam(EVENT_KEY_PATH_PARAM))) {
       throw new ForbiddenResponse();
     }
 
     Map<String, Map<String, Object>> payload = jsonDecode(ctx, Map.class);
-    if (!matchesSchema(payload, questions().getPitQuestions())) {
+    if (!matchesSchema(payload, questions(eventKey).getPitQuestions())) {
       throw new BadRequestResponse(BAD_SUBMISSION_MESSAGE);
     }
 
-    pitEntryDB().createEntry(teamEvent, null, session.getUser(), session.getTeam(), teamNum,
+    pitEntryDB().createEntry(eventKey, null, session.getUser(), session.getTeam(), teamNum,
                              jsonEncode(payload));
-    analysisCache().scheduleRefresh(teamEvent, teamNum);
+    analysisCache().scheduleRefresh(eventKey, teamNum);
     throw new NoContentResponse();
   }
 
@@ -129,13 +129,13 @@ public final class SubmissionController extends Controller {
     Session session = getValidSession(ctx);
 
     String matchKey = ctx.pathParam(MATCH_KEY_PATH_PARAM);
-    String teamEvent = teamDB().getTeam(session.getTeam())
-                               .eventKey();
-    if (teamEvent.isEmpty() || !matchKey.startsWith(teamEvent)) {
+    String eventKey = teamDB().getTeam(session.getTeam())
+                              .eventKey();
+    if (eventKey.isEmpty() || !matchKey.startsWith(eventKey)) {
       throw new ForbiddenResponse();
     }
 
-    MatchInfo match = matchScheduleCache().get(teamEvent)
+    MatchInfo match = matchScheduleCache().get(eventKey)
                                           .value()
                                           .get(matchKey);
     if (match == null) {
@@ -170,16 +170,16 @@ public final class SubmissionController extends Controller {
         throw new BadRequestResponse("Team " + scoutedTeam + " not on same alliance in match");
       }
 
-      if (!matchesQuestions(entry.getValue(), questions().getDriveTeamQuestions())) {
+      if (!matchesQuestions(entry.getValue(), questions(eventKey).getDriveTeamQuestions())) {
         throw new BadRequestResponse(BAD_SUBMISSION_MESSAGE);
       }
     }
 
     for (Map.Entry<String, Map<String, Object>> entry : payload.entrySet()) {
       int teamNum = Integer.parseInt(entry.getKey());
-      driveTeamEntryDB().createEntry(teamEvent, matchKey, session.getUser(), session.getTeam(),
+      driveTeamEntryDB().createEntry(eventKey, matchKey, session.getUser(), session.getTeam(),
                                      teamNum, jsonEncode(entry.getValue()));
-      analysisCache().scheduleRefresh(teamEvent, teamNum);
+      analysisCache().scheduleRefresh(eventKey, teamNum);
     }
 
     throw new NoContentResponse();

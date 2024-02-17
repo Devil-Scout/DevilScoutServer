@@ -28,15 +28,15 @@ paths:
             schema:
               $ref: "#/components/schemas/LoginRequest"
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/LoginChallenge"
-        '400':
+        "400":
           $ref: "#/components/responses/BadRequest"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
   /auth:
     post:
@@ -48,17 +48,17 @@ paths:
             schema:
               $ref: "#/components/schemas/AuthRequest"
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AuthResponse"
-        '400':
+        "400":
           $ref: "#/components/responses/BadRequest"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
   /logout:
     delete:
@@ -67,9 +67,9 @@ paths:
       security:
         - sessionKey: []
       responses:
-        '204':
+        "204":
           $ref: "#/components/responses/NoContent"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
   /session:
     get:
@@ -78,13 +78,13 @@ paths:
       security:
         - sessionKey: []
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Session"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
   /teams/{teamNum}:
     parameters:
@@ -95,43 +95,43 @@ paths:
       security:
         - sessionKey: []
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Team"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-        '403':
+        "403":
           $ref: "#/components/responses/Forbidden"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - teams
       security:
         - sessionKey:
-          - admin
+            - admin
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/TeamEdits"
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Team"
-        '400':
+        "400":
           $ref: "#/components/responses/BadRequest"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-        '403':
+        "403":
           $ref: "#/components/responses/Forbidden"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
   /teams/{teamNum}/users:
     parameters:
@@ -141,9 +141,9 @@ paths:
         - teams
       security:
         - sessionKey:
-          - admin
+            - admin
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
@@ -151,39 +151,39 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/User"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-        '403':
+        "403":
           $ref: "#/components/responses/Forbidden"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
     post:
       tags:
         - teams
       security:
         - sessionKey:
-          - admin
+            - admin
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/UserRegistration"
       responses:
-        '201':
+        "201":
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-        '400':
+        "400":
           $ref: "#/components/responses/BadRequest"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-        '403':
+        "403":
           $ref: "#/components/responses/Forbidden"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
-        '409':
+        "409":
           $ref: "#/components/responses/Conflict"
   /users/{userId}:
     parameters:
@@ -194,19 +194,19 @@ paths:
       security:
         - sessionKey: []
         - sessionKey:
-          - admin
+            - admin
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-        '403':
+        "403":
           $ref: "#/components/responses/Forbidden"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
     patch:
       tags:
@@ -214,7 +214,7 @@ paths:
       security:
         - sessionKey: []
         - sessionKey:
-          - admin
+            - admin
       requestBody:
         content:
           application/json:
@@ -222,21 +222,21 @@ paths:
               $ref: "#/components/schemas/UserEdits"
         required: false
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-        '400':
+        "400":
           $ref: "#/components/responses/BadRequest"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-        '403':
+        "403":
           $ref: "#/components/responses/Forbidden"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
-        '409':
+        "409":
           $ref: "#/components/responses/Conflict"
     delete:
       tags:
@@ -244,15 +244,15 @@ paths:
       security:
         - sessionKey: []
         - sessionKey:
-          - admin
+            - admin
       responses:
-        '204':
+        "204":
           $ref: "#/components/responses/NoContent"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-        '403':
+        "403":
           $ref: "#/components/responses/Forbidden"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
   /events:
     get:
@@ -263,7 +263,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ifNoneMatchTimestamp"
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
@@ -271,9 +271,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/EventInfo"
-        '304':
+        "304":
           $ref: "#/components/responses/NotModified"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
       deprecated: false
   /events/{eventKey}:
@@ -287,17 +287,17 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ifNoneMatchTimestamp"
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventInfo"
-        '304':
+        "304":
           $ref: "#/components/responses/NotModified"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
   /events/{eventKey}/teams:
     parameters:
@@ -310,7 +310,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ifNoneMatchTimestamp"
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
@@ -318,11 +318,11 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TeamInfo"
-        '304':
+        "304":
           $ref: "#/components/responses/NotModified"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
   /events/{eventKey}/matches:
     parameters:
@@ -335,7 +335,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ifNoneMatchTimestamp"
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
@@ -343,13 +343,15 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MatchInfo"
-        '304':
+        "304":
           $ref: "#/components/responses/NotModified"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
-  /questions/match:
+  /questions/{eventKey}/match:
+    parameters:
+      - $ref: "#/components/parameters/eventKey"
     get:
       tags:
         - questions
@@ -358,7 +360,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ifNoneMatchHash"
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
@@ -366,11 +368,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/QuestionPage"
-        '304':
+        "304":
           $ref: "#/components/responses/NotModified"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-  /questions/pit:
+  /questions/{eventKey}/pit:
+    parameters:
+      - $ref: "#/components/parameters/eventKey"
     get:
       tags:
         - questions
@@ -379,7 +383,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ifNoneMatchHash"
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
@@ -387,18 +391,20 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/QuestionPage"
-        '304':
+        "304":
           $ref: "#/components/responses/NotModified"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-  /questions/drive-team:
+  /questions/{eventKey}/drive-team:
+    parameters:
+      - $ref: "#/components/parameters/eventKey"
     get:
       tags:
         - questions
       parameters:
         - $ref: "#/components/parameters/ifNoneMatchHash"
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
@@ -406,9 +412,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Question"
-        '304':
+        "304":
           $ref: "#/components/responses/NotModified"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
   /submissions/match/{matchKey}/{teamNum}:
     parameters:
@@ -425,15 +431,15 @@ paths:
             schema:
               $ref: "#/components/schemas/MatchSubmission"
       responses:
-        '204':
+        "204":
           $ref: "#/components/responses/NoContent"
-        '400':
+        "400":
           $ref: "#/components/responses/BadRequest"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-        '403':
+        "403":
           $ref: "#/components/responses/Forbidden"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
   /submissions/pit/{eventKey}/{teamNum}:
     parameters:
@@ -450,15 +456,15 @@ paths:
             schema:
               $ref: "#/components/schemas/PitSubmission"
       responses:
-        '204':
+        "204":
           $ref: "#/components/responses/NoContent"
-        '400':
+        "400":
           $ref: "#/components/responses/BadRequest"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-        '403':
+        "403":
           $ref: "#/components/responses/Forbidden"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
   /submissions/drive-team/{matchKey}:
     parameters:
@@ -474,36 +480,36 @@ paths:
             schema:
               $ref: "#/components/schemas/DriveTeamSubmission"
       responses:
-        '204':
+        "204":
           $ref: "#/components/responses/NoContent"
-        '400':
+        "400":
           $ref: "#/components/responses/BadRequest"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-        '403':
+        "403":
           $ref: "#/components/responses/Forbidden"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
   /analysis/{eventKey}/teams:
     parameters:
-        - $ref: "#/components/parameters/eventKey"
+      - $ref: "#/components/parameters/eventKey"
     get:
       tags:
         - analysis
       security:
         - sessionKey: []
       responses:
-        '200':
+        "200":
           description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventTeamStatistics"
-        '401':
+        "401":
           $ref: "#/components/responses/Unauthorized"
-        '403':
+        "403":
           $ref: "#/components/responses/Forbidden"
-        '404':
+        "404":
           $ref: "#/components/responses/NotFound"
 components:
   parameters:
@@ -856,90 +862,90 @@ components:
             - key
             - prompt
         - oneOf:
-          - title: BooleanQuestion
-            properties:
-              type:
-                type: string
-                enum:
-                  - BOOLEAN
-            required:
-              - type
-          - title: CounterQuestion
-            properties:
-              type:
-                type: string
-                enum:
-                  - COUNTER
-            required:
-              - type
-          - title: MultipleChoiceQuestion
-            properties:
-              type:
-                type: string
-                enum:
-                  - MULTIPLE
-              options:
-                type: array
-                items:
+            - title: BooleanQuestion
+              properties:
+                type:
                   type: string
-            required:
-              - type
-              - options
-          - title: NumberQuestion
-            properties:
-              type:
-                type: string
-                enum:
-                  - NUMBER
-              min:
-                type: integer
-              max:
-                type: integer
-            required:
-              - type
-          - title: RangeQuestion
-            properties:
-              type:
-                type: string
-                enum:
-                  - RANGE
-              min:
-                type: integer
-              max:
-                type: integer
-              increment:
-                type: integer
-                default: 1
-            required:
-              - type
-              - min
-              - max
-          - title: SequenceQuestion
-            properties:
-              type:
-                type: string
-                enum:
-                  - SEQUENCE
-              options:
-                type: array
-                items:
+                  enum:
+                    - BOOLEAN
+              required:
+                - type
+            - title: CounterQuestion
+              properties:
+                type:
                   type: string
-            required:
-              - type
-              - options
-          - title: SingleChoiceQuestion
-            properties:
-              type:
-                type: string
-                enum:
-                  - SINGLE
-              options:
-                type: array
-                items:
+                  enum:
+                    - COUNTER
+              required:
+                - type
+            - title: MultipleChoiceQuestion
+              properties:
+                type:
                   type: string
-            required:
-              - type
-              - options
+                  enum:
+                    - MULTIPLE
+                options:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - type
+                - options
+            - title: NumberQuestion
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - NUMBER
+                min:
+                  type: integer
+                max:
+                  type: integer
+              required:
+                - type
+            - title: RangeQuestion
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - RANGE
+                min:
+                  type: integer
+                max:
+                  type: integer
+                increment:
+                  type: integer
+                  default: 1
+              required:
+                - type
+                - min
+                - max
+            - title: SequenceQuestion
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - SEQUENCE
+                options:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - type
+                - options
+            - title: SingleChoiceQuestion
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - SINGLE
+                options:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - type
+                - options
     MatchSubmission:
       type: object
       minProperties: 1
@@ -986,110 +992,110 @@ components:
           required:
             - name
         - oneOf:
-          - title: BooleanStatistic
-            properties:
-              type:
-                type: string
-                enum:
-                  - BOOLEAN
-              percent:
-                type: number
-            required:
-              - type
-          - title: NumberStatistic
-            properties:
-              type:
-                type: string
-                enum:
-                  - NUMBER
-              min:
-                type: number
-              max:
-                type: number
-              mean:
-                type: number
-              stddev:
-                type: number
-            required:
-              - type
-          - title: OprStatistic
-            properties:
-              type:
-                type: string
-                enum:
-                  - OPR
-              opr:
-                type: number
-              dpr:
-                type: number
-              ccwm:
-                type: number
-            required:
-              - type
-          - title: PieChartStatistic
-            properties:
-              type:
-                type: string
-                enum:
-                  - PIE_CHART
-              slices:
-                type: object
-                additionalProperties:
+            - title: BooleanStatistic
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - BOOLEAN
+                percent:
                   type: number
-            required:
-              - type
-          - title: RadarStatistic
-            properties:
-              type:
-                type: string
-                enum:
-                  - RADAR
-              max:
-                type: number
-              points:
-                type: object
-                additionalProperties:
+              required:
+                - type
+            - title: NumberStatistic
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - NUMBER
+                min:
                   type: number
-            required:
-              - type
-              - max
-              - points
-          - title: RankingPointsStatistic
-            properties:
-              type:
-                type: string
-                enum:
-                  - RP
-              rankingPoints:
-                type: object
-                additionalProperties:
+                max:
+                  type: number
+                mean:
+                  type: number
+                stddev:
+                  type: number
+              required:
+                - type
+            - title: OprStatistic
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - OPR
+                opr:
+                  type: number
+                dpr:
+                  type: number
+                ccwm:
+                  type: number
+              required:
+                - type
+            - title: PieChartStatistic
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - PIE_CHART
+                slices:
+                  type: object
+                  additionalProperties:
+                    type: number
+              required:
+                - type
+            - title: RadarStatistic
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - RADAR
+                max:
+                  type: number
+                points:
+                  type: object
+                  additionalProperties:
+                    type: number
+              required:
+                - type
+                - max
+                - points
+            - title: RankingPointsStatistic
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - RP
+                rankingPoints:
+                  type: object
+                  additionalProperties:
+                    type: integer
+              required:
+                - type
+            - title: StringStatistic
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - STRING
+                value:
+                  type: string
+              required:
+                - type
+            - title: WltStatistic
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - WLT
+                wins:
                   type: integer
-            required:
-              - type
-          - title: StringStatistic
-            properties:
-              type:
-                type: string
-                enum:
-                  - STRING
-              value:
-                type: string
-            required:
-              - type
-          - title: WltStatistic
-            properties:
-              type:
-                type: string
-                enum:
-                  - WLT
-              wins:
-                type: integer
-              losses:
-                type: integer
-              ties:
-                type: integer
-            required:
-              - type
+                losses:
+                  type: integer
+                ties:
+                  type: integer
+              required:
+                - type
   x-hidden:
     uuid:
       type: string

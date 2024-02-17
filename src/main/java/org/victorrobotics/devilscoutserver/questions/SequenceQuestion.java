@@ -1,13 +1,21 @@
 package org.victorrobotics.devilscoutserver.questions;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class SequenceQuestion extends Question {
   public final List<String> options;
 
-  public SequenceQuestion(String prompt, String key, List<String> options) {
+  public <T> SequenceQuestion(String prompt, String key, Iterable<T> options) {
     super(QuestionType.SEQUENCE, prompt, key);
-    this.options = options;
+    this.options = new ArrayList<>();
+    for (T option : options) {
+      this.options.add(option.toString());
+    }
+  }
+
+  public <T> SequenceQuestion(String prompt, String key, T[] options) {
+    this(prompt, key, List.of(options));
   }
 
   @Override
