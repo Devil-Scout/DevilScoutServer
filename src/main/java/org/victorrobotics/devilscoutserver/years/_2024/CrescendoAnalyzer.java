@@ -62,6 +62,11 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
       this.value = value;
     }
 
+    @Override
+    public String toString() {
+      return value;
+    }
+
     static StartLocation of(Integer index) {
       return index == null ? null : VALUES[index];
     }
@@ -77,6 +82,11 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
 
     ScoreLocation(String value) {
       this.value = value;
+    }
+
+    @Override
+    public String toString() {
+      return value;
     }
 
     static ScoreLocation of(Integer index) {
@@ -96,6 +106,11 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
       this.value = value;
     }
 
+    @Override
+    public String toString() {
+      return value;
+    }
+
     static PickupLocation of(Integer index) {
       return index == null ? null : VALUES[index];
     }
@@ -113,6 +128,11 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
 
     FinalStatus(String value) {
       this.value = value;
+    }
+
+    @Override
+    public String toString() {
+      return value;
     }
 
     static FinalStatus of(Integer index) {
