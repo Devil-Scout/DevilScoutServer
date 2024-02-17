@@ -3,6 +3,7 @@ package org.victorrobotics.devilscoutserver.years._2024;
 import org.victorrobotics.bluealliance.Event.WinLossRecord;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
 import org.victorrobotics.devilscoutserver.analysis.data.NumberSummary;
+import org.victorrobotics.devilscoutserver.analysis.statistics.BooleanStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.NumberStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.OprStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.PieChartStatistic;
@@ -47,21 +48,76 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
     }
   }
 
-  static record DriveTeamRadar(Double communication,
-                               Double strategy,
-                               Double adaptability,
-                               Double professionalism) {}
+  enum StartLocation {
+    NEXT_TO_AMP("Next to amp"),
+    FRONT_OF_SPEAKER("In front of speaker"),
+    NEXT_TO_SPEAKER("Center, next to speaker"),
+    NEXT_TO_SOURCE("Next to source");
+
+    static final StartLocation[] VALUES = values();
+
+    final String value;
+
+    StartLocation(String value) {
+      this.value = value;
+    }
+
+    static StartLocation of(Integer index) {
+      return index == null ? null : VALUES[index];
+    }
+  }
+
+  enum ScoreLocation {
+    AMP("Amp"),
+    SPEAKER("Speaker");
+
+    static final ScoreLocation[] VALUES = values();
+
+    final String value;
+
+    ScoreLocation(String value) {
+      this.value = value;
+    }
+
+    static ScoreLocation of(Integer index) {
+      return index == null ? null : VALUES[index];
+    }
+  }
+
+  enum PickupLocation {
+    SOURCE("Source"),
+    GROUND("Ground");
+
+    static final PickupLocation[] VALUES = values();
+
+    final String value;
+
+    PickupLocation(String value) {
+      this.value = value;
+    }
+
+    static PickupLocation of(Integer index) {
+      return index == null ? null : VALUES[index];
+    }
+  }
 
   static record Data(WinLossRecord wlt,
                      Map<String, Integer> rankingPoints,
                      TeamOpr opr,
-                     DriveTeamRadar driveTeamRadar,
+                     Double driveTeamCommunication,
+                     Double driveTeamStrategy,
+                     Double driveTeamAdaptability,
+                     Double driveTeamProfessionalism,
                      DrivetrainType drivetrain,
                      Integer weight,
                      Integer size,
                      NumberSummary speed,
-                     Map<Integer, Integer> autoStartPositions,
-                     NumberSummary autoNotes) {}
+                     Map<StartLocation, Integer> autoStartPositions,
+                     NumberSummary autoNotes,
+                     NumberSummary teleopCyclesPerMinute,
+                     Double teleopScoreAccuracy,
+                     Map<ScoreLocation, Integer> teleopScoreCounts,
+                     Map<PickupLocation, Integer> teleopPickupCounts) {}
 
   public CrescendoAnalyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
                            EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
@@ -74,34 +130,42 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
   protected Data computeData(Handle handle) {
     return new Data(handle.getRankings()
                           .getWinLossRecord(),
-                    null, handle.getOpr(), driveTeamRadar(handle),
-                    DrivetrainType.of(mostCommon(extractData(handle.getPitEntries(),
-                                                             "/specs/drivetrain",
-                                                             DataEntry::getInteger))),
+                    null, handle.getOpr(),
+                    average(extractDataDeep(handle.getDriveTeamEntries(), "/communication",
+                                            DataEntry::getInteger, Analyzer::average)),
+                    average(extractDataDeep(handle.getDriveTeamEntries(), "/strategy",
+                                            DataEntry::getInteger, Analyzer::average)),
+                    average(extractDataDeep(handle.getDriveTeamEntries(), "/adaptability",
+                                            DataEntry::getInteger, Analyzer::average)),
+                    average(extractDataDeep(handle.getDriveTeamEntries(), "/professionalism",
+                                            DataEntry::getInteger, Analyzer::average)),
+                    mostCommon(map(extractData(handle.getPitEntries(), "/specs/drivetrain",
+                                               DataEntry::getInteger),
+                                   DrivetrainType::of)),
                     mostCommon(extractData(handle.getPitEntries(), "/specs/weight",
                                            DataEntry::getInteger)),
                     mostCommon(extractData(handle.getPitEntries(), "/specs/size",
                                            DataEntry::getInteger)),
                     summarizeNumbers(extractDataDeep(handle.getMatchEntries(), "/general/speed",
                                                      DataEntry::getInteger, Analyzer::average)),
-                    countDistinct(extractDataDeep(handle.getMatchEntries(), "/auto/start_pos",
-                                                  DataEntry::getInteger, Analyzer::mostCommon)),
+                    countDistinct(map(extractDataDeep(handle.getMatchEntries(), "/auto/start_pos",
+                                                      DataEntry::getInteger, Analyzer::mostCommon),
+                                      StartLocation::of)),
                     summarizeNumbers(extractDataDeep(handle.getMatchEntries(),
                                                      CrescendoAnalyzer::autoNoteCount,
-                                                     Analyzer::average)));
-  }
-
-  private static DriveTeamRadar driveTeamRadar(Handle handle) {
-    return new DriveTeamRadar(average(extractDataDeep(handle.getDriveTeamEntries(),
-                                                      "/communication", DataEntry::getInteger,
-                                                      Analyzer::average)),
-                              average(extractDataDeep(handle.getDriveTeamEntries(), "/strategy",
-                                                      DataEntry::getInteger, Analyzer::average)),
-                              average(extractDataDeep(handle.getDriveTeamEntries(), "/adaptability",
-                                                      DataEntry::getInteger, Analyzer::average)),
-                              average(extractDataDeep(handle.getDriveTeamEntries(),
-                                                      "/professionalism", DataEntry::getInteger,
-                                                      Analyzer::average)));
+                                                     Analyzer::average)),
+                    summarizeNumbers(extractDataDeep(handle.getMatchEntries(),
+                                                     CrescendoAnalyzer::teleopCyclesPerMinute,
+                                                     Analyzer::average)),
+                    average(extractDataDeep(handle.getMatchEntries(),
+                                            CrescendoAnalyzer::teleopScoreAccuracy,
+                                            Analyzer::average)),
+                    sumCounts(extractDataDeep(handle.getMatchEntries(),
+                                              CrescendoAnalyzer::teleopScoreLocations,
+                                              Analyzer::averageCounts)),
+                    sumCounts(extractDataDeep(handle.getMatchEntries(),
+                                              CrescendoAnalyzer::teleopPickupLocations,
+                                              Analyzer::averageCounts)));
   }
 
   @Override
@@ -116,29 +180,27 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
                                               new StringStatistic("Size", data.size(), " in"))),
                    new StatisticsPage("Auto",
                                       List.of(new PieChartStatistic("Start Position",
-                                                                    data.autoStartPositions(),
-                                                                    List.of("Next to amp",
-                                                                            "Front of speaker",
-                                                                            "Next to speaker",
-                                                                            "Next to source")),
-                                              new NumberStatistic("Note Count",
-                                                                  data.autoNotes()))));
+                                                                    data.autoStartPositions()),
+                                              new NumberStatistic("Note Count", data.autoNotes()))),
+                   new StatisticsPage("Teleop",
+                                      List.of(new NumberStatistic("Cycles per Minute",
+                                                                  data.teleopCyclesPerMinute()),
+                                              new BooleanStatistic("Score Accuracy",
+                                                                   data.teleopScoreAccuracy()),
+                                              new PieChartStatistic("Score Locations",
+                                                                    data.teleopScoreCounts()),
+                                              new PieChartStatistic("Pickup Locations",
+                                                                    data.teleopPickupCounts()))));
   }
 
   private static RadarStatistic driveTeamRadar(Data data) {
-    return new RadarStatistic("Drive Team", 5, List.of(
-                                                       new RadarPoint("Communication",
-                                                                      data.driveTeamRadar()
-                                                                          .communication()),
-                                                       new RadarPoint("Strategy",
-                                                                      data.driveTeamRadar()
-                                                                          .strategy()),
-                                                       new RadarPoint("Adaptability",
-                                                                      data.driveTeamRadar()
-                                                                          .adaptability()),
-                                                       new RadarPoint("Professionalism",
-                                                                      data.driveTeamRadar()
-                                                                          .professionalism())));
+    return new RadarStatistic("Drive Team", 5,
+                              List.of(new RadarPoint("Communication",
+                                                     data.driveTeamCommunication()),
+                                      new RadarPoint("Strategy", data.driveTeamStrategy()),
+                                      new RadarPoint("Adaptability", data.driveTeamAdaptability()),
+                                      new RadarPoint("Professionalism",
+                                                     data.driveTeamProfessionalism())));
   }
 
   private static Integer autoNoteCount(DataEntry match) {
@@ -163,53 +225,53 @@ public final class CrescendoAnalyzer extends Analyzer<CrescendoAnalyzer.Data> {
     return Math.min(scoreCount, pickupCount + 1);
   }
 
-  // private StatisticsPage teleopPage(Handle handle) {
-  // return new StatisticsPage("Teleop",
-  // List.of(NumberStatistic.computedMatch("Cycles per Minute",
-  // handle.getMatchEntries(),
-  // CrescendoAnalyzer::matchCyclesPerMinute),
-  // PieChartStatistic.computedMatchCounts("Score Locations",
-  // handle.getMatchEntries(),
-  // List.of("Speaker",
-  // "Amp"),
-  // CrescendoAnalyzer::matchScoreLocations),
-  // PieChartStatistic.computedMatchCounts("Score Accuracy",
-  // handle.getMatchEntries(),
-  // List.of("Successful",
-  // "Missed"),
-  // CrescendoAnalyzer::matchScoreAccuracy),
-  // PieChartStatistic.computedMatchCounts("Pickup Locations",
-  // handle.getMatchEntries(),
-  // List.of("Source",
-  // "Ground"),
-  // CrescendoAnalyzer::matchPickupLocations)));
-  // }
+  private static Double teleopCyclesPerMinute(DataEntry match) {
+    // We are assuming 2 minutes of play time
+    return (match.getInteger("/teleop/score_amp") + match.getInteger("/teleop/score_speaker"))
+        / 2.0;
+  }
 
-  // private static Double matchCyclesPerMinute(DataEntry match) {
-  // // We are assuming 2 minutes of play time
-  // return (match.getInteger("/teleop/score_amp") +
-  // match.getInteger("/teleop/score_speaker"))
-  // / 2.0;
-  // }
+  private static Double teleopScoreAccuracy(DataEntry match) {
+    Integer sourcePickups = match.getInteger("/teleop/pickup_source");
+    Integer groundPickups = match.getInteger("/teleop/pickup_ground");
 
-  // private static List<Integer> matchScoreLocations(DataEntry match) {
-  // return List.of(match.getInteger("/teleop/score_speaker"),
-  // match.getInteger("/teleop/score_amp"));
-  // }
+    int attempts = 0;
+    if (sourcePickups != null) {
+      attempts += sourcePickups;
+    }
+    if (groundPickups != null) {
+      attempts += groundPickups;
+    }
 
-  // private static List<Integer> matchScoreAccuracy(DataEntry match) {
-  // int scores = match.getInteger("/teleop/score_speaker") +
-  // match.getInteger("/teleop/score_amp");
-  // int attempts =
-  // match.getInteger("/teleop/pickup_source") +
-  // match.getInteger("/teleop/pickup_ground");
-  // return List.of(scores, attempts - scores);
-  // }
+    if (attempts == 0) return null;
 
-  // private static List<Integer> matchPickupLocations(DataEntry match) {
-  // return List.of(match.getInteger("/teleop/pickup_source"),
-  // match.getInteger("/teleop/pickup_ground"));
-  // }
+    Integer speakerScores = match.getInteger("/teleop/score_speaker");
+    Integer ampScores = match.getInteger("/teleop/score_amp");
+
+    if (speakerScores == null && ampScores == null) {
+      return null;
+    }
+
+    int scores = 0;
+    if (speakerScores != null) {
+      scores += speakerScores;
+    }
+    if (ampScores != null) {
+      scores += ampScores;
+    }
+
+    return Math.clamp((double) scores / attempts, 0, 1);
+  }
+
+  private static Map<ScoreLocation, Integer> teleopScoreLocations(DataEntry match) {
+    return Map.of(ScoreLocation.SPEAKER, match.getInteger("/teleop/score_speaker"),
+                  ScoreLocation.AMP, match.getInteger("/teleop/score_amp"));
+  }
+
+  private static Map<PickupLocation, Integer> teleopPickupLocations(DataEntry match) {
+    return Map.of(PickupLocation.GROUND, match.getInteger("/teleop/pickup_ground"),
+                  PickupLocation.SOURCE, match.getInteger("/teleop/pickup_source"));
+  }
 
   // private StatisticsPage endgamePage(Handle handle) {
   // return new StatisticsPage("Endgame",

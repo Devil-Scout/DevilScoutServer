@@ -261,4 +261,42 @@ public abstract class Analyzer<D> {
     }
     return map;
   }
+
+  protected static <I, T> Collection<T> map(Iterable<I> data, Function<I, T> mapper) {
+    Collection<T> enums = new ArrayList<>();
+    for (I key : data) {
+      if (key != null) {
+        enums.add(mapper.apply(key));
+      }
+    }
+    return enums;
+  }
+
+  protected static <T> Collection<T> union(Iterable<? extends Collection<T>> data) {
+    Collection<T> result = new ArrayList<>();
+    for (Collection<T> item : data) {
+      if (item != null) {
+        result.addAll(item);
+      }
+    }
+    return result;
+  }
+
+  protected static <T> Map<T, Integer> averageCounts(Collection<Map<T, Integer>> allCounts) {
+    int size = allCounts.size();
+    Map<T, Integer> counts = sumCounts(allCounts);
+    counts.replaceAll((key, count) -> (int) Math.round((count + size * 0.5) / size));
+    return counts;
+  }
+
+  protected static <T> Map<T, Integer> sumCounts(Collection<Map<T, Integer>> allCounts) {
+    Map<T, Integer> counts = new LinkedHashMap<>();
+    for (Map<T, Integer> c : allCounts) {
+      for (Map.Entry<T, Integer> entry : c.entrySet()) {
+        counts.compute(entry.getKey(), (key, count) -> count == null ? entry.getValue()
+            : (count + entry.getValue()));
+      }
+    }
+    return counts;
+  }
 }
