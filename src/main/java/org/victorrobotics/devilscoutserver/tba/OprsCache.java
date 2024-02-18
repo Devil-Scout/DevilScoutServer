@@ -66,16 +66,19 @@ public class OprsCache extends BlueAllianceCache<String, OPRs, Oprs> {
 
     @Override
     public boolean update(OPRs oprs) {
-      if (oprs == null || oprs.offensivePowerRatings == null) {
+      if (oprs == null || oprs.oprs() == null) {
         boolean change = !teamOprs.isEmpty();
         teamOprs.clear();
         return change;
       }
 
       Set<Integer> teams = new LinkedHashSet<>();
-      oprs.offensivePowerRatings.forEach((teamKey, opr) -> teams.add(parseTeamKey(teamKey)));
-      oprs.defensivePowerRatings.forEach((teamKey, opr) -> teams.add(parseTeamKey(teamKey)));
-      oprs.contributionsToWinMargin.forEach((teamKey, opr) -> teams.add(parseTeamKey(teamKey)));
+      oprs.oprs()
+          .forEach((teamKey, opr) -> teams.add(parseTeamKey(teamKey)));
+      oprs.dprs()
+          .forEach((teamKey, opr) -> teams.add(parseTeamKey(teamKey)));
+      oprs.ccwms()
+          .forEach((teamKey, opr) -> teams.add(parseTeamKey(teamKey)));
 
       boolean mods = teamOprs.keySet()
                              .retainAll(teams);
@@ -97,19 +100,22 @@ public class OprsCache extends BlueAllianceCache<String, OPRs, Oprs> {
       TeamOpr teamOpr = teamOprs.computeIfAbsent(team, t -> new TeamOpr());
       boolean mods = false;
 
-      Double opr = oprs.offensivePowerRatings.get(teamKey);
+      Double opr = oprs.oprs()
+                       .get(teamKey);
       if (opr != null && opr != teamOpr.opr) {
         teamOpr.opr = opr;
         mods = true;
       }
 
-      Double dpr = oprs.defensivePowerRatings.get(teamKey);
+      Double dpr = oprs.dprs()
+                       .get(teamKey);
       if (dpr != null && dpr != teamOpr.dpr) {
         teamOpr.dpr = dpr;
         mods = true;
       }
 
-      Double ccwm = oprs.contributionsToWinMargin.get(teamKey);
+      Double ccwm = oprs.ccwms()
+                        .get(teamKey);
       if (ccwm != null && ccwm != teamOpr.ccwm) {
         teamOpr.ccwm = ccwm;
         mods = true;

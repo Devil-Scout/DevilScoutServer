@@ -3,6 +3,7 @@ package org.victorrobotics.devilscoutserver.tba;
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.bluealliance.Match;
 import org.victorrobotics.bluealliance.Match.Alliance.Color;
+import org.victorrobotics.bluealliance.ScoreBreakdown;
 import org.victorrobotics.devilscoutserver.analysis.AnalysisCache;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
 import org.victorrobotics.devilscoutserver.cache.ListValue;
@@ -55,15 +56,15 @@ public class MatchScheduleCache
     private long    time;
     private boolean completed;
 
-    private Match.ScoreBreakdown redBreakdown;
-    private Match.ScoreBreakdown blueBreakdown;
+    private ScoreBreakdown redBreakdown;
+    private ScoreBreakdown blueBreakdown;
 
     MatchInfo(Match match) {
-      this.key = match.key;
-      this.eventKey = match.eventKey;
-      this.level = MatchLevel.of(match.level);
-      this.set = match.setNumber;
-      this.number = match.matchNumber;
+      this.key = match.key();
+      this.eventKey = match.eventKey();
+      this.level = MatchLevel.of(match.level());
+      this.set = match.setNumber();
+      this.number = match.matchNumber();
 
       String setStr = key.substring(key.lastIndexOf('_') + 1, key.lastIndexOf('m'));
       if (Character.isDigit(setStr.charAt(setStr.length() - 1))) {
@@ -76,46 +77,48 @@ public class MatchScheduleCache
     }
 
     public boolean update(Match match) {
-      if (!Objects.equals(key, match.key)) {
+      if (!Objects.equals(key, match.key())) {
         throw new IllegalArgumentException();
       }
 
       boolean change = false;
 
-      int[] matchBlueAlliance = parseTeamKeys(match.blueAlliance.teamKeys);
+      int[] matchBlueAlliance = parseTeamKeys(match.blueAlliance()
+                                                   .teamKeys());
       if (!Arrays.equals(blue, matchBlueAlliance)) {
         blue = matchBlueAlliance;
         change = true;
       }
 
-      int[] matchRedAlliance = parseTeamKeys(match.redAlliance.teamKeys);
+      int[] matchRedAlliance = parseTeamKeys(match.redAlliance()
+                                                  .teamKeys());
       if (!Arrays.equals(red, matchRedAlliance)) {
         red = matchRedAlliance;
         change = true;
       }
 
-      boolean matchIsComplete = match.winningAlliance != Color.NONE;
+      boolean matchIsComplete = match.winningAlliance() != Color.NONE;
       if (completed != matchIsComplete) {
         completed = matchIsComplete;
         change = true;
       }
 
-      long matchTime = matchIsComplete ? match.actualTime.getTime() : match.predictedTime.getTime();
+      long matchTime = matchIsComplete ? match.actualTime().getTime() : match.predictedTime().getTime();
       if (time != matchTime) {
         time = matchTime;
         change = true;
       }
 
-      if (!Objects.equals(match.blueScore, blueBreakdown)) {
-        blueBreakdown = match.blueScore;
+      if (!Objects.equals(match.blueBreakdown(), blueBreakdown)) {
+        blueBreakdown = match.blueBreakdown();
         change = true;
         for (int team : blue) {
           analysis.scheduleRefresh(eventKey, team);
         }
       }
 
-      if (!Objects.equals(match.redScore, redBreakdown)) {
-        redBreakdown = match.redScore;
+      if (!Objects.equals(match.redBreakdown(), redBreakdown)) {
+        redBreakdown = match.redBreakdown();
         change = true;
         for (int team : red) {
           analysis.scheduleRefresh(eventKey, team);
@@ -172,11 +175,11 @@ public class MatchScheduleCache
       return completed;
     }
 
-    public Match.ScoreBreakdown getRedBreakdown() {
+    public ScoreBreakdown getRedBreakdown() {
       return redBreakdown;
     }
 
-    public Match.ScoreBreakdown getBlueBreakdown() {
+    public ScoreBreakdown getBlueBreakdown() {
       return blueBreakdown;
     }
   }
@@ -266,7 +269,7 @@ public class MatchScheduleCache
 
     @Override
     protected String getKey(Match data) {
-      return data.key;
+      return data.key();
     }
 
     @Override
