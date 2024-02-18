@@ -55,7 +55,7 @@ public abstract class BlueAllianceListCache<K, D, V extends Cacheable<D>> extend
 
       getLogger().info("Refreshed in {}ms", System.currentTimeMillis() - start);
     } catch (Exception e) {
-      getLogger().warn("Exception occured while refreshing:", e);
+      getLogger().warn("Error while refreshing", e);
     }
   }
 }

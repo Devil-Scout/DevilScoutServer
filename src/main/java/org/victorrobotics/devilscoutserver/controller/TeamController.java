@@ -5,8 +5,6 @@ import org.victorrobotics.devilscoutserver.database.Team;
 import java.sql.SQLException;
 
 import io.javalin.http.Context;
-import io.javalin.http.ForbiddenResponse;
-import io.javalin.http.NotFoundResponse;
 
 public final class TeamController extends Controller {
   private static final String TEAM_PATH_PARAM = "teamNum";
@@ -29,15 +27,14 @@ public final class TeamController extends Controller {
     Session session = getValidSession(ctx);
     int teamNum = ctx.pathParamAsClass(TEAM_PATH_PARAM, Integer.class)
                      .get();
-    checkTeamRange(teamNum);
 
     if (teamNum != session.getTeam()) {
-      throw new ForbiddenResponse();
+      throw forbiddenTeam(session.getTeam());
     }
 
     Team team = teamDB().getTeam(teamNum);
     if (team == null) {
-      throw new NotFoundResponse();
+      throw teamNotFound(teamNum);
     }
 
     ctx.json(team);
@@ -65,19 +62,19 @@ public final class TeamController extends Controller {
                      .get();
 
     if (session.getTeam() != teamNum) {
-      throw new ForbiddenResponse();
+      throw forbiddenTeam(session.getTeam());
     }
 
     Team team = teamDB().getTeam(teamNum);
     if (team == null) {
-      throw new NotFoundResponse();
+      throw teamNotFound(teamNum);
     }
 
     TeamEdits edits = jsonDecode(ctx, TeamEdits.class);
 
     String eventKey = edits.eventKey();
     if (eventKey != null && !"".equals(eventKey) && eventsCache().get(eventKey) == null) {
-      throw new NotFoundResponse();
+      throw eventNotFound(eventKey);
     }
 
     team = teamDB().editTeam(teamNum, edits.name(), eventKey);

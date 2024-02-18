@@ -16,12 +16,8 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.javalin.http.ConflictResponse;
 import io.javalin.http.Context;
-import io.javalin.http.CreatedResponse;
-import io.javalin.http.ForbiddenResponse;
-import io.javalin.http.NoContentResponse;
-import io.javalin.http.NotFoundResponse;
+import io.javalin.http.HttpStatus;
 
 public final class UserController extends Controller {
   private static final String TEAM_PATH_PARAM = "teamNum";
@@ -52,17 +48,17 @@ public final class UserController extends Controller {
     int teamNum = ctx.pathParamAsClass(TEAM_PATH_PARAM, Integer.class)
                      .get();
     if (session.getTeam() != teamNum) {
-      throw new ForbiddenResponse();
+      throw forbiddenTeam(session.getTeam());
     }
 
     if (!teamDB().containsTeam(teamNum)) {
-      throw new NotFoundResponse();
+      throw teamNotFound(teamNum);
     }
 
     UserRegistration registration = jsonDecode(ctx, UserRegistration.class);
     String username = registration.username();
     if (userDB().getUser(teamNum, username) != null) {
-      throw new ConflictResponse("User " + username + "@" + teamNum + " already exists");
+      throw userConflict(teamNum, username);
     }
 
     byte[][] auth = computeAuthentication(registration.password());
@@ -73,7 +69,7 @@ public final class UserController extends Controller {
     User user = userDB().registerUser(teamNum, username, registration.fullName(),
                                       registration.admin(), salt, storedKey, serverKey);
     ctx.json(user);
-    throw new CreatedResponse();
+    ctx.status(HttpStatus.CREATED);
   }
 
   /**
@@ -94,14 +90,13 @@ public final class UserController extends Controller {
 
     int team = ctx.pathParamAsClass(TEAM_PATH_PARAM, Integer.class)
                   .get();
-    checkTeamRange(team);
 
     if (team != session.getTeam()) {
-      throw new ForbiddenResponse();
+      throw forbiddenTeam(session.getTeam());
     }
 
     if (!teamDB().containsTeam(team)) {
-      throw new NotFoundResponse();
+      throw teamNotFound(team);
     }
 
     Collection<User> users = userDB().usersOnTeam(team);
@@ -132,11 +127,11 @@ public final class UserController extends Controller {
 
     User user = userDB().getUser(userId);
     if (user == null) {
-      throw new NotFoundResponse();
+      throw userNotFound(userId);
     }
 
     if (user.team() != session.getTeam()) {
-      throw new ForbiddenResponse();
+      throw forbiddenTeam(session.getTeam());
     }
 
     ctx.json(user);
@@ -169,16 +164,20 @@ public final class UserController extends Controller {
 
     User user = userDB().getUser(userId);
     if (user == null) {
-      throw new NotFoundResponse();
+      throw userNotFound(userId);
     }
 
     if (session.getTeam() != user.team()) {
-      throw new ForbiddenResponse();
+      throw forbiddenTeam(session.getTeam());
     }
 
     UserEdits edits = jsonDecode(ctx, UserEdits.class);
-    if (edits.admin() != null) {
+    if (edits.admin() == Boolean.TRUE) {
       session.verifyAdmin();
+    }
+
+    if (edits.username() != null && userDB().getUser(user.team(), edits.username()) != null) {
+      throw userConflict(user.team(), edits.username());
     }
 
     byte[][] authInfo = null;
@@ -223,18 +222,18 @@ public final class UserController extends Controller {
 
     User user = userDB().getUser(userId);
     if (user == null) {
-      throw new NotFoundResponse();
+      throw userNotFound(userId);
     }
 
     if (session.getTeam() != user.team()) {
-      throw new ForbiddenResponse();
+      throw forbiddenTeam(session.getTeam());
     }
 
     userDB().deleteUser(user.id());
     sessions().values()
               .removeIf(s -> s.getUser()
                               .equals(user.id()));
-    throw new NoContentResponse();
+    ctx.status(HttpStatus.NO_CONTENT);
   }
 
   private static byte[][] computeAuthentication(String password) {

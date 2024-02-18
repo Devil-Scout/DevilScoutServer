@@ -19,9 +19,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.javalin.http.Context;
-import io.javalin.http.NoContentResponse;
-import io.javalin.http.NotFoundResponse;
-import io.javalin.http.UnauthorizedResponse;
+import io.javalin.http.HttpStatus;
 
 @SuppressWarnings("java:S6218") // override equals for array content
 public final class SessionController extends Controller {
@@ -44,19 +42,19 @@ public final class SessionController extends Controller {
    */
   public static void login(Context ctx) throws SQLException {
     LoginRequest request = jsonDecode(ctx, LoginRequest.class);
-    int team = request.team();
+    int teamNum = request.team();
     String username = request.username();
 
-    byte[] salt = userDB().getSalt(team, username);
+    byte[] salt = userDB().getSalt(teamNum, username);
     if (salt == null) {
-      throw new NotFoundResponse();
+      throw userNotFound(teamNum, username);
     }
 
     byte[] nonce = new byte[16];
     SECURE_RANDOM.nextBytes(nonce);
     System.arraycopy(request.clientNonce(), 0, nonce, 0, 8);
 
-    String nonceId = username + "@" + team + ":" + base64Encode(nonce);
+    String nonceId = username + "@" + teamNum + ":" + base64Encode(nonce);
     NONCES.add(nonceId);
 
     ctx.json(new LoginChallenge(salt, nonce));
@@ -84,17 +82,17 @@ public final class SessionController extends Controller {
 
     User user = userDB().getUser(teamNum, username);
     if (user == null) {
-      throw new NotFoundResponse();
+      throw userNotFound(teamNum, username);
     }
 
     Team team = teamDB().getTeam(teamNum);
     if (team == null) {
-      throw new NotFoundResponse();
+      throw teamNotFound(teamNum);
     }
 
     String nonceId = username + "@" + teamNum + ":" + base64Encode(request.nonce());
     if (!NONCES.contains(nonceId)) {
-      throw new NotFoundResponse("Invalid nonce");
+      throw incorrectCredentials(teamNum, username);
     }
 
     MessageDigest hashFunction = MessageDigest.getInstance(HASH_ALGORITHM);
@@ -106,7 +104,7 @@ public final class SessionController extends Controller {
     byte[] clientKey = xor(request.clientProof(), clientSignature);
     byte[] storedKey = hashFunction.digest(clientKey);
     if (!MessageDigest.isEqual(user.storedKey(), storedKey)) {
-      throw new UnauthorizedResponse("Incorrect credentials for user " + username + "@" + teamNum);
+      throw incorrectCredentials(teamNum, username);
     }
 
     hmacFunction.init(new SecretKeySpec(user.serverKey(), MAC_ALGORITHM));
@@ -148,7 +146,7 @@ public final class SessionController extends Controller {
   public static void logout(Context ctx) {
     Session session = getValidSession(ctx);
     sessions().remove(session.getKey());
-    throw new NoContentResponse();
+    ctx.status(HttpStatus.NO_CONTENT);
   }
 
   private static byte[] xor(byte[] bytes1, byte[] bytes2) {

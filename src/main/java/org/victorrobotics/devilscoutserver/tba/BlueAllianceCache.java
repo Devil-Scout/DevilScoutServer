@@ -42,7 +42,7 @@ public abstract class BlueAllianceCache<K, D, V extends Cacheable<D>> extends Ca
                          System.currentTimeMillis() - start);
       }
     } catch (Exception e) {
-      getLogger().warn("Exception occured while refreshing key {}:", key, e);
+      getLogger().warn("Error while refreshing key {}", key, e);
     }
   }
 
