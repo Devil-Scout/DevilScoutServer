@@ -18,6 +18,7 @@ import org.victorrobotics.devilscoutserver.controller.UserController;
 import io.javalin.Javalin;
 import io.javalin.community.ssl.SslPlugin;
 import io.javalin.http.HttpResponseException;
+import io.javalin.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,21 +88,21 @@ public class HttpServer {
 
     javalin.before(ctx -> LOGGER.info("Request {} {}", ctx.method(), ctx.path()));
     javalin.exception(HttpResponseException.class, (e, ctx) -> {
-      int status = e.getStatus();
-      ctx.status(status);
+      int statusCode = e.getStatus();
+      ctx.status(statusCode);
 
-      if (status >= 500) {
+      if (statusCode >= 500) {
         ctx.json(new Controller.ApiError(e.getMessage()));
-        LOGGER.warn("Server error {} {} {}", ctx.method(), ctx.path(), ctx.status(), e);
-      } else if (status >= 400) {
+        LOGGER.warn("Server error {} {} {}", ctx.method(), ctx.path(), ctx.status());
+      } else if (statusCode >= 400) {
         ctx.json(new Controller.ApiError(e.getMessage()));
         LOGGER.warn("Client error {} {} {}", ctx.method(), ctx.path(), ctx.status());
       }
     });
     javalin.exception(Exception.class, (e, ctx) -> {
-      ctx.status(500);
-      ctx.json(new Controller.ApiError(e.getMessage()));
-      LOGGER.error("Server exception {} {} {}", ctx.method(), ctx.path(), ctx.status(), e);
+      ctx.status(HttpStatus.INTERNAL_SERVER_ERROR);
+      ctx.json(new Controller.ApiError("Internal server error"));
+      LOGGER.error("Server error {} {} {}", ctx.method(), ctx.path(), ctx.status(), e);
     });
   }
 

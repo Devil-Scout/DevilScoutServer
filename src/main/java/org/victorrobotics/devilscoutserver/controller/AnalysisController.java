@@ -1,7 +1,6 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import io.javalin.http.Context;
-import io.javalin.http.NotFoundResponse;
 
 public final class AnalysisController extends Controller {
   private static final String EVENT_KEY_PATH_PARAM = "eventKey";
@@ -25,7 +24,7 @@ public final class AnalysisController extends Controller {
 
     String eventKey = ctx.pathParam(EVENT_KEY_PATH_PARAM);
     if (!eventsCache().containsKey(eventKey)) {
-      throw new NotFoundResponse();
+      throw eventNotFound(eventKey);
     }
 
     verifyAnalysisAccess(eventKey, session);

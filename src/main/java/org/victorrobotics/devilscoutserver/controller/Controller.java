@@ -18,8 +18,11 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.javalin.http.BadRequestResponse;
+import io.javalin.http.ConflictResponse;
 import io.javalin.http.Context;
 import io.javalin.http.ForbiddenResponse;
+import io.javalin.http.HttpResponseException;
+import io.javalin.http.NotFoundResponse;
 import io.javalin.http.NotModifiedResponse;
 import io.javalin.http.UnauthorizedResponse;
 
@@ -154,7 +157,7 @@ public sealed class Controller
     try {
       return (T) ctx.bodyAsClass(clazz);
     } catch (Exception e) {
-      throw new BadRequestResponse("Failed to decode body as " + clazz.getSimpleName());
+      throw new BadRequestResponse("Invalid request body");
     }
   }
 
@@ -199,10 +202,49 @@ public sealed class Controller
     ctx.header("etag", Long.toString(timestamp));
   }
 
-  protected static void checkTeamRange(int team) {
-    if (team <= 0 || team > 9999) {
-      throw new BadRequestResponse("Team [" + team + "] must be in range 1 to 9999");
-    }
+  protected static HttpResponseException eventNotFound(String eventKey) {
+    return new NotFoundResponse("Event " + eventKey + " not found");
+  }
+
+  protected static HttpResponseException wrongEvent(String eventKey, int teamNum) {
+    return new ForbiddenResponse("Team " + teamNum + " is attending event " + eventKey);
+  }
+
+  protected static HttpResponseException matchNotFound(String matchKey) {
+    return new NotFoundResponse("Match " + matchKey + " not found");
+  }
+
+  protected static HttpResponseException teamNotInMatch(String matchKey, int teamNum) {
+    return new BadRequestResponse("Team " + teamNum + " not in match " + matchKey);
+  }
+
+  protected static HttpResponseException schemaMismatch(String eventKey) {
+    return new BadRequestResponse("Invalid submission schema for event " + eventKey);
+  }
+
+  protected static HttpResponseException forbiddenTeam(int teamNum) {
+    return new ForbiddenResponse("Team " + teamNum + " cannot access another team");
+  }
+
+  protected static HttpResponseException teamNotFound(int teamNum) {
+    return new NotFoundResponse("Team " + teamNum + " not found");
+  }
+
+  protected static HttpResponseException userConflict(int teamNum, String username) {
+    return new ConflictResponse("User " + username + " already exists on team " + teamNum);
+  }
+
+  protected static HttpResponseException userNotFound(String userId) {
+    return new NotFoundResponse("User with id " + userId + " not found");
+  }
+
+  protected static HttpResponseException userNotFound(int teamNum, String username) {
+    return new NotFoundResponse("User " + username + " on team " + teamNum + " not found");
+  }
+
+  protected static HttpResponseException incorrectCredentials(int teamNum, String username) {
+    return new UnauthorizedResponse("Incorrect credentials for user " + username + " on team "
+        + teamNum);
   }
 
   public static class Session {
@@ -245,7 +287,7 @@ public sealed class Controller
 
     public void verifyAdmin() throws SQLException {
       if (!userDB().isAdmin(getUser())) {
-        throw new ForbiddenResponse();
+        throw new ForbiddenResponse("Access to resource requires admin privileges");
       }
     }
   }

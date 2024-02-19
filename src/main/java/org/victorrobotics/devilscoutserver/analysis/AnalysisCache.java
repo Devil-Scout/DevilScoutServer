@@ -59,7 +59,7 @@ public class AnalysisCache {
     boolean removal = refreshQueue.removeIf(q -> q.eventKey.equals(eventKey) && q.team == team);
     refreshQueue.add(new DelayedRefresh(eventKey, team));
     if (!removal) {
-      LOGGER.info("Scheduled refresh for {} at {}", team, eventKey);
+      LOGGER.info("Scheduled refresh for team {} at event {}", team, eventKey);
     }
   }
 
@@ -102,9 +102,9 @@ public class AnalysisCache {
                            .put(team, uiStats);
       }
 
-      LOGGER.info("Refreshed {} at {} in {}ms", team, eventKey, System.currentTimeMillis() - start);
+      LOGGER.info("Refreshed team {} at event {} in {}ms", team, eventKey, System.currentTimeMillis() - start);
     } catch (Exception e) {
-      LOGGER.warn("Exception while refreshing {} at {}:", team, eventKey, e);
+      LOGGER.warn("Error while refreshing team {} at event {}", team, eventKey, e);
     }
   }
 

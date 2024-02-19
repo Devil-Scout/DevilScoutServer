@@ -12,15 +12,12 @@ import java.util.Map;
 
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
-import io.javalin.http.ForbiddenResponse;
-import io.javalin.http.NoContentResponse;
+import io.javalin.http.HttpStatus;
 
 public final class SubmissionController extends Controller {
   private static final String MATCH_KEY_PATH_PARAM   = "matchKey";
   private static final String EVENT_KEY_PATH_PARAM   = "eventKey";
   private static final String TEAM_NUMBER_PATH_PARAM = "teamNum";
-
-  private static final String BAD_SUBMISSION_MESSAGE = "Invalid/expired submission format";
 
   private SubmissionController() {}
 
@@ -48,29 +45,29 @@ public final class SubmissionController extends Controller {
     String eventKey = teamDB().getTeam(session.getTeam())
                               .eventKey();
     if (eventKey.isEmpty() || !matchKey.startsWith(eventKey)) {
-      throw new ForbiddenResponse();
+      throw wrongEvent(eventKey, session.getTeam());
     }
 
     MatchInfo match = matchScheduleCache().get(eventKey)
                                           .value()
                                           .get(matchKey);
     if (match == null) {
-      throw new BadRequestResponse("Match not found at event");
+      throw matchNotFound(matchKey);
     }
 
     if (!teamOnAlliance(teamNum, match.getBlue()) && !teamOnAlliance(teamNum, match.getRed())) {
-      throw new BadRequestResponse("Scouted team not in match");
+      throw teamNotInMatch(matchKey, teamNum);
     }
 
     Map<String, Map<String, Object>> payload = jsonDecode(ctx, Map.class);
     if (!matchesSchema(payload, questions(eventKey).getMatchQuestions())) {
-      throw new BadRequestResponse(BAD_SUBMISSION_MESSAGE);
+      throw schemaMismatch(eventKey);
     }
 
     matchEntryDB().createEntry(eventKey, matchKey, session.getUser(), session.getTeam(), teamNum,
                                jsonEncode(payload));
     analysisCache().scheduleRefresh(eventKey, teamNum);
-    throw new NoContentResponse();
+    ctx.status(HttpStatus.NO_CONTENT);
   }
 
   /**
@@ -96,18 +93,18 @@ public final class SubmissionController extends Controller {
     String eventKey = teamDB().getTeam(session.getTeam())
                               .eventKey();
     if (!eventKey.equals(ctx.pathParam(EVENT_KEY_PATH_PARAM))) {
-      throw new ForbiddenResponse();
+      throw wrongEvent(eventKey, session.getTeam());
     }
 
     Map<String, Map<String, Object>> payload = jsonDecode(ctx, Map.class);
     if (!matchesSchema(payload, questions(eventKey).getPitQuestions())) {
-      throw new BadRequestResponse(BAD_SUBMISSION_MESSAGE);
+      throw schemaMismatch(eventKey);
     }
 
     pitEntryDB().createEntry(eventKey, null, session.getUser(), session.getTeam(), teamNum,
                              jsonEncode(payload));
     analysisCache().scheduleRefresh(eventKey, teamNum);
-    throw new NoContentResponse();
+    ctx.status(HttpStatus.NO_CONTENT);
   }
 
   /**
@@ -132,14 +129,14 @@ public final class SubmissionController extends Controller {
     String eventKey = teamDB().getTeam(session.getTeam())
                               .eventKey();
     if (eventKey.isEmpty() || !matchKey.startsWith(eventKey)) {
-      throw new ForbiddenResponse();
+      throw wrongEvent(eventKey, session.getTeam());
     }
 
     MatchInfo match = matchScheduleCache().get(eventKey)
                                           .value()
                                           .get(matchKey);
     if (match == null) {
-      throw new BadRequestResponse("Match not found at event");
+      throw matchNotFound(matchKey);
     }
 
     Alliance.Color alliance;
@@ -148,12 +145,7 @@ public final class SubmissionController extends Controller {
     } else if (teamOnAlliance(session.getTeam(), match.getRed())) {
       alliance = Alliance.Color.RED;
     } else {
-      throw new BadRequestResponse("Scouting team not in match");
-    }
-
-    if (!teamOnAlliance(session.getTeam(), match.getBlue())
-        && !teamOnAlliance(session.getTeam(), match.getRed())) {
-      throw new BadRequestResponse("Scouting team not in match");
+      throw teamNotInMatch(matchKey, session.getTeam());
     }
 
     Map<String, Map<String, Object>> payload = jsonDecode(ctx, Map.class);
@@ -167,11 +159,12 @@ public final class SubmissionController extends Controller {
 
       if ((alliance == Alliance.Color.BLUE && !teamOnAlliance(scoutedTeam, match.getBlue()))
           || (alliance == Alliance.Color.RED && !teamOnAlliance(scoutedTeam, match.getRed()))) {
-        throw new BadRequestResponse("Team " + scoutedTeam + " not on same alliance in match");
+        throw new BadRequestResponse("Team " + scoutedTeam + " not alliance partners with team "
+            + session.getTeam() + " in match " + matchKey);
       }
 
       if (!matchesQuestions(entry.getValue(), questions(eventKey).getDriveTeamQuestions())) {
-        throw new BadRequestResponse(BAD_SUBMISSION_MESSAGE);
+        throw schemaMismatch(eventKey);
       }
     }
 
@@ -182,7 +175,7 @@ public final class SubmissionController extends Controller {
       analysisCache().scheduleRefresh(eventKey, teamNum);
     }
 
-    throw new NoContentResponse();
+    ctx.status(HttpStatus.NO_CONTENT);
   }
 
   private static boolean teamOnAlliance(int team, int[] alliance) {

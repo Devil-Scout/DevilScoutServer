@@ -4,7 +4,6 @@ import org.victorrobotics.devilscoutserver.questions.Question;
 import org.victorrobotics.devilscoutserver.questions.Questions;
 
 import io.javalin.http.Context;
-import io.javalin.http.NotFoundResponse;
 
 public final class QuestionController extends Controller {
   private static final String EVENT_KEY_PATH_PARAM = "eventKey";
@@ -28,7 +27,7 @@ public final class QuestionController extends Controller {
 
     String eventKey = ctx.pathParam(EVENT_KEY_PATH_PARAM);
     if (!eventsCache().containsKey(eventKey)) {
-      throw new NotFoundResponse();
+      throw eventNotFound(eventKey);
     }
 
     Questions questions = questions(eventKey);
@@ -55,7 +54,7 @@ public final class QuestionController extends Controller {
 
     String eventKey = ctx.pathParam(EVENT_KEY_PATH_PARAM);
     if (!eventsCache().containsKey(eventKey)) {
-      throw new NotFoundResponse();
+      throw eventNotFound(eventKey);
     }
 
     Questions questions = questions(eventKey);
@@ -82,7 +81,7 @@ public final class QuestionController extends Controller {
 
     String eventKey = ctx.pathParam(EVENT_KEY_PATH_PARAM);
     if (!eventsCache().containsKey(eventKey)) {
-      throw new NotFoundResponse();
+      throw eventNotFound(eventKey);
     }
 
     Questions questions = questions(eventKey);
