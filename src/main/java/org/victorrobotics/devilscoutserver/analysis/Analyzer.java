@@ -1,6 +1,6 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
-import org.victorrobotics.bluealliance.Match.ScoreBreakdown;
+import org.victorrobotics.bluealliance.ScoreBreakdown;
 import org.victorrobotics.devilscoutserver.analysis.data.NumberSummary;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
 import org.victorrobotics.devilscoutserver.database.DataEntry;

@@ -23,30 +23,30 @@ public class EventCache extends BlueAllianceListCache<String, Simple, EventCache
 
     @Override
     public boolean update(Simple event) {
-      if (!Objects.equals(key, event.key)) {
+      if (!Objects.equals(key, event.key())) {
         throw new IllegalArgumentException();
       }
 
       boolean changed = false;
 
-      if (!Objects.equals(name, event.name)) {
-        name = event.name;
+      if (!Objects.equals(name, event.name())) {
+        name = event.name();
         changed = true;
       }
 
-      String eventLocation = event.city + ", " + event.stateProv + ", " + event.country;
+      String eventLocation = event.city() + ", " + event.stateProv() + ", " + event.country();
       if (!Objects.equals(location, eventLocation)) {
         location = eventLocation;
         changed = true;
       }
 
-      if (!Objects.equals(start, event.startDate)) {
-        start = event.startDate;
+      if (!Objects.equals(start, event.startDate())) {
+        start = event.startDate();
         changed = true;
       }
 
-      if (!Objects.equals(end, event.endDate)) {
-        end = event.endDate;
+      if (!Objects.equals(end, event.endDate())) {
+        end = event.endDate();
         changed = true;
       }
 
@@ -104,6 +104,6 @@ public class EventCache extends BlueAllianceListCache<String, Simple, EventCache
 
   @Override
   protected String getKey(Simple data) {
-    return data.key;
+    return data.key();
   }
 }

@@ -23,7 +23,7 @@ public class TeamListCache
     private String location;
 
     public TeamInfo(Team.Simple team) {
-      this.number = team.number;
+      this.number = team.number();
       update(team);
     }
 
@@ -31,12 +31,12 @@ public class TeamListCache
     public boolean update(Team.Simple team) {
       boolean changed = false;
 
-      if (!Objects.equals(name, team.name)) {
-        name = team.name;
+      if (!Objects.equals(name, team.name())) {
+        name = team.name();
         changed = true;
       }
 
-      String teamLocation = team.city + ", " + team.province + ", " + team.country;
+      String teamLocation = team.city() + ", " + team.province() + ", " + team.country();
       if (!Objects.equals(location, teamLocation)) {
         location = teamLocation;
         changed = true;
@@ -79,11 +79,11 @@ public class TeamListCache
       boolean change = false;
       Collection<Integer> keys = new ArrayList<>();
       for (Team.Simple team : teams) {
-        keys.add(team.number);
+        keys.add(team.number());
 
-        TeamInfo info = teamMap.get(team.number);
+        TeamInfo info = teamMap.get(team.number());
         if (info == null) {
-          teamMap.put(team.number, new TeamInfo(team));
+          teamMap.put(team.number(), new TeamInfo(team));
           change = true;
         } else {
           change |= info.update(team);

@@ -21,7 +21,8 @@ public class RankingsCache
 
     public Team(String eventKey, Event.Rankings.Team data) {
       this.eventKey = eventKey;
-      this.number = Integer.parseInt(data.teamKey.substring(3));
+      this.number = Integer.parseInt(data.teamKey()
+                                         .substring(3));
       update(data);
     }
 
@@ -29,13 +30,13 @@ public class RankingsCache
     public boolean update(Event.Rankings.Team data) {
       boolean change = false;
 
-      if (!Objects.equals(winLossRecord, data.winLossRecord)) {
-        winLossRecord = data.winLossRecord;
+      if (!Objects.equals(winLossRecord, data.winLossRecord())) {
+        winLossRecord = data.winLossRecord();
         change = true;
       }
 
-      if (rank != data.rank) {
-        rank = data.rank;
+      if (rank != data.rank()) {
+        rank = data.rank();
         change = true;
       }
 
@@ -79,12 +80,13 @@ public class RankingsCache
 
     @Override
     protected Integer getKey(Event.Rankings.Team data) {
-      return Integer.parseInt(data.teamKey.substring(3));
+      return Integer.parseInt(data.teamKey()
+                                  .substring(3));
     }
 
     @Override
     protected List<Event.Rankings.Team> getList(Event.Rankings data) {
-      return data.rankings;
+      return data.rankings();
     }
   }
 
