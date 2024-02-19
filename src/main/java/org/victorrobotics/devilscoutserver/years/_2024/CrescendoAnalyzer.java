@@ -1,5 +1,6 @@
 package org.victorrobotics.devilscoutserver.years._2024;
 
+import org.victorrobotics.bluealliance.ScoreBreakdown;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
 import org.victorrobotics.devilscoutserver.analysis.statistics.BooleanStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.NumberStatistic;
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("java:S1192") // repeating paths is more clear here
-public final class CrescendoAnalyzer extends Analyzer<CrescendoData> {
+public final class CrescendoAnalyzer extends Analyzer<ScoreBreakdown.Crescendo2024, CrescendoData> {
   public CrescendoAnalyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
                            EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
                            OprsCache teamOprsCache, RankingsCache rankingsCache) {

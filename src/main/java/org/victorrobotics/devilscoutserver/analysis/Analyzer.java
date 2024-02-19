@@ -1,6 +1,7 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
-import org.victorrobotics.bluealliance.ScoreBreakdown;
+import org.victorrobotics.bluealliance.Match.Alliance;
+import org.victorrobotics.bluealliance.Match.Alliance.Color;
 import org.victorrobotics.devilscoutserver.analysis.data.NumberSummary;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
@@ -23,7 +24,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public abstract class Analyzer<D> {
+public abstract class Analyzer<B, D> {
   private final EntryDatabase matchEntryDB;
   private final EntryDatabase pitEntryDB;
   private final EntryDatabase driveTeamEntryDB;
@@ -59,9 +60,10 @@ public abstract class Analyzer<D> {
     private List<DataEntry>             pitEntries;
     private Collection<List<DataEntry>> driveTeamEntries;
 
-    private Collection<ScoreBreakdown> scoreBreakdowns;
-    private TeamOpr                    opr;
-    private RankingsCache.Team         rankings;
+    private Collection<TeamScoreBreakdown> scoreBreakdowns;
+
+    private TeamOpr            opr;
+    private RankingsCache.Team rankings;
 
     Handle(String eventKey, int team) {
       this.eventKey = eventKey;
@@ -102,13 +104,13 @@ public abstract class Analyzer<D> {
       return opr;
     }
 
-    public Collection<ScoreBreakdown> getScoreBreakdowns() {
+    public Collection<TeamScoreBreakdown> getScoreBreakdowns() {
       if (scoreBreakdowns == null) {
         scoreBreakdowns = new ArrayList<>();
         MatchSchedule schedule = matchScheduleCache.get(eventKey)
                                                    .value();
         for (MatchInfo match : schedule.values()) {
-          ScoreBreakdown breakdown = getBreakdown(match);
+          TeamScoreBreakdown breakdown = resolveBreakdown(match);
           if (breakdown != null) {
             scoreBreakdowns.add(breakdown);
           }
@@ -117,16 +119,20 @@ public abstract class Analyzer<D> {
       return scoreBreakdowns;
     }
 
-    private ScoreBreakdown getBreakdown(MatchInfo match) {
-      for (int t : match.getRed()) {
-        if (t == team) {
-          return match.getRedBreakdown();
+    @SuppressWarnings("unchecked") // breakdowns always from current year
+    private TeamScoreBreakdown resolveBreakdown(MatchInfo match) {
+      int[] redAlliance = match.getRed();
+      for (int i = 0; i < redAlliance.length; i++) {
+        if (redAlliance[i] == team) {
+          return new TeamScoreBreakdown(match, (B) match.getRedBreakdown(), Alliance.Color.RED, i);
         }
       }
 
-      for (int t : match.getBlue()) {
-        if (t == team) {
-          return match.getBlueBreakdown();
+      int[] blueAlliance = match.getBlue();
+      for (int i = 0; i < blueAlliance.length; i++) {
+        if (blueAlliance[i] == team) {
+          return new TeamScoreBreakdown(match, (B) match.getBlueBreakdown(), Alliance.Color.BLUE,
+                                        i);
         }
       }
 
@@ -161,6 +167,20 @@ public abstract class Analyzer<D> {
                 .add(entry);
       }
       return entryMap.values();
+    }
+  }
+
+  protected class TeamScoreBreakdown {
+    protected final MatchInfo      match;
+    protected final B              breakdown;
+    protected final Alliance.Color allianceColor;
+    protected final int            stationNumber;
+
+    TeamScoreBreakdown(MatchInfo match, B breakdown, Color allianceColor, int stationNumber) {
+      this.match = match;
+      this.breakdown = breakdown;
+      this.allianceColor = allianceColor;
+      this.stationNumber = stationNumber;
     }
   }
 

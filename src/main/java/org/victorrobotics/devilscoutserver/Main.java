@@ -48,7 +48,7 @@ public class Main {
 
     LOGGER.info("Initializing analysis...");
     // Hack to pass circular references on final members
-    Map<Integer, Analyzer<?>> analyzers = new HashMap<>();
+    Map<Integer, Analyzer<?, ?>> analyzers = new HashMap<>();
     AnalysisCache analysisCache = new AnalysisCache(analyzers);
     Controller.setAnalysisCache(analysisCache);
 

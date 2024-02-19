@@ -40,14 +40,14 @@ public class AnalysisCache {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AnalysisCache.class);
 
-  private final Map<Integer, Analyzer<?>>     analyzers;
+  private final Map<Integer, Analyzer<?, ?>>  analyzers;
   private final BlockingQueue<DelayedRefresh> refreshQueue;
 
   private final ConcurrentMap<String, Object> individualData;
 
   private final ConcurrentMap<String, Map<Integer, List<StatisticsPage>>> eventTeamStatistics;
 
-  public AnalysisCache(Map<Integer, Analyzer<?>> analyzers) {
+  public AnalysisCache(Map<Integer, Analyzer<?, ?>> analyzers) {
     this.analyzers = analyzers;
     this.refreshQueue = new DelayQueue<>();
 
@@ -81,7 +81,7 @@ public class AnalysisCache {
     try {
       long start = System.currentTimeMillis();
       @SuppressWarnings("unchecked") // SHOULD be safe
-      Analyzer<D> analyzer = (Analyzer<D>) analyzers.get(extractYear(eventKey));
+      Analyzer<?, D> analyzer = (Analyzer<?, D>) analyzers.get(extractYear(eventKey));
       D data = analyzer.computeData(eventKey, team);
 
       if (data == null) {
@@ -102,7 +102,8 @@ public class AnalysisCache {
                            .put(team, uiStats);
       }
 
-      LOGGER.info("Refreshed team {} at event {} in {}ms", team, eventKey, System.currentTimeMillis() - start);
+      LOGGER.info("Refreshed team {} at event {} in {}ms", team, eventKey,
+                  System.currentTimeMillis() - start);
     } catch (Exception e) {
       LOGGER.warn("Error while refreshing team {} at event {}", team, eventKey, e);
     }
