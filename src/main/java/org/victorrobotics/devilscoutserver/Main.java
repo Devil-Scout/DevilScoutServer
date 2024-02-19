@@ -46,7 +46,10 @@ public class Main {
     Controller.setDriveTeamEntryDB(new EntryDatabase("drive_team_entries", true));
     LOGGER.info("Database connected");
 
-    LOGGER.info("Initializing analysis...");
+    LOGGER.info("Initializing caches...");
+    Controller.setEventCache(new EventCache());
+    Controller.setTeamListCache(new TeamListCache());
+
     // Hack to pass circular references on final members
     Map<Integer, Analyzer<?, ?>> analyzers = new HashMap<>();
     AnalysisCache analysisCache = new AnalysisCache(analyzers);
@@ -54,18 +57,14 @@ public class Main {
 
     OprsCache oprsCache = new OprsCache(analysisCache);
     RankingsCache rankingsCache = new RankingsCache(analysisCache);
+    Controller.setMatchScheduleCache(new MatchScheduleCache(oprsCache, rankingsCache,
+                                                            analysisCache));
     analyzers.put(2024,
                   new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
                                         Controller.driveTeamEntryDB(),
                                         Controller.matchScheduleCache(), oprsCache, rankingsCache));
     analyzers.put(2023, analyzers.get(2024));
-    LOGGER.info("Analysis ready");
 
-    LOGGER.info("Initializing caches...");
-    Controller.setEventCache(new EventCache());
-    Controller.setTeamListCache(new TeamListCache());
-    Controller.setMatchScheduleCache(new MatchScheduleCache(oprsCache, rankingsCache,
-                                                            analysisCache));
     LOGGER.info("Caches ready");
 
     LOGGER.info("Loading questions...");

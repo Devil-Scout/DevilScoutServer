@@ -1,7 +1,7 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
 import org.victorrobotics.bluealliance.Match.Alliance;
-import org.victorrobotics.bluealliance.Match.Alliance.Color;
+import org.victorrobotics.bluealliance.ScoreBreakdown;
 import org.victorrobotics.devilscoutserver.analysis.data.NumberSummary;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
@@ -24,7 +24,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public abstract class Analyzer<B, D> {
+public abstract class Analyzer<B extends ScoreBreakdown, D> {
   private final EntryDatabase matchEntryDB;
   private final EntryDatabase pitEntryDB;
   private final EntryDatabase driveTeamEntryDB;
@@ -60,7 +60,7 @@ public abstract class Analyzer<B, D> {
     private List<DataEntry>             pitEntries;
     private Collection<List<DataEntry>> driveTeamEntries;
 
-    private Collection<TeamScoreBreakdown> scoreBreakdowns;
+    private Collection<TeamScoreBreakdown<B>> scoreBreakdowns;
 
     private TeamOpr            opr;
     private RankingsCache.Team rankings;
@@ -104,13 +104,13 @@ public abstract class Analyzer<B, D> {
       return opr;
     }
 
-    public Collection<TeamScoreBreakdown> getScoreBreakdowns() {
+    public Collection<TeamScoreBreakdown<B>> getScoreBreakdowns() {
       if (scoreBreakdowns == null) {
         scoreBreakdowns = new ArrayList<>();
         MatchSchedule schedule = matchScheduleCache.get(eventKey)
                                                    .value();
         for (MatchInfo match : schedule.values()) {
-          TeamScoreBreakdown breakdown = resolveBreakdown(match);
+          TeamScoreBreakdown<B> breakdown = resolveBreakdown(match);
           if (breakdown != null) {
             scoreBreakdowns.add(breakdown);
           }
@@ -120,19 +120,24 @@ public abstract class Analyzer<B, D> {
     }
 
     @SuppressWarnings("unchecked") // breakdowns always from current year
-    private TeamScoreBreakdown resolveBreakdown(MatchInfo match) {
-      int[] redAlliance = match.getRed();
-      for (int i = 0; i < redAlliance.length; i++) {
-        if (redAlliance[i] == team) {
-          return new TeamScoreBreakdown(match, (B) match.getRedBreakdown(), Alliance.Color.RED, i);
+    private TeamScoreBreakdown<B> resolveBreakdown(MatchInfo match) {
+      if (match.getRedBreakdown() != null) {
+        int[] redAlliance = match.getRed();
+        for (int i = 0; i < redAlliance.length; i++) {
+          if (redAlliance[i] == team) {
+            return new TeamScoreBreakdown<>(match, (B) match.getRedBreakdown(), Alliance.Color.RED,
+                                            i);
+          }
         }
       }
 
-      int[] blueAlliance = match.getBlue();
-      for (int i = 0; i < blueAlliance.length; i++) {
-        if (blueAlliance[i] == team) {
-          return new TeamScoreBreakdown(match, (B) match.getBlueBreakdown(), Alliance.Color.BLUE,
-                                        i);
+      if (match.getBlueBreakdown() != null) {
+        int[] blueAlliance = match.getBlue();
+        for (int i = 0; i < blueAlliance.length; i++) {
+          if (blueAlliance[i] == team) {
+            return new TeamScoreBreakdown<>(match, (B) match.getBlueBreakdown(),
+                                            Alliance.Color.BLUE, i);
+          }
         }
       }
 
@@ -170,19 +175,11 @@ public abstract class Analyzer<B, D> {
     }
   }
 
-  protected class TeamScoreBreakdown {
-    protected final MatchInfo      match;
-    protected final B              breakdown;
-    protected final Alliance.Color allianceColor;
-    protected final int            stationNumber;
-
-    TeamScoreBreakdown(MatchInfo match, B breakdown, Color allianceColor, int stationNumber) {
-      this.match = match;
-      this.breakdown = breakdown;
-      this.allianceColor = allianceColor;
-      this.stationNumber = stationNumber;
-    }
-  }
+  @SuppressWarnings("java:S1105") // braces (false positive)
+  protected record TeamScoreBreakdown<B extends ScoreBreakdown>(MatchInfo match,
+                                                                B breakdown,
+                                                                Alliance.Color allianceColor,
+                                                                int stationNumber) {}
 
   protected static <T> Collection<T> extractData(Collection<DataEntry> entries, String path,
                                                  BiFunction<DataEntry, String, T> extractor) {
