@@ -88,6 +88,6 @@ public final class TeamController extends Controller {
     ctx.json(team);
   }
 
-  static record TeamEdits(String name,
-                          String eventKey) {}
+  record TeamEdits(String name,
+                   String eventKey) {}
 }

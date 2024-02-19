@@ -292,5 +292,5 @@ public sealed class Controller
     }
   }
 
-  public static record ApiError(String error) {}
+  public record ApiError(String error) {}
 }

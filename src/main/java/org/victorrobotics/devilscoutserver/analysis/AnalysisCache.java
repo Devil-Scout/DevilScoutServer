@@ -16,9 +16,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AnalysisCache {
-  private static record DelayedRefresh(String eventKey,
-                                       Integer team,
-                                       long delayEnd)
+  private record DelayedRefresh(String eventKey,
+                                Integer team,
+                                long delayEnd)
       implements Delayed {
 
     private static final long DELAY = TimeUnit.SECONDS.toMillis(5);

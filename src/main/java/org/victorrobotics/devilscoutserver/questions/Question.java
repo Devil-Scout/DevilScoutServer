@@ -13,9 +13,9 @@ public abstract class Question {
     this.key = key;
   }
 
-  public static record Page(String title,
-                            String key,
-                            List<Question> questions) {
+  public record Page(String title,
+                     String key,
+                     List<Question> questions) {
     public Page(String title, String key, Question... questions) {
       this(title, key, List.of(questions));
     }

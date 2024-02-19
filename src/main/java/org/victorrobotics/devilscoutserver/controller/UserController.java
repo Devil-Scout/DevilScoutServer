@@ -258,13 +258,13 @@ public final class UserController extends Controller {
     }
   }
 
-  static record UserRegistration(@JsonProperty(required = true) String username,
-                                 @JsonProperty(required = true) String fullName,
-                                 @JsonProperty(required = true) boolean admin,
-                                 @JsonProperty(required = true) String password) {}
+  record UserRegistration(@JsonProperty(required = true) String username,
+                          @JsonProperty(required = true) String fullName,
+                          @JsonProperty(required = true) boolean admin,
+                          @JsonProperty(required = true) String password) {}
 
-  static record UserEdits(String username,
-                          String fullName,
-                          Boolean admin,
-                          String password) {}
+  record UserEdits(String username,
+                   String fullName,
+                   Boolean admin,
+                   String password) {}
 }
