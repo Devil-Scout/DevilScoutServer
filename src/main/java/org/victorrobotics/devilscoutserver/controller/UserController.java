@@ -51,7 +51,7 @@ public final class UserController extends Controller {
       throw forbiddenTeam(session.getTeam());
     }
 
-    if (!teamDB().containsTeam(teamNum)) {
+    if (teamDB().getTeam(teamNum) == null) {
       throw teamNotFound(teamNum);
     }
 
@@ -95,7 +95,7 @@ public final class UserController extends Controller {
       throw forbiddenTeam(session.getTeam());
     }
 
-    if (!teamDB().containsTeam(team)) {
+    if (teamDB().getTeam(team) == null) {
       throw teamNotFound(team);
     }
 

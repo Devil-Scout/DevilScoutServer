@@ -11,9 +11,7 @@ import java.util.Set;
 @SuppressWarnings("java:S2325")
 public final class TeamDatabase extends Database {
   private static final String SELECT_TEAM_BY_NUMBER = "SELECT * FROM teams WHERE number = ?";
-  private static final String COUNT_TEAM_BY_NUMBER  = "SELECT COUNT(*) FROM teams WHERE number = ?";
-
-  private static final String SELECT_ACTIVE_EVENTS = "SELECT DISTINCT event_key FROM teams";
+  private static final String SELECT_ACTIVE_EVENTS  = "SELECT DISTINCT event_key FROM teams";
 
   public TeamDatabase() {}
 
@@ -23,16 +21,6 @@ public final class TeamDatabase extends Database {
       statement.setShort(1, (short) number);
       try (ResultSet resultSet = statement.executeQuery()) {
         return resultSet.next() ? Team.fromDatabase(resultSet) : null;
-      }
-    }
-  }
-
-  public boolean containsTeam(int number) throws SQLException {
-    try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(COUNT_TEAM_BY_NUMBER)) {
-      statement.setShort(1, (short) number);
-      try (ResultSet resultSet = statement.executeQuery()) {
-        return resultSet.next() && resultSet.getInt("count") != 0;
       }
     }
   }
