@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 public final class EntryDatabase extends Database {
@@ -42,17 +41,8 @@ public final class EntryDatabase extends Database {
       statement.setString(2, eventKey);
 
       try (ResultSet resultSet = statement.executeQuery()) {
-        List<DataEntry> entries = new ArrayList<>();
-        if (hasMatchKeys) {
-          while (resultSet.next()) {
-            entries.add(DataEntry.fromDatabaseWithMatch(resultSet));
-          }
-        } else {
-          while (resultSet.next()) {
-            entries.add(DataEntry.fromDatabase(resultSet));
-          }
-        }
-        return entries;
+        return listFromDatabase(resultSet, hasMatchKeys ? DataEntry::fromDatabaseWithMatch
+            : DataEntry::fromDatabase);
       }
     }
   }

@@ -5,7 +5,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -39,6 +41,15 @@ public sealed class Database permits UserDatabase, TeamDatabase, EntryDatabase {
       items.add(factory.apply(resultSet));
     }
     return Collections.unmodifiableList(items);
+  }
+
+  protected static <T> Set<T> setFromDatabase(ResultSet resultSet, SQLFactory<T> factory)
+      throws SQLException {
+    Set<T> items = new LinkedHashSet<>();
+    while (resultSet.next()) {
+      items.add(factory.apply(resultSet));
+    }
+    return Collections.unmodifiableSet(items);
   }
 
   @FunctionalInterface
