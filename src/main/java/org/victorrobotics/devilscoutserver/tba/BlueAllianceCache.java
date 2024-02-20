@@ -4,6 +4,8 @@ import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.devilscoutserver.cache.Cache;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
+import java.util.Collection;
+
 public abstract class BlueAllianceCache<K, D, V extends Cacheable<D>> extends Cache<K, D, V> {
   protected abstract Endpoint<D> getEndpoint(K key);
 
@@ -46,7 +48,14 @@ public abstract class BlueAllianceCache<K, D, V extends Cacheable<D>> extends Ca
     }
   }
 
-  public void refreshAll(Iterable<? extends K> keys) {
+  public void refreshAll(Collection<? extends K> keys) {
     keys.forEach(this::refresh);
+
+    long start = System.currentTimeMillis();
+    int size = size();
+    if (keySet().retainAll(keys)) {
+      getLogger().info("Removed {} stale entries in {}ms", size - size(),
+                       System.currentTimeMillis() - start);
+    }
   }
 }
