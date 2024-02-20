@@ -57,8 +57,9 @@ public abstract class Analyzer<B extends ScoreBreakdown, D> {
 
   protected class Data {
     private final Map<String, List<DataEntry>> matchEntries;
-    private final List<DataEntry>              pitEntries;
     private final Map<String, List<DataEntry>> driveTeamEntries;
+
+    private final List<DataEntry> pitEntries;
 
     private final Map<String, TeamScoreBreakdown<B>> scoreBreakdowns;
 
@@ -77,22 +78,24 @@ public abstract class Analyzer<B extends ScoreBreakdown, D> {
       }
 
       try {
-        pitEntries = pitEntryDB.getEntries(eventKey, team);
+        matchEntries = new LinkedHashMap<>();
+        List<DataEntry> matchEntriesList = matchEntryDB.getEntries(eventKey, team);
+        for (DataEntry entry : matchEntriesList) {
+          TeamScoreBreakdown<B> breakdown = scoreBreakdowns.get(entry.matchKey());
+          if (breakdown == null || isValidMatchEntry(entry, breakdown)) {
+            matchEntries.computeIfAbsent(entry.matchKey(), k -> new ArrayList<>(1))
+                        .add(entry);
+          }
+        }
 
         driveTeamEntries = new LinkedHashMap<>();
-        driveTeamEntryDB.getEntries(eventKey, team)
-                        .forEach(entry -> driveTeamEntries.computeIfAbsent(entry.matchKey(),
-                                                                           s -> new ArrayList<>(1))
-                                                          .add(entry));
+        List<DataEntry> driveTeamEntriesList = driveTeamEntryDB.getEntries(eventKey, team);
+        for (DataEntry entry : driveTeamEntriesList) {
+          driveTeamEntries.computeIfAbsent(entry.matchKey(), k -> new ArrayList<>(1))
+                          .add(entry);
+        }
 
-        matchEntries = new LinkedHashMap<>();
-        matchEntryDB.getEntries(eventKey, team)
-                    .forEach(entry -> {
-                      if (isValidMatchEntry(entry, scoreBreakdowns.get(entry.matchKey()))) {
-                        matchEntries.computeIfAbsent(entry.matchKey(), s -> new ArrayList<>(1))
-                                    .add(entry);
-                      }
-                    });
+        pitEntries = pitEntryDB.getEntries(eventKey, team);
       } catch (SQLException e) {
         throw new IllegalStateException(e);
       }
@@ -131,24 +134,32 @@ public abstract class Analyzer<B extends ScoreBreakdown, D> {
       return null;
     }
 
-    public List<DataEntry> getPitEntries() {
-      return pitEntries;
-    }
-
     public Collection<List<DataEntry>> getMatchEntries() {
       return matchEntries.values();
+    }
+
+    public Map<String, List<DataEntry>> getMatchEntriesRaw() {
+      return matchEntries;
     }
 
     public Collection<List<DataEntry>> getDriveTeamEntries() {
       return driveTeamEntries.values();
     }
 
-    public TeamOpr getOpr() {
-      return opr;
+    public Map<String, List<DataEntry>> getDriveTeamEntriesRaw() {
+      return driveTeamEntries;
+    }
+
+    public List<DataEntry> getPitEntries() {
+      return pitEntries;
     }
 
     public Collection<TeamScoreBreakdown<B>> getScoreBreakdowns() {
       return scoreBreakdowns.values();
+    }
+
+    public TeamOpr getOpr() {
+      return opr;
     }
 
     public RankingsCache.Team getRankings() {

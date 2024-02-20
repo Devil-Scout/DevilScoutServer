@@ -25,9 +25,9 @@ public abstract class BlueAllianceCache<K, D, V extends Cacheable<D>> extends Ca
         remove(key);
         if (hadKey) {
           modified();
+          getLogger().info("Removed entry for key {} in {}ms", key,
+                           System.currentTimeMillis() - start);
         }
-        getLogger().info("Removed entry for key {} in {}ms", key,
-                         System.currentTimeMillis() - start);
         return;
       }
 
