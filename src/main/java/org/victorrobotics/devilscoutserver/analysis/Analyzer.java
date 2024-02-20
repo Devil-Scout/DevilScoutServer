@@ -44,83 +44,70 @@ public abstract class Analyzer<B extends ScoreBreakdown, D> {
     this.rankingsCache = rankingsCache;
   }
 
-  protected abstract D computeData(Handle handle);
+  protected abstract boolean isValidMatchEntry(DataEntry matchEntry,
+                                               TeamScoreBreakdown<B> breakdown);
+
+  protected abstract D computeData(Data inputs);
 
   protected abstract List<StatisticsPage> generateStatistics(D data);
 
   public D computeData(String eventKey, int team) {
-    return computeData(new Handle(eventKey, team));
+    return computeData(new Data(eventKey, team));
   }
 
-  protected class Handle {
-    private final String eventKey;
-    private final int    team;
+  protected class Data {
+    private final Map<String, List<DataEntry>> matchEntries;
+    private final List<DataEntry>              pitEntries;
+    private final Map<String, List<DataEntry>> driveTeamEntries;
 
-    private Collection<List<DataEntry>> matchEntries;
-    private List<DataEntry>             pitEntries;
-    private Collection<List<DataEntry>> driveTeamEntries;
+    private final Map<String, TeamScoreBreakdown<B>> scoreBreakdowns;
 
-    private Collection<TeamScoreBreakdown<B>> scoreBreakdowns;
+    private final TeamOpr            opr;
+    private final RankingsCache.Team rankings;
 
-    private TeamOpr            opr;
-    private RankingsCache.Team rankings;
-
-    Handle(String eventKey, int team) {
-      this.eventKey = eventKey;
-      this.team = team;
-    }
-
-    public List<DataEntry> getPitEntries() {
-      if (pitEntries == null) {
-        try {
-          pitEntries = pitEntryDB.getEntries(eventKey, team);
-        } catch (SQLException e) {
-          throw new IllegalStateException(e);
+    Data(String eventKey, int team) {
+      scoreBreakdowns = new LinkedHashMap<>();
+      MatchSchedule schedule = matchScheduleCache.get(eventKey)
+                                                 .value();
+      for (MatchInfo match : schedule.values()) {
+        TeamScoreBreakdown<B> breakdown = resolveBreakdown(match, team);
+        if (breakdown != null) {
+          scoreBreakdowns.put(match.getKey(), breakdown);
         }
       }
-      return pitEntries;
-    }
 
-    public Collection<List<DataEntry>> getMatchEntries() {
-      if (matchEntries == null) {
-        matchEntries = loadEntriesByMatch(matchEntryDB, eventKey, team);
-      }
-      return matchEntries;
-    }
+      try {
+        pitEntries = pitEntryDB.getEntries(eventKey, team);
 
-    public Collection<List<DataEntry>> getDriveTeamEntries() {
-      if (driveTeamEntries == null) {
-        driveTeamEntries = loadEntriesByMatch(driveTeamEntryDB, eventKey, team);
-      }
-      return driveTeamEntries;
-    }
+        driveTeamEntries = new LinkedHashMap<>();
+        driveTeamEntryDB.getEntries(eventKey, team)
+                        .forEach(entry -> driveTeamEntries.computeIfAbsent(entry.matchKey(),
+                                                                           s -> new ArrayList<>(1))
+                                                          .add(entry));
 
-    public TeamOpr getOpr() {
-      if (opr == null) {
-        opr = oprsCache.get(eventKey)
-                       .value()
-                       .get(team);
+        matchEntries = new LinkedHashMap<>();
+        matchEntryDB.getEntries(eventKey, team)
+                    .forEach(entry -> {
+                      if (isValidMatchEntry(entry, scoreBreakdowns.get(entry.matchKey()))) {
+                        matchEntries.computeIfAbsent(entry.matchKey(), s -> new ArrayList<>(1))
+                                    .add(entry);
+                      }
+                    });
+      } catch (SQLException e) {
+        throw new IllegalStateException(e);
       }
-      return opr;
-    }
 
-    public Collection<TeamScoreBreakdown<B>> getScoreBreakdowns() {
-      if (scoreBreakdowns == null) {
-        scoreBreakdowns = new ArrayList<>();
-        MatchSchedule schedule = matchScheduleCache.get(eventKey)
-                                                   .value();
-        for (MatchInfo match : schedule.values()) {
-          TeamScoreBreakdown<B> breakdown = resolveBreakdown(match);
-          if (breakdown != null) {
-            scoreBreakdowns.add(breakdown);
-          }
-        }
-      }
-      return scoreBreakdowns;
+      opr = oprsCache.get(eventKey)
+                     .value()
+                     .get(team);
+
+      rankings = rankingsCache.get(eventKey)
+                              .value()
+                              .get(team);
     }
 
     @SuppressWarnings("unchecked") // breakdowns always from current year
-    private TeamScoreBreakdown<B> resolveBreakdown(MatchInfo match) {
+    private TeamScoreBreakdown<B> resolveBreakdown(MatchInfo match, int team) {
       if (match.getRedBreakdown() != null) {
         int[] redAlliance = match.getRed();
         for (int i = 0; i < redAlliance.length; i++) {
@@ -144,34 +131,28 @@ public abstract class Analyzer<B extends ScoreBreakdown, D> {
       return null;
     }
 
-    public RankingsCache.Team getRankings() {
-      if (rankings == null) {
-        rankings = rankingsCache.get(eventKey)
-                                .value()
-                                .get(team);
-      }
-      return rankings;
+    public List<DataEntry> getPitEntries() {
+      return pitEntries;
     }
 
-    private static Collection<List<DataEntry>> loadEntriesByMatch(EntryDatabase database,
-                                                                  String eventKey, int team) {
-      List<DataEntry> entries;
-      try {
-        entries = database.getEntries(eventKey, team);
-      } catch (SQLException e) {
-        throw new IllegalStateException(e);
-      }
+    public Collection<List<DataEntry>> getMatchEntries() {
+      return matchEntries.values();
+    }
 
-      if (entries.isEmpty()) {
-        return List.of();
-      }
+    public Collection<List<DataEntry>> getDriveTeamEntries() {
+      return driveTeamEntries.values();
+    }
 
-      Map<String, List<DataEntry>> entryMap = new LinkedHashMap<>();
-      for (DataEntry entry : entries) {
-        entryMap.computeIfAbsent(entry.matchKey(), s -> new ArrayList<>(1))
-                .add(entry);
-      }
-      return entryMap.values();
+    public TeamOpr getOpr() {
+      return opr;
+    }
+
+    public Collection<TeamScoreBreakdown<B>> getScoreBreakdowns() {
+      return scoreBreakdowns.values();
+    }
+
+    public RankingsCache.Team getRankings() {
+      return rankings;
     }
   }
 

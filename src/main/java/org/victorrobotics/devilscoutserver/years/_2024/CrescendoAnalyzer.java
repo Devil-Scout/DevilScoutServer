@@ -1,6 +1,6 @@
 package org.victorrobotics.devilscoutserver.years._2024;
 
-import org.victorrobotics.bluealliance.ScoreBreakdown;
+import org.victorrobotics.bluealliance.ScoreBreakdown.Crescendo2024;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
 import org.victorrobotics.devilscoutserver.analysis.statistics.BooleanStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.NumberStatistic;
@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("java:S1192") // repeating paths is more clear here
-public final class CrescendoAnalyzer extends Analyzer<ScoreBreakdown.Crescendo2024, CrescendoData> {
+public final class CrescendoAnalyzer extends Analyzer<Crescendo2024, CrescendoData> {
   public CrescendoAnalyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
                            EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
                            OprsCache teamOprsCache, RankingsCache rankingsCache) {
@@ -35,55 +35,61 @@ public final class CrescendoAnalyzer extends Analyzer<ScoreBreakdown.Crescendo20
   }
 
   @Override
-  protected CrescendoData computeData(Handle handle) {
-    return new CrescendoData(handle.getRankings()
+  protected boolean isValidMatchEntry(DataEntry matchEntry,
+                                      TeamScoreBreakdown<Crescendo2024> breakdown) {
+    return true;
+  }
+
+  @Override
+  protected CrescendoData computeData(Data inputs) {
+    return new CrescendoData(inputs.getRankings()
                                    .getWinLossRecord(),
-                             null, handle.getOpr(),
-                             average(extractMergeData(handle.getDriveTeamEntries(),
+                             null, inputs.getOpr(),
+                             average(extractMergeData(inputs.getDriveTeamEntries(),
                                                       "/communication", DataEntry::getInteger,
                                                       Analyzer::average)),
-                             average(extractMergeData(handle.getDriveTeamEntries(), "/strategy",
+                             average(extractMergeData(inputs.getDriveTeamEntries(), "/strategy",
                                                       DataEntry::getInteger, Analyzer::average)),
-                             average(extractMergeData(handle.getDriveTeamEntries(), "/adaptability",
+                             average(extractMergeData(inputs.getDriveTeamEntries(), "/adaptability",
                                                       DataEntry::getInteger, Analyzer::average)),
-                             average(extractMergeData(handle.getDriveTeamEntries(),
+                             average(extractMergeData(inputs.getDriveTeamEntries(),
                                                       "/professionalism", DataEntry::getInteger,
                                                       Analyzer::average)),
-                             mostCommon(map(extractData(handle.getPitEntries(), "/specs/drivetrain",
+                             mostCommon(map(extractData(inputs.getPitEntries(), "/specs/drivetrain",
                                                         DataEntry::getInteger),
                                             DrivetrainType::of)),
-                             mostCommon(extractData(handle.getPitEntries(), "/specs/weight",
+                             mostCommon(extractData(inputs.getPitEntries(), "/specs/weight",
                                                     DataEntry::getInteger)),
-                             mostCommon(extractData(handle.getPitEntries(), "/specs/size",
+                             mostCommon(extractData(inputs.getPitEntries(), "/specs/size",
                                                     DataEntry::getInteger)),
-                             average(extractMergeData(handle.getMatchEntries(), "/general/speed",
+                             average(extractMergeData(inputs.getMatchEntries(), "/general/speed",
                                                       DataEntry::getInteger, Analyzer::average)),
-                             countDistinct(map(extractMergeData(handle.getMatchEntries(),
+                             countDistinct(map(extractMergeData(inputs.getMatchEntries(),
                                                                 "/auto/start_pos",
                                                                 DataEntry::getInteger,
                                                                 Analyzer::mostCommon),
                                                StartPosition::of)),
-                             summarizeNumbers(extractMergeData(handle.getMatchEntries(),
+                             summarizeNumbers(extractMergeData(inputs.getMatchEntries(),
                                                                CrescendoAnalyzer::autoNoteCount,
                                                                Analyzer::average)),
-                             summarizeNumbers(extractMergeData(handle.getMatchEntries(),
+                             summarizeNumbers(extractMergeData(inputs.getMatchEntries(),
                                                                CrescendoAnalyzer::teleopCyclesPerMinute,
                                                                Analyzer::average)),
-                             average(extractMergeData(handle.getMatchEntries(),
+                             average(extractMergeData(inputs.getMatchEntries(),
                                                       CrescendoAnalyzer::teleopScoreAccuracy,
                                                       Analyzer::average)),
-                             sumCounts(extractMergeData(handle.getMatchEntries(),
+                             sumCounts(extractMergeData(inputs.getMatchEntries(),
                                                         CrescendoAnalyzer::teleopScoreLocations,
                                                         Analyzer::averageCounts)),
-                             sumCounts(extractMergeData(handle.getMatchEntries(),
+                             sumCounts(extractMergeData(inputs.getMatchEntries(),
                                                         CrescendoAnalyzer::teleopPickupLocations,
                                                         Analyzer::averageCounts)),
-                             countDistinct(map(extractMergeData(handle.getMatchEntries(),
+                             countDistinct(map(extractMergeData(inputs.getMatchEntries(),
                                                                 "/auto/start_pos",
                                                                 DataEntry::getInteger,
                                                                 Analyzer::mostCommon),
                                                FinalStatus::of)),
-                             average(map(extractMergeData(handle.getMatchEntries(), "/endgame/trap",
+                             average(map(extractMergeData(inputs.getMatchEntries(), "/endgame/trap",
                                                           DataEntry::getBoolean,
                                                           Analyzer::mostCommon),
                                          b -> b ? 1 : 0)));
