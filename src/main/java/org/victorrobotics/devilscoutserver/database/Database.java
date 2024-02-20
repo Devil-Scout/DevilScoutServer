@@ -23,8 +23,6 @@ public sealed class Database permits UserDatabase, TeamDatabase, EntryDatabase {
     config.setPassword(System.getenv("POSTGRESQL_PASSWORD"));
     config.setMaximumPoolSize(32);
     config.setMinimumIdle(4);
-    config.setThreadFactory(Thread.ofVirtual()
-                                  .factory());
     CONNECTION_POOL = new HikariDataSource(config);
   }
 
