@@ -10,6 +10,7 @@ import org.victorrobotics.devilscoutserver.cache.ListValue;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -103,9 +104,18 @@ public class MatchScheduleCache
         change = true;
       }
 
-      long matchTime = matchIsComplete ? match.actualTime().getTime() : match.predictedTime().getTime();
-      if (time != matchTime) {
-        time = matchTime;
+      Date matchTime = null;
+      if (match.actualTime() != null) {
+        matchTime = match.actualTime();
+      } else if (match.predictedTime() != null) {
+        matchTime = match.predictedTime();
+      } else if (match.scheduledTime() != null) {
+        matchTime = match.scheduledTime();
+      }
+
+      long matchTimestamp = matchTime == null ? -1 : matchTime.getTime();
+      if (time != matchTimestamp) {
+        time = matchTimestamp;
         change = true;
       }
 
