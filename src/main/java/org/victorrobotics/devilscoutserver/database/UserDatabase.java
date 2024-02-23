@@ -14,35 +14,23 @@ import java.util.List;
 
 @SuppressWarnings("java:S2325")
 public final class UserDatabase extends Database {
-  private static final String SELECT_ALL_USERS     = "SELECT * FROM users ORDER BY id";
   private static final String SELECT_USERS_BY_TEAM =
       "SELECT * FROM users WHERE team = ? ORDER BY id";
+  private static final String SELECT_USER_BY_ID    = "SELECT * FROM users WHERE id = ?";
 
-  private static final String SELECT_USER_BY_ID                = "SELECT * FROM users WHERE id = ?";
   private static final String SELECT_USER_BY_TEAM_AND_USERNAME =
       "SELECT * FROM users WHERE team = ? AND username = ?";
-
   private static final String SELECT_SALT_BY_TEAM_AND_USERNAME =
       "SELECT salt FROM users WHERE team = ? AND username = ?";
-  private static final String SELECT_ADMIN_BY_ID        =
-      "SELECT admin FROM users WHERE id = ?";
 
-  private static final String COUNT_USER_BY_ID = "SELECT COUNT(*) FROM users WHERE id = ?";
+  private static final String SELECT_ADMIN_BY_ID = "SELECT admin FROM users WHERE id = ?";
 
-  private static final String INSERT_USER = "INSERT INTO users "
-      + "(team, username, full_name, admin, salt, stored_key, server_key) "
-      + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+  private static final String INSERT_USER =
+      "INSERT INTO users (team, username, full_name, admin, salt, stored_key, server_key) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
   private static final String DELETE_USER = "DELETE FROM users WHERE id = ?";
 
   public UserDatabase() {}
-
-  public Collection<User> allUsers() throws SQLException {
-    try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(SELECT_ALL_USERS);
-         ResultSet resultSet = statement.executeQuery()) {
-      return listFromDatabase(resultSet, User::fromDatabase);
-    }
-  }
 
   public Collection<User> usersOnTeam(int team) throws SQLException {
     try (Connection connection = getConnection();
@@ -72,16 +60,6 @@ public final class UserDatabase extends Database {
       statement.setString(2, username);
       try (ResultSet resultSet = statement.executeQuery()) {
         return resultSet.next() ? User.fromDatabase(resultSet) : null;
-      }
-    }
-  }
-
-  public boolean containsUser(String id) throws SQLException {
-    try (Connection connection = getConnection();
-         PreparedStatement statement = connection.prepareStatement(COUNT_USER_BY_ID)) {
-      statement.setString(1, id);
-      try (ResultSet resultSet = statement.executeQuery()) {
-        return resultSet.next() && resultSet.getInt(1) != 0;
       }
     }
   }
