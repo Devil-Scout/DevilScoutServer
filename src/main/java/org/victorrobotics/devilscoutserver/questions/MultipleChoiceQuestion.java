@@ -7,7 +7,7 @@ public final class MultipleChoiceQuestion extends Question {
   public final List<String> options;
 
   public <T> MultipleChoiceQuestion(String prompt, String key, Iterable<T> options) {
-    super(QuestionType.SEQUENCE, prompt, key);
+    super(QuestionType.MULTIPLE, prompt, key);
     this.options = new ArrayList<>();
     for (T option : options) {
       this.options.add(option.toString());
