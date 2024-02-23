@@ -165,20 +165,20 @@ public final class SessionController extends Controller {
     return bytes;
   }
 
-  public static record LoginRequest(@JsonProperty(required = true) int team,
-                                    @JsonProperty(required = true) String username,
-                                    @JsonProperty(required = true) byte[] clientNonce) {}
+  public record LoginRequest(@JsonProperty(required = true) int team,
+                             @JsonProperty(required = true) String username,
+                             @JsonProperty(required = true) byte[] clientNonce) {}
 
-  public static record LoginChallenge(byte[] salt,
-                                      byte[] nonce) {}
+  public record LoginChallenge(byte[] salt,
+                               byte[] nonce) {}
 
-  public static record AuthRequest(@JsonProperty(required = true) String username,
-                                   @JsonProperty(required = true) int team,
-                                   @JsonProperty(required = true) byte[] nonce,
-                                   @JsonProperty(required = true) byte[] clientProof) {}
+  public record AuthRequest(@JsonProperty(required = true) String username,
+                            @JsonProperty(required = true) int team,
+                            @JsonProperty(required = true) byte[] nonce,
+                            @JsonProperty(required = true) byte[] clientProof) {}
 
-  public static record AuthResponse(User user,
-                                    Team team,
-                                    Session session,
-                                    byte[] serverSignature) {}
+  public record AuthResponse(User user,
+                             Team team,
+                             Session session,
+                             byte[] serverSignature) {}
 }
