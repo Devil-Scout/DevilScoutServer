@@ -1,6 +1,7 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.database.Team;
+import org.victorrobotics.devilscoutserver.session.Session;
 
 import java.sql.SQLException;
 
@@ -80,8 +81,7 @@ public final class TeamController extends Controller {
     team = teamDB().editTeam(teamNum, edits.name(), eventKey);
 
     if (eventKey != null) {
-      sessions().values()
-                .removeIf(s -> s.getTeam() == teamNum);
+      sessions().logoutTeam(teamNum);
       matchScheduleCache().refresh(eventKey);
       teamListsCache().refresh(eventKey);
     }

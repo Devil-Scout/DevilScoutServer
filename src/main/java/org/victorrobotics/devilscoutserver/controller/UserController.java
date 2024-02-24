@@ -1,6 +1,7 @@
 package org.victorrobotics.devilscoutserver.controller;
 
 import org.victorrobotics.devilscoutserver.database.User;
+import org.victorrobotics.devilscoutserver.session.Session;
 
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -190,10 +191,8 @@ public final class UserController extends Controller {
     // If permissions are reduced OR password was changed, log out this user
     // EXCEPT the current session
     if (Boolean.FALSE.equals(edits.admin()) || authInfo != null) {
-      sessions().values()
-                .removeIf(s -> s.getUser()
-                                .equals(userId)
-                    && s != session);
+      sessions().logoutUser(userId);
+      sessions().add(session);
     }
 
     ctx.json(user);
@@ -230,9 +229,8 @@ public final class UserController extends Controller {
     }
 
     userDB().deleteUser(user.id());
-    sessions().values()
-              .removeIf(s -> s.getUser()
-                              .equals(user.id()));
+    sessions().logoutUser(user.id());
+
     ctx.status(HttpStatus.NO_CONTENT);
   }
 

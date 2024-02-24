@@ -5,18 +5,16 @@ import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.questions.Questions;
+import org.victorrobotics.devilscoutserver.session.Session;
+import org.victorrobotics.devilscoutserver.session.SessionManager;
 import org.victorrobotics.devilscoutserver.tba.EventCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 import org.victorrobotics.devilscoutserver.tba.OprsCache;
 import org.victorrobotics.devilscoutserver.tba.TeamListCache;
 
 import java.security.SecureRandom;
-import java.sql.SQLException;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.ConflictResponse;
 import io.javalin.http.Context;
@@ -31,13 +29,13 @@ public sealed class Controller
     TeamController, UserController, AnalysisController {
   public static final String SESSION_HEADER = "X-DS-SESSION-KEY";
 
-  private static final ConcurrentMap<String, Session> SESSIONS = new ConcurrentHashMap<>();
-
   protected static final String HASH_ALGORITHM   = "SHA-256";
   protected static final String MAC_ALGORITHM    = "HmacSHA256";
   protected static final String KEYGEN_ALGORITHM = "PBKDF2WithHmacSHA256";
 
   protected static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+  private static SessionManager SESSIONS;
 
   private static UserDatabase USERS;
   private static TeamDatabase TEAMS;
@@ -56,6 +54,10 @@ public sealed class Controller
   private static AnalysisCache ANALYSIS_CACHE;
 
   protected Controller() {}
+
+  public static void setSessions(SessionManager sessions) {
+    SESSIONS = sessions;
+  }
 
   public static void setUserDB(UserDatabase users) {
     USERS = users;
@@ -102,7 +104,7 @@ public sealed class Controller
   }
 
   @SuppressWarnings("java:S2384") // copy map
-  public static ConcurrentMap<String, Session> sessions() {
+  public static SessionManager sessions() {
     return SESSIONS;
   }
 
@@ -164,15 +166,14 @@ public sealed class Controller
   protected static Session getValidSession(Context ctx) {
     String sessionKey = ctx.header(SESSION_HEADER);
     if (sessionKey == null) {
-      throw new UnauthorizedResponse("Missing " + SESSION_HEADER + " header");
+      throw new UnauthorizedResponse("Missing required " + SESSION_HEADER + " header");
     }
 
     Session session = SESSIONS.get(sessionKey);
-    if (session == null || session.isExpired()) {
-      throw new UnauthorizedResponse("Invalid/Expired " + SESSION_HEADER + " header");
+    if (session == null) {
+      throw new UnauthorizedResponse("Invalid/expired credentials");
     }
 
-    session.refresh();
     return session;
   }
 
@@ -245,51 +246,6 @@ public sealed class Controller
   protected static HttpResponseException incorrectCredentials(int teamNum, String username) {
     return new UnauthorizedResponse("Incorrect credentials for user " + username + " on team "
         + teamNum);
-  }
-
-  public static class Session {
-    private static final long DURATION_MILLIS = 8 * 60 * 60 * 1000;
-
-    private final String key;
-    private final String user;
-    private final int    team;
-
-    private long expiration;
-
-    public Session(String key, String userId, int team) {
-      this.key = key;
-      this.user = userId;
-      this.team = team;
-
-      expiration = System.currentTimeMillis() + DURATION_MILLIS;
-    }
-
-    @JsonIgnore
-    public boolean isExpired() {
-      return System.currentTimeMillis() >= expiration;
-    }
-
-    public String getKey() {
-      return key;
-    }
-
-    public String getUser() {
-      return user;
-    }
-
-    public int getTeam() {
-      return team;
-    }
-
-    public void refresh() {
-      expiration = System.currentTimeMillis() + DURATION_MILLIS;
-    }
-
-    public void verifyAdmin() throws SQLException {
-      if (!userDB().isAdmin(getUser())) {
-        throw new ForbiddenResponse("Access to resource requires admin privileges");
-      }
-    }
   }
 
   public record ApiError(String error) {}

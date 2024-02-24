@@ -4,12 +4,12 @@ import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.devilscoutserver.analysis.AnalysisCache;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
 import org.victorrobotics.devilscoutserver.controller.Controller;
-import org.victorrobotics.devilscoutserver.controller.Controller.Session;
 import org.victorrobotics.devilscoutserver.database.Database;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.database.TeamDatabase;
 import org.victorrobotics.devilscoutserver.database.UserDatabase;
 import org.victorrobotics.devilscoutserver.questions.Questions;
+import org.victorrobotics.devilscoutserver.session.SessionManager;
 import org.victorrobotics.devilscoutserver.tba.EventCache;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
 import org.victorrobotics.devilscoutserver.tba.OprsCache;
@@ -22,7 +22,6 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -47,6 +46,7 @@ public class Main {
     LOGGER.info("Database connected");
 
     LOGGER.info("Initializing caches...");
+    Controller.setSessions(new SessionManager());
     Controller.setEventCache(new EventCache());
     Controller.setTeamListCache(new TeamListCache());
 
@@ -101,13 +101,8 @@ public class Main {
                 .refreshAll(getActiveEvents());
     }, 0, 1, TimeUnit.MINUTES);
     executor.scheduleAtFixedRate(() -> {
-      ConcurrentMap<String, Session> sessions = Controller.sessions();
-      long start = System.currentTimeMillis();
-      int size = sessions.size();
-      sessions.values()
-              .removeIf(Session::isExpired);
-      LOGGER.info("Purged {} expired sessions in {}ms", size - sessions.size(),
-                  System.currentTimeMillis() - start);
+      Controller.sessions()
+                .purgeExpired();
     }, 0, 5, TimeUnit.MINUTES);
     LOGGER.info("Refresh services running");
 
