@@ -2,6 +2,7 @@ package org.victorrobotics.devilscoutserver.tba;
 
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.bluealliance.Team;
+import org.victorrobotics.devilscoutserver.analysis.AnalysisCache;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
 
 import java.util.ArrayList;
@@ -16,13 +17,15 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public class TeamListCache
     extends BlueAllianceCache<String, List<Team.Simple>, TeamListCache.TeamList> {
-  public static class TeamInfo implements Cacheable<Team.Simple>, Comparable<TeamInfo> {
+  public class TeamInfo implements Cacheable<Team.Simple>, Comparable<TeamInfo> {
+    private final String eventKey;
     private final int number;
 
     private String name;
     private String location;
 
-    public TeamInfo(Team.Simple team) {
+    public TeamInfo(String eventKey, Team.Simple team) {
+      this.eventKey = eventKey;
       this.number = team.number();
       update(team);
     }
@@ -40,6 +43,10 @@ public class TeamListCache
       if (!Objects.equals(location, teamLocation)) {
         location = teamLocation;
         changed = true;
+      }
+
+      if (changed) {
+        analysisCache.scheduleRefresh(eventKey, number);
       }
 
       return changed;
@@ -64,11 +71,14 @@ public class TeamListCache
     }
   }
 
-  public static class TeamList implements Cacheable<List<Team.Simple>> {
+  public class TeamList implements Cacheable<List<Team.Simple>> {
+    private final String eventKey;
+
     private final ConcurrentNavigableMap<Integer, TeamInfo> teamMap;
     private final Collection<TeamInfo>                      teams;
 
-    public TeamList(List<Team.Simple> teams) {
+    public TeamList(String eventKey, List<Team.Simple> teams) {
+      this.eventKey = eventKey;
       this.teamMap = new ConcurrentSkipListMap<>();
       this.teams = Collections.unmodifiableCollection(teamMap.values());
       update(teams);
@@ -83,7 +93,7 @@ public class TeamListCache
 
         TeamInfo info = teamMap.get(team.number());
         if (info == null) {
-          teamMap.put(team.number(), new TeamInfo(team));
+          teamMap.put(team.number(), new TeamInfo(eventKey, team));
           change = true;
         } else {
           change |= info.update(team);
@@ -91,6 +101,11 @@ public class TeamListCache
       }
       change |= teamMap.keySet()
                        .retainAll(keys);
+
+      if (change) {
+        oprs.refresh(eventKey);
+        rankings.refresh(eventKey);
+      }
 
       return change;
     }
@@ -101,6 +116,16 @@ public class TeamListCache
     }
   }
 
+  private final OprsCache oprs;
+  private final RankingsCache rankings;
+  private final AnalysisCache analysisCache;
+
+  public TeamListCache(OprsCache oprs, RankingsCache rankings, AnalysisCache analysisCache) {
+    this.oprs = oprs;
+    this.rankings = rankings;
+    this.analysisCache = analysisCache;
+  }
+
   @Override
   protected Endpoint<List<Team.Simple>> getEndpoint(String eventKey) {
     return Team.Simple.endpointForEvent(eventKey);
@@ -108,6 +133,6 @@ public class TeamListCache
 
   @Override
   protected TeamList createValue(String eventKey, List<Team.Simple> data) {
-    return new TeamList(data);
+    return new TeamList(eventKey, data);
   }
 }

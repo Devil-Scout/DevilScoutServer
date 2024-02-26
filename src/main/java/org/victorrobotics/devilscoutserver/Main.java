@@ -48,7 +48,6 @@ public class Main {
 
     LOGGER.info("Initializing caches...");
     Controller.setEventCache(new EventCache());
-    Controller.setTeamListCache(new TeamListCache());
 
     // Hack to pass circular references on final members
     Map<Integer, Analyzer<?, ?>> analyzers = new HashMap<>();
@@ -59,6 +58,7 @@ public class Main {
     RankingsCache rankingsCache = new RankingsCache(analysisCache);
     Controller.setMatchScheduleCache(new MatchScheduleCache(oprsCache, rankingsCache,
                                                             analysisCache));
+    Controller.setTeamListCache(new TeamListCache(oprsCache, rankingsCache, analysisCache));
     analyzers.put(2024,
                   new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
                                         Controller.driveTeamEntryDB(),
