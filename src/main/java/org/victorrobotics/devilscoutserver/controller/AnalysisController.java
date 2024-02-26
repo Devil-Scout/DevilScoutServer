@@ -1,5 +1,7 @@
 package org.victorrobotics.devilscoutserver.controller;
 
+import org.victorrobotics.devilscoutserver.session.Session;
+
 import io.javalin.http.Context;
 
 public final class AnalysisController extends Controller {

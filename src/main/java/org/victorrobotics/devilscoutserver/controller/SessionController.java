@@ -4,6 +4,7 @@ import static org.victorrobotics.devilscoutserver.EncodingUtil.base64Encode;
 
 import org.victorrobotics.devilscoutserver.database.Team;
 import org.victorrobotics.devilscoutserver.database.User;
+import org.victorrobotics.devilscoutserver.session.Session;
 
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -11,7 +12,6 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.crypto.Mac;
@@ -111,10 +111,7 @@ public final class SessionController extends Controller {
     byte[] serverSignature = hmacFunction.doFinal(userAndNonce);
     NONCES.remove(nonceId);
 
-    String sessionKey = UUID.randomUUID()
-                            .toString();
-    Session session = new Session(sessionKey, user.id(), user.team());
-    sessions().put(sessionKey, session);
+    Session session = sessions().create(user.id(), user.team());
     ctx.json(new AuthResponse(user, team, session, serverSignature));
   }
 
@@ -145,7 +142,7 @@ public final class SessionController extends Controller {
    */
   public static void logout(Context ctx) {
     Session session = getValidSession(ctx);
-    sessions().remove(session.getKey());
+    sessions().logout(session.getKey());
     ctx.status(HttpStatus.NO_CONTENT);
   }
 
