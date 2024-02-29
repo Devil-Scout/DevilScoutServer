@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public abstract class Analyzer<B extends ScoreBreakdown, D> {
@@ -294,6 +295,10 @@ public abstract class Analyzer<B extends ScoreBreakdown, D> {
       }
     }
     return result;
+  }
+
+  protected static <T> int count(Collection<T> data, Predicate<T> condition) {
+    return (int) data.stream().filter(condition).count();
   }
 
   protected static <T> Map<T, Integer> averageCounts(Collection<Map<T, Integer>> allCounts) {
