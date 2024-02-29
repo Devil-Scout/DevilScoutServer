@@ -44,7 +44,7 @@ public class CrescendoQuestions extends Questions {
     return List.of(new Question.Page("Specs", "specs",
                                      new SingleChoiceQuestion("Drivetrain", "drivetrain",
                                                               DrivetrainType.values()),
-                                     new NumberQuestion("Chassis size (in)", "size", 18, 30, 28),
+                                     new NumberQuestion("Chassis size (in)", "size", 18, 60, 28),
                                      new NumberQuestion("Weight (no battery/bumpers)", "weight", 80,
                                                         125, 100)),
                    new Question.Page("Auto", "auto",
