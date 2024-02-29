@@ -42,8 +42,7 @@ public final class CrescendoAnalyzer extends Analyzer<Crescendo2024, CrescendoDa
 
   @Override
   protected CrescendoData computeData(Data inputs) {
-    return new CrescendoData(inputs.getRankings()
-                                   .getWinLossRecord(),
+    return new CrescendoData(mapSingle(inputs.getRankings(), RankingsCache.Team::getWinLossRecord),
                              null, inputs.getOpr(),
                              average(extractMergeData(inputs.getDriveTeamEntries(),
                                                       "/communication", DataEntry::getInteger,

@@ -272,6 +272,10 @@ public abstract class Analyzer<B extends ScoreBreakdown, D> {
     return map;
   }
 
+  protected static <I, T> T mapSingle(I input, Function<I, T> mapper) {
+    return input == null ? null : mapper.apply(input);
+  }
+
   protected static <I, T> Collection<T> map(Iterable<I> data, Function<I, T> mapper) {
     Collection<T> enums = new ArrayList<>();
     for (I key : data) {
