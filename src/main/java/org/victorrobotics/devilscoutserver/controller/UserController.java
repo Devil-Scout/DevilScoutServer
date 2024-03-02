@@ -57,7 +57,7 @@ public final class UserController extends Controller {
     }
 
     UserRegistration registration = jsonDecode(ctx, UserRegistration.class);
-    String username = registration.username();
+    String username = registration.username().trim();
     if (userDB().getUser(teamNum, username) != null) {
       throw userConflict(teamNum, username);
     }
