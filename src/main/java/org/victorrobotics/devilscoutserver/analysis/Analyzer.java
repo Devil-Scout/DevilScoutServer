@@ -304,7 +304,7 @@ public abstract class Analyzer<B extends ScoreBreakdown, D> {
   protected static <T> Map<T, Integer> averageCounts(Collection<Map<T, Integer>> allCounts) {
     int size = allCounts.size();
     Map<T, Integer> counts = sumCounts(allCounts);
-    counts.replaceAll((key, count) -> (int) Math.round((count + size * 0.5) / size));
+    counts.replaceAll((key, count) -> (int) Math.round((double) count / size));
     return counts;
   }
 
