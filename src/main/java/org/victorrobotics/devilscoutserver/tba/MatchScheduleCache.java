@@ -2,7 +2,6 @@ package org.victorrobotics.devilscoutserver.tba;
 
 import org.victorrobotics.bluealliance.Endpoint;
 import org.victorrobotics.bluealliance.Match;
-import org.victorrobotics.bluealliance.Match.Alliance.Color;
 import org.victorrobotics.bluealliance.ScoreBreakdown;
 import org.victorrobotics.devilscoutserver.analysis.AnalysisCache;
 import org.victorrobotics.devilscoutserver.cache.Cacheable;
@@ -98,7 +97,7 @@ public class MatchScheduleCache
         change = true;
       }
 
-      boolean matchIsComplete = match.winningAlliance() != Color.NONE;
+      boolean matchIsComplete = match.actualTime() != null;
       if (completed != matchIsComplete) {
         completed = matchIsComplete;
         change = true;

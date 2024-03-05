@@ -43,7 +43,8 @@ public final class SessionController extends Controller {
   public static void login(Context ctx) throws SQLException {
     LoginRequest request = jsonDecode(ctx, LoginRequest.class);
     int teamNum = request.team();
-    String username = request.username();
+    String username = request.username()
+                             .trim();
 
     byte[] salt = userDB().getSalt(teamNum, username);
     if (salt == null) {
@@ -77,7 +78,8 @@ public final class SessionController extends Controller {
   public static void auth(Context ctx)
       throws NoSuchAlgorithmException, InvalidKeyException, SQLException {
     AuthRequest request = jsonDecode(ctx, AuthRequest.class);
-    String username = request.username();
+    String username = request.username()
+                             .trim();
     int teamNum = request.team();
 
     User user = userDB().getUser(teamNum, username);

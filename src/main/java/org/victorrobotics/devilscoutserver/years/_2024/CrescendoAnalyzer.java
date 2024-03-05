@@ -42,9 +42,23 @@ public final class CrescendoAnalyzer extends Analyzer<Crescendo2024, CrescendoDa
 
   @Override
   protected CrescendoData computeData(Data inputs) {
-    return new CrescendoData(inputs.getRankings()
-                                   .getWinLossRecord(),
-                             null, inputs.getOpr(),
+    return new CrescendoData(mapSingle(inputs.getRankings(), RankingsCache.Team::getWinLossRecord),
+                             Map.of("Melody Bonus", count(
+                                                          map(inputs.getScoreBreakdowns(),
+                                                              b -> b.breakdown()
+                                                                    .melodyBonusAchieved()),
+                                                          b -> b),
+                                    "Ensemble Bonus", count(
+                                                            map(inputs.getScoreBreakdowns(),
+                                                                b -> b.breakdown()
+                                                                      .ensembleBonusAchieved()),
+                                                            b -> b),
+                                    "Coopertition Bonus", count(
+                                                                map(inputs.getScoreBreakdowns(),
+                                                                    b -> b.breakdown()
+                                                                          .coopertitionBonusAchieved()),
+                                                                b -> b)),
+                             inputs.getOpr(),
                              average(extractMergeData(inputs.getDriveTeamEntries(),
                                                       "/communication", DataEntry::getInteger,
                                                       Analyzer::average)),
