@@ -119,7 +119,6 @@ public final class UserController extends Controller {
   @SuppressWarnings("java:S1941") // move session closer to code that uses it
   public static void getUser(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
-    session.verifyAdmin();
 
     String userId = ctx.pathParam(USER_PATH_PARAM);
     if (!userId.equals(session.getUser())) {
