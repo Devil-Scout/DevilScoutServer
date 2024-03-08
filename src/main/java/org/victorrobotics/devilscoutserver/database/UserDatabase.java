@@ -19,9 +19,9 @@ public final class UserDatabase extends Database {
   private static final String SELECT_USER_BY_ID    = "SELECT * FROM users WHERE id = ?";
 
   private static final String SELECT_USER_BY_TEAM_AND_USERNAME =
-      "SELECT * FROM users WHERE team = ? AND username = ?";
+      "SELECT * FROM users WHERE team = ? AND username = ?::citext";
   private static final String SELECT_SALT_BY_TEAM_AND_USERNAME =
-      "SELECT salt FROM users WHERE team = ? AND username = ?";
+      "SELECT salt FROM users WHERE team = ? AND username = ?::citext";
 
   private static final String SELECT_ADMIN_BY_ID = "SELECT admin FROM users WHERE id = ?";
 
