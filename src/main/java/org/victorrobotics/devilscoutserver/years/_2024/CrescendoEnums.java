@@ -54,7 +54,7 @@ public final class CrescendoEnums {
   public enum StartPosition {
     NEXT_TO_AMP("Next to amp"),
     FRONT_OF_SPEAKER("In front of speaker"),
-    NEXT_TO_SPEAKER("Center, next to speaker"),
+    NEXT_TO_SPEAKER("On the side of speaker"),
     NEXT_TO_SOURCE("Next to source");
 
     static final StartPosition[] VALUES = values();
