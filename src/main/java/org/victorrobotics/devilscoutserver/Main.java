@@ -63,14 +63,12 @@ public class Main {
                   new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
                                         Controller.driveTeamEntryDB(),
                                         Controller.matchScheduleCache(), oprsCache, rankingsCache));
-    analyzers.put(2023, analyzers.get(2024));
 
     LOGGER.info("Caches ready");
 
     LOGGER.info("Loading questions...");
     Map<Integer, Questions> questions = new HashMap<>();
     questions.put(2024, new CrescendoQuestions());
-    questions.put(2023, questions.get(2024));
     Controller.setQuestions(questions);
     LOGGER.info("Questions loaded");
 
