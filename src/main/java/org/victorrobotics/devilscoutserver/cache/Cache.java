@@ -194,11 +194,13 @@ public abstract class Cache<K, D, V extends Cacheable<D>> implements Map<K, Cach
     public Value(V value, Runnable onModification) {
       this.val = value;
       this.onModification = onModification;
+      lastModified = System.currentTimeMillis();
     }
 
     public void update(D data) {
       if (val.update(data)) {
         onModification.run();
+        lastModified = System.currentTimeMillis();
         jsonCache = null;
       }
     }
