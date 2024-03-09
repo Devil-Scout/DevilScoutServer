@@ -53,7 +53,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthResponse"
+                allOf:
+                  - $ref: "#/components/schemas/SessionResponse"
+                  - properties:
+                      serverSignature:
+                        $ref: "#/components/x-hidden/base64_256"
+                    required:
+                    - serverSignature
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -83,7 +89,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Session"
+                $ref: "#/components/schemas/SessionResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
   /teams/{teamNum}:
@@ -659,7 +665,7 @@ components:
         - username
         - nonce
         - clientProof
-    AuthResponse:
+    SessionResponse:
       properties:
         session:
           $ref: "#/components/schemas/Session"
@@ -667,13 +673,10 @@ components:
           $ref: "#/components/schemas/User"
         team:
           $ref: "#/components/schemas/Team"
-        serverSignature:
-          $ref: "#/components/x-hidden/base64_256"
       required:
         - session
         - user
         - team
-        - serverSignature
     Session:
       properties:
         key:

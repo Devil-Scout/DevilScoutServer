@@ -17,7 +17,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 
@@ -66,7 +68,7 @@ public final class SessionController extends Controller {
    * <p>
    * Request body: {@link AuthRequest}
    * <p>
-   * Success: 200 {@link AuthResponse}
+   * Success: 200 {@link SessionResponse}
    * <p>
    * Errors:
    * <ul>
@@ -114,22 +116,24 @@ public final class SessionController extends Controller {
     NONCES.remove(nonceId);
 
     Session session = sessions().create(user.id(), user.team());
-    ctx.json(new AuthResponse(user, team, session, serverSignature));
+    ctx.json(new SessionResponse(user, team, session, serverSignature));
   }
 
   /**
    * GET /session
    * <p>
-   * Success: 200 {@link Session}
+   * Success: 200 {@link SessionResponse}
    * <p>
    * Errors:
    * <ul>
    * <li>401 Unauthorized</li>
    * </ul>
    */
-  public static void getSession(Context ctx) {
+  public static void getSession(Context ctx) throws SQLException {
     Session session = getValidSession(ctx);
-    ctx.json(session);
+    User user = userDB().getUser(session.getUser());
+    Team team = teamDB().getTeam(session.getTeam());
+    ctx.json(new SessionResponse(user, team, session, null));
   }
 
   /**
@@ -176,8 +180,8 @@ public final class SessionController extends Controller {
                             @JsonProperty(required = true) byte[] nonce,
                             @JsonProperty(required = true) byte[] clientProof) {}
 
-  public record AuthResponse(User user,
-                             Team team,
-                             Session session,
-                             byte[] serverSignature) {}
+  public record SessionResponse(User user,
+                                Team team,
+                                Session session,
+                                @JsonInclude(Include.NON_NULL) byte[] serverSignature) {}
 }
