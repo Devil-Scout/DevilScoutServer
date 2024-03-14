@@ -78,7 +78,7 @@ public final class CrescendoAnalyzer extends Analyzer<Crescendo2024, CrescendoDa
                                                     DataEntry::getInteger)),
                              average(extractMergeData(inputs.getMatchEntries(), "/general/speed",
                                                       DataEntry::getInteger, Analyzer::average)),
-                             average(extractMergeData(inputs.getMatchEntries(), "/general/speed",
+                             average(extractMergeData(inputs.getMatchEntries(), "/general/defense",
                                                       DataEntry::getInteger, Analyzer::average)),
                              countDistinct(map(extractMergeData(inputs.getMatchEntries(),
                                                                 "/auto/start_pos",
