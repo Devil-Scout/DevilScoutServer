@@ -138,7 +138,8 @@ public final class CrescendoAnalyzer extends Analyzer<Crescendo2024, CrescendoDa
                    new StatisticsPage("Endgame",
                                       List.of(new PieChartStatistic("Final Status",
                                                                     data.endgameStatusCounts()),
-                                              new BooleanStatistic("Trap Rate", data.trapRate()))));
+                                              new BooleanStatistic("Trap Rate", data.trapRate()),
+                                              new StringStatistic("Speed", data.speed(), " / 5"))));
   }
 
   private static RadarStatistic driveTeamRadar(CrescendoData data) {
