@@ -36,7 +36,8 @@ public class CrescendoQuestions extends Questions {
                                                               FinalStatus.values()),
                                      new BooleanQuestion("Scored in Trap", "trap")),
                    new Question.Page("General", "general",
-                                     new RangeQuestion("Speed", "speed", 1, 5, 1)));
+                                     new RangeQuestion("Speed", "speed", 1, 5, 1),
+                                     new RangeQuestion("Defense", "defense", 1, 5, 1)));
   }
 
   @Override
