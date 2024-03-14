@@ -127,7 +127,8 @@ public final class CrescendoAnalyzer extends Analyzer<Crescendo2024, CrescendoDa
                                                                     data.autoStartPositions()),
                                               new NumberStatistic("Note Count", data.autoNotes()))),
                    new StatisticsPage("Teleop",
-                                      List.of(new NumberStatistic("Cycles per Minute",
+                                      List.of(new StringStatistic("Speed", data.speed(), " / 5"),
+                                              new NumberStatistic("Cycles per Minute",
                                                                   data.teleopCyclesPerMinute()),
                                               new BooleanStatistic("Score Accuracy",
                                                                    data.teleopScoreAccuracy()),
@@ -138,8 +139,7 @@ public final class CrescendoAnalyzer extends Analyzer<Crescendo2024, CrescendoDa
                    new StatisticsPage("Endgame",
                                       List.of(new PieChartStatistic("Final Status",
                                                                     data.endgameStatusCounts()),
-                                              new BooleanStatistic("Trap Rate", data.trapRate()),
-                                              new StringStatistic("Speed", data.speed(), " / 5"))));
+                                              new BooleanStatistic("Trap Rate", data.trapRate()))));
   }
 
   private static RadarStatistic driveTeamRadar(CrescendoData data) {
