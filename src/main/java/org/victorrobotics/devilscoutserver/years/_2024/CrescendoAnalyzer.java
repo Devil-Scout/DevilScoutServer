@@ -127,7 +127,7 @@ public final class CrescendoAnalyzer extends Analyzer<Crescendo2024, CrescendoDa
                                                                     data.autoStartPositions()),
                                               new NumberStatistic("Note Count", data.autoNotes()))),
                    new StatisticsPage("Teleop",
-                                      List.of(new StringStatistic("Speed", data.speed(), " / 5"),
+                                      List.of(new StringStatistic("Defense", data.defense(), " / 5"),
                                               new NumberStatistic("Cycles per Minute",
                                                                   data.teleopCyclesPerMinute()),
                                               new BooleanStatistic("Score Accuracy",
