@@ -127,7 +127,8 @@ public final class CrescendoAnalyzer extends Analyzer<Crescendo2024, CrescendoDa
                                                                     data.autoStartPositions()),
                                               new NumberStatistic("Note Count", data.autoNotes()))),
                    new StatisticsPage("Teleop",
-                                      List.of(new StringStatistic("Defense", data.defense(), " / 5"),
+                                      List.of(new StringStatistic("Defense", data.defense(),
+                                                                  " / 5"),
                                               new NumberStatistic("Cycles per Minute",
                                                                   data.teleopCyclesPerMinute()),
                                               new BooleanStatistic("Score Accuracy",
@@ -157,23 +158,19 @@ public final class CrescendoAnalyzer extends Analyzer<Crescendo2024, CrescendoDa
   private static Integer autoNoteCount(DataEntry match) {
     List<Integer> actions = match.getIntegers("/auto/routine");
     int scoreCount = 0;
-    int pickupCount = 0;
     for (Integer action : actions) {
       switch (action) {
         case 0, 1:
           scoreCount++;
           break;
-        case 2:
-          break;
-        case 3:
-          pickupCount++;
+        case 2, 3:
           break;
         default:
           return null;
       }
     }
-    // Can't score more than you pick up
-    return Math.min(scoreCount, pickupCount + 1);
+    // People often forget to click 'pickup note', so don't filter by pickups
+    return scoreCount;
   }
 
   private static Double teleopCyclesPerMinute(DataEntry match) {
