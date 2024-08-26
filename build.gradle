@@ -19,8 +19,8 @@ repositories {
 }
 
 dependencies {
-  implementation 'io.javalin:javalin:6.1.6'
-  implementation 'io.javalin.community.ssl:ssl-plugin:6.1.6'
+  implementation 'io.javalin:javalin:6.3.0'
+  implementation 'io.javalin.community.ssl:ssl-plugin:6.3.0'
 
   implementation 'org.slf4j:slf4j-simple:2.0.13'
   implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
