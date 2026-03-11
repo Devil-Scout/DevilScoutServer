@@ -19,6 +19,7 @@ import org.victorrobotics.devilscoutserver.years._2024.CrescendoAnalyzer;
 import org.victorrobotics.devilscoutserver.years._2024.CrescendoQuestions;
 import org.victorrobotics.devilscoutserver.years._2025.ReefscapeAnalyzer;
 import org.victorrobotics.devilscoutserver.years._2025.ReefscapeQuestions;
+import org.victorrobotics.devilscoutserver.years._2026.RebuiltQuestions;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -76,6 +77,7 @@ public class Main {
     Map<Integer, Questions> questions = new HashMap<>();
     questions.put(2024, new CrescendoQuestions());
     questions.put(2025, new ReefscapeQuestions());
+    questions.put(2026, new RebuiltQuestions());
     Controller.setQuestions(questions);
     LOGGER.info("Questions loaded");
 
