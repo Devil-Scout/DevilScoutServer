@@ -25,7 +25,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public abstract class Analyzer<B extends ScoreBreakdown, D> {
+public abstract class Analyzer<B extends ScoreBreakdown, D extends Record> {
   private final EntryDatabase matchEntryDB;
   private final EntryDatabase pitEntryDB;
   private final EntryDatabase driveTeamEntryDB;

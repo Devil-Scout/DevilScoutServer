@@ -16,7 +16,6 @@ import org.victorrobotics.devilscoutserver.controller.TeamController;
 import org.victorrobotics.devilscoutserver.controller.UserController;
 
 import io.javalin.Javalin;
-import io.javalin.community.ssl.SslPlugin;
 import io.javalin.http.HttpResponseException;
 import io.javalin.http.HttpStatus;
 import org.slf4j.Logger;
@@ -31,12 +30,6 @@ public class HttpServer {
     javalin = Javalin.create(config -> {
       config.http.prefer405over404 = true;
       config.useVirtualThreads = true;
-
-      // config.bundledPlugins.enableSslRedirects();
-      // config.registerPlugin(new SslPlugin(sslConfig -> {
-      //   sslConfig.pemFromPath(System.getenv("SSL_CERT_PATH"), System.getenv("SSL_KEY_PATH"));
-      //   sslConfig.sniHostCheck = false;
-      // }));
 
       config.router.apiBuilder(() -> {
         post("login", SessionController::login);

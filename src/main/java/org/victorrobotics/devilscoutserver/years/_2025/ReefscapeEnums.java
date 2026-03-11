@@ -212,31 +212,6 @@ public class ReefscapeEnums {
     }
   }
 
-  public enum FinalStatus2 {
-    NONE("None"),
-    PARK("Parked"),
-    CLIMB_FAIL("Failed Climb"),
-    CLIMB_SHALLOW("Shallow Climb"),
-    CLIMB_DEEP("Deep Climb");
-
-    static final FinalStatus2[] VALUES = values();
-
-    final String value;
-
-    FinalStatus2(String value) {
-      this.value = value;
-    }
-
-    @Override
-    public String toString() {
-      return value;
-    }
-
-    static FinalStatus2 of(Integer index) {
-      return index == null ? null : VALUES[index];
-    }
-  }
-
   public enum CageHeight {
     SHALLOW("Shallow"),
     DEEP("Deep");

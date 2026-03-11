@@ -77,7 +77,7 @@ public class AnalysisCache {
     }
   }
 
-  private <D> void refresh(String eventKey, int team) {
+  private <D extends Record> void refresh(String eventKey, int team) {
     try {
       long start = System.currentTimeMillis();
       @SuppressWarnings("unchecked") // SHOULD be safe

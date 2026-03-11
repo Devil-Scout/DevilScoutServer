@@ -130,7 +130,7 @@ public class Main {
       return Controller.teamDB()
                        .getActiveEvents();
     } catch (SQLException e) {
-      LOGGER.warn("");
+      LOGGER.warn("Exception in getActiveEvents()", e);
       return Set.of();
     }
   }
