@@ -17,6 +17,8 @@ import org.victorrobotics.devilscoutserver.tba.RankingsCache;
 import org.victorrobotics.devilscoutserver.tba.TeamListCache;
 import org.victorrobotics.devilscoutserver.years._2024.CrescendoAnalyzer;
 import org.victorrobotics.devilscoutserver.years._2024.CrescendoQuestions;
+import org.victorrobotics.devilscoutserver.years._2025.ReefscapeAnalyzer;
+import org.victorrobotics.devilscoutserver.years._2025.ReefscapeQuestions;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -63,12 +65,17 @@ public class Main {
                   new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
                                         Controller.driveTeamEntryDB(),
                                         Controller.matchScheduleCache(), oprsCache, rankingsCache));
+    analyzers.put(2025,
+                  new ReefscapeAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
+                                        Controller.driveTeamEntryDB(),
+                                        Controller.matchScheduleCache(), oprsCache, rankingsCache));
 
     LOGGER.info("Caches ready");
 
     LOGGER.info("Loading questions...");
     Map<Integer, Questions> questions = new HashMap<>();
     questions.put(2024, new CrescendoQuestions());
+    questions.put(2025, new ReefscapeQuestions());
     Controller.setQuestions(questions);
     LOGGER.info("Questions loaded");
 

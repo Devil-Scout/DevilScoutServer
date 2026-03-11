@@ -32,11 +32,11 @@ public class HttpServer {
       config.http.prefer405over404 = true;
       config.useVirtualThreads = true;
 
-      config.bundledPlugins.enableSslRedirects();
-      config.registerPlugin(new SslPlugin(sslConfig -> {
-        sslConfig.pemFromPath(System.getenv("SSL_CERT_PATH"), System.getenv("SSL_KEY_PATH"));
-        sslConfig.sniHostCheck = false;
-      }));
+      // config.bundledPlugins.enableSslRedirects();
+      // config.registerPlugin(new SslPlugin(sslConfig -> {
+      //   sslConfig.pemFromPath(System.getenv("SSL_CERT_PATH"), System.getenv("SSL_KEY_PATH"));
+      //   sslConfig.sniHostCheck = false;
+      // }));
 
       config.router.apiBuilder(() -> {
         post("login", SessionController::login);

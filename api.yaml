@@ -1,0 +1,608 @@
+openapi: 3.0.3
+info:
+  title: Devil Scout API
+  description: >
+    This is the complete API documentation for Devil Scout, an all-in-one FIRST Robotics Competition scouting platform created and maintained by Team 1559.
+
+
+    We maintain a mobile frontend designed to communicate with the Devil Scout servers; however, we accept that some teams may have their own tastes and preferences, from superficial UI design to complicated graphs. Since we could never hope to simultaneously accomodate everybody's wishes, we expose this API so anyone can take advantage of the platform in their own way.
+
+
+    All requests to this API are authenticated by Google Identity Platform. This allows us to offer multiple login methods to suit any user's needs, including 2FA if desired (though that's probably a bit much).
+  version: 2.0.0
+  contact:
+    name: Victor Robotics
+    url: https://scouting.victorrobotics.org
+    email: victorrobotics@gmail.com
+  termsOfService: https://scouting.victorrobotics.org/terms
+  x-api-id: 26327030-47b9-4027-b372-1faa25228e2e
+  x-audience: external-public
+servers:
+  - url: https://apiv2.scouting.victorrobotics.org
+tags:
+  - name: Events
+    description: >
+      These endpoints return information about events, such as attending teams
+      or match schedules.
+      All data is sourced directly from FIRST's FRC Events API.
+  - name: Scouting
+    description: >
+      These endpoints relate to collecting scouting data, including the
+      questions asked and the submission interface.
+  - name: Analysis
+    description: >
+      These endpoints return the various forms of analysis generated from both
+      scouting submissions and metadata from the FRC Events API.
+paths:
+  /seasons:
+    get:
+      summary: Seasons
+      description: >
+        Lists the competition seasons supported by this API.
+        Seasons prior to 2024 (Crescendo) will not be included.
+      tags: [ Events ]
+      responses:
+        "200":
+          description: description
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Season"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /seasons/{year}:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/year"
+    get:
+      tags: [ Events ]
+      responses:
+        "200":
+          description: description
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Season"
+  /events/{year}:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/year"
+      - name: teamNumber
+        in: query
+        schema:
+          $ref: "#/components/schemas/teamNumber"
+    get:
+      tags: [ Events ]
+      responses:
+        "200":
+          description: description
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+  /events/{year}/{eventCode}:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/year"
+      - name: eventCode
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/eventCode"
+    get:
+      tags: [ Events ]
+      responses:
+        "200":
+          description: description
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+  /events/{year}/{eventCode}/matches:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/year"
+      - name: eventCode
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/eventCode"
+    get:
+      tags: [ Events ]
+      responses:
+        "200":
+          description: description
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Match"
+  /events/{year}/{eventCode}/teams:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/year"
+      - name: eventCode
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/eventCode"
+    get:
+      tags: [ Events ]
+      responses:
+        "200":
+          description: description
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Team"
+        "304":
+          $ref: "#/components/responses/NotModified"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      responses:
+        "200":
+          description: description
+  /teams:
+    get:
+      tags: [ Events ]
+      responses:
+        "200":
+          description: description
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Team"
+  /teams/{teamNumber}:
+    get:
+      tags: [ Events ]
+      responses:
+        "200":
+          description: description
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+  /questions/{year}/pit:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/year"
+    get:
+      tags: [ Scouting ]
+      responses:
+        "200":
+          description: description
+  /questions/{year}/drive-team:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/year"
+    get:
+      tags: [ Scouting ]
+      responses:
+        "200":
+          description: description
+  /questions/{year}/match:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/year"
+    get:
+      tags: [ Scouting ]
+      responses:
+        "200":
+          description: description
+  /submissions/{year}/{eventCode}/match/{tournamentLevel}/{matchNumber}/{teamNumber}:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/year"
+      - name: eventCode
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/eventCode"
+      - name: tournamentLevel
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: matchNumber
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/matchNumber"
+      - name: teamNumber
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/teamNumber"
+    post:
+      tags: [ Scouting ]
+      requestBody:
+        description: description
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: description
+  /submissions/{year}/{eventCode}/pit/{teamNumber}:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/year"
+      - name: eventCode
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/eventCode"
+      - name: teamNumber
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/teamNumber"
+    post:
+      tags: [ Scouting ]
+      requestBody:
+        description: description
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: description
+  /submissions/{year}/{eventCode}/drive-team/{tournamentLevel}/{matchNumber}:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/year"
+      - name: eventCode
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/eventCode"
+      - name: tournamentLevel
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: matchNumber
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/matchNumber"
+    post:
+      tags: [ Scouting ]
+      requestBody:
+        description: description
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: description
+  /analysis/{year}/{eventCode}/teams:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/year"
+      - name: eventCode
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/eventCode"
+    get:
+      tags: [ Analysis ]
+      responses:
+        "200":
+          description: description
+  /analysis/{year}/{eventCode}/teams/{teamNumber}:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/year"
+      - name: eventCode
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/eventCode"
+      - name: teamNumber
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/teamNumber"
+    get:
+      tags: [ Analysis ]
+      responses:
+        "200":
+          description: description
+
+components:
+  responses:
+    NotModified:
+      description: >
+        The requested resource has not been modified since previously fetched,
+        and the cached value should be used.
+    BadRequest:
+      description: >
+        One or more inputs (such as path/query parameters or request body)
+        were malformed and prevented the server from parsing the request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            status: Bad Request
+            message: Request contains malformed body/parameter
+    Unauthorized:
+      description: description
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            status: Unauthorized
+            message: Request is missing authorization credentials
+    Forbidden:
+      description: description
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            status: 403
+            message: Forbidden
+    NotFound:
+      description: description
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            status: 404
+            message: Not Found
+  schemas:
+    ApiError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A human-readable error message
+        status:
+          type: string
+          description: An HTTP error response name
+      required:
+        - message
+        - status
+    Season:
+      type: object
+      properties:
+        year:
+          $ref: "#/components/schemas/year"
+        name:
+          type: string
+        teamCount:
+          type: integer
+          minimum: 0
+      required:
+        - year
+        - name
+        - teamCount
+      example:
+        year: 2024
+        name: Crescendo
+        teamCount: 8000
+    Event:
+      type: object
+      properties:
+        name:
+          type: string
+        year:
+          $ref: "#/components/schemas/year"
+        code:
+          $ref: "#/components/schemas/eventCode"
+        location:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        province:
+          type: string
+        country:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        website:
+          type: string
+          format: uri
+        webcasts:
+          type: array
+          items:
+            type: string
+            format: uri
+      required:
+        - name
+        - year
+        - code
+        - location
+        - address
+        - city
+        - province
+        - country
+        - startDate
+        - endDate
+      example:
+        name: Greater Pittsburgh Regional
+        year: 2024
+        code: PACA
+        location: David L. Lawrence Convention Center
+        address: 1000 Fort Duquesne Blvd
+        city: Pittsburgh
+        province: PA
+        country: USA
+        startDate: 2024-02-28
+        endDate: 2024-03-02
+        website: https://www.firstwcpa.org/
+        webcasts:
+          - https://twitch.tv/firstinspires9
+    Match:
+      type: object
+      properties:
+        name:
+          type: string
+        year:
+          type: integer
+        eventCode:
+          $ref: "#/components/schemas/eventCode"
+        level:
+          $ref: "#/components/schemas/tournamentLevel"
+        number:
+          $ref: "#/components/schemas/matchNumber"
+        time:
+          $ref: "#/components/schemas/localdatetime"
+        redAlliance:
+          type: array
+          items:
+            $ref: "#/components/schemas/teamNumber"
+        blueAlliance:
+          type: array
+          items:
+            $ref: "#/components/schemas/teamNumber"
+        redScore:
+          $ref: "#/components/schemas/matchScore"
+        blueScore:
+          $ref: "#/components/schemas/matchScore"
+        video:
+          type: string
+          format: uri
+      required:
+        - name
+        - year
+        - eventCode
+        - level
+        - number
+        - time
+        - redAlliance
+        - blueAlliance
+      example:
+        name: Qualification 1
+        key: 2024PACA_qual1
+        time: 2024-03-01T09:03:16
+        redAlliance:
+          - 1126
+          - 9475
+          - 2172
+        blueAlliance:
+          - 8393
+          - 695
+          - 3201
+        redScore: 26
+        blueScore: 28
+    Team:
+      type: object
+      properties:
+        number:
+          $ref: "#/components/schemas/teamNumber"
+        name:
+          type: string
+        website:
+          type: string
+          format: uri
+        city:
+          type: string
+        province:
+          type: string
+        country:
+          type: string
+        rookieYear:
+          type: integer
+          minimum: 1992
+          maximum: 2024
+      example:
+        number: 1559
+        name: Devil Tech
+        website: https://victorrobotics.org
+        city: Victor
+        province: NY
+        country: USA
+        rookieYear: 2005
+    tournamentLevel:
+      type: string
+      enum:
+        - practice
+        - qualification
+        - playoff
+    matchNumber:
+      type: integer
+      minimum: 1
+    matchScore:
+      type: integer
+      minimum: 0
+    teamNumber:
+      type: integer
+      minimum: 0
+      maximum: 99999
+      example: 1559
+    eventCode:
+      type: string
+      pattern: ^20\d{2}[A-Za-z\d]+$
+      example: PACA
+    localdatetime:
+      type: string
+      description: Local date and time in the event's timezone
+      pattern: ^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[1-2]\d|3[0-1])T([0-1][0-9]|2[0-3]):([0-5]\d):([0-5]\d)$
+    year:
+      type: integer
+      minimum: 2023
+      maximum: 2024
+      example: 2024

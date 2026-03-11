@@ -213,7 +213,7 @@ public abstract class Analyzer<B extends ScoreBreakdown, D> {
         count++;
       }
     }
-    return count == 0 ? null : Double.valueOf(sum / count);
+    return count == 0 ? 0 : Double.valueOf(sum / count);
   }
 
   protected static <T> T mostCommon(Collection<T> data) {
@@ -228,6 +228,10 @@ public abstract class Analyzer<B extends ScoreBreakdown, D> {
       }
     }
     return mostCommon;
+  }
+
+  public static void main(String[] args) {
+    System.out.println(mostCommon(List.<Integer>of(0, 2)));
   }
 
   protected static NumberSummary summarizeNumbers(Iterable<? extends Number> data) {
