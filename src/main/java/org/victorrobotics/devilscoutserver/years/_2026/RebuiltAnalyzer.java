@@ -205,7 +205,7 @@ public class RebuiltAnalyzer extends Analyzer<UnknownScoreBreakdown, RebuiltData
         new StatisticsPage("Climber", new StringStatistic("Tower Rungs (claimed)", data.pitData()
                                                                                        .climberRungs()),
             new StringStatistic("Climb Time (claimed)", data.pitData()
-                                                            .climberTime()),
+                                                            .climberTime(), " seconds"),
             new PieChartStatistic("Endgame Rungs (actual)", data.matchData()
                                                                 .climbResults())),
         new StatisticsPage("Auto", new StringStatistic("Auto Actions (claimed)", data.pitData()

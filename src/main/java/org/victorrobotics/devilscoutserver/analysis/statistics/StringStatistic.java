@@ -30,7 +30,7 @@ public class StringStatistic extends Statistic {
 
     return items.stream()
                 .map(Object::toString)
-                .collect(Collectors.joining(", "));
+                .collect(Collectors.joining("\n"));
   }
 
   private static String formatNumber(Number number) {
