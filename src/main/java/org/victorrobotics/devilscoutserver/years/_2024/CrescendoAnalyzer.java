@@ -31,7 +31,7 @@ public final class CrescendoAnalyzer extends Analyzer<Crescendo2024, CrescendoDa
                            EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
                            OprsCache teamOprsCache, RankingsCache rankingsCache) {
     super(matchEntryDB, pitEntryDB, driveTeamEntryDB, matchScheduleCache, teamOprsCache,
-          rankingsCache);
+        rankingsCache);
   }
 
   @Override
@@ -42,117 +42,84 @@ public final class CrescendoAnalyzer extends Analyzer<Crescendo2024, CrescendoDa
 
   @Override
   protected CrescendoData computeData(Data inputs) {
-    return new CrescendoData(mapSingle(inputs.getRankings(), RankingsCache.Team::getWinLossRecord),
-                             Map.of("Melody Bonus", count(
-                                                          map(inputs.getScoreBreakdowns(),
-                                                              b -> b.breakdown()
-                                                                    .melodyBonusAchieved()),
-                                                          b -> b),
-                                    "Ensemble Bonus", count(
-                                                            map(inputs.getScoreBreakdowns(),
-                                                                b -> b.breakdown()
-                                                                      .ensembleBonusAchieved()),
-                                                            b -> b),
-                                    "Coopertition Bonus", count(
-                                                                map(inputs.getScoreBreakdowns(),
-                                                                    b -> b.breakdown()
-                                                                          .coopertitionBonusAchieved()),
-                                                                b -> b)),
-                             inputs.getOpr(),
-                             average(extractMergeData(inputs.getDriveTeamEntries(),
-                                                      "/communication", DataEntry::getInteger,
-                                                      Analyzer::average)),
-                             average(extractMergeData(inputs.getDriveTeamEntries(), "/strategy",
-                                                      DataEntry::getInteger, Analyzer::average)),
-                             average(extractMergeData(inputs.getDriveTeamEntries(), "/adaptability",
-                                                      DataEntry::getInteger, Analyzer::average)),
-                             average(extractMergeData(inputs.getDriveTeamEntries(),
-                                                      "/professionalism", DataEntry::getInteger,
-                                                      Analyzer::average)),
-                             mostCommon(map(extractData(inputs.getPitEntries(), "/specs/drivetrain",
-                                                        DataEntry::getInteger),
-                                            DrivetrainType::of)),
-                             mostCommon(extractData(inputs.getPitEntries(), "/specs/weight",
-                                                    DataEntry::getInteger)),
-                             mostCommon(extractData(inputs.getPitEntries(), "/specs/size",
-                                                    DataEntry::getInteger)),
-                             average(extractMergeData(inputs.getMatchEntries(), "/general/speed",
-                                                      DataEntry::getInteger, Analyzer::average)),
-                             average(extractMergeData(inputs.getMatchEntries(), "/general/defense",
-                                                      DataEntry::getInteger, Analyzer::average)),
-                             countDistinct(map(extractMergeData(inputs.getMatchEntries(),
-                                                                "/auto/start_pos",
-                                                                DataEntry::getInteger,
-                                                                Analyzer::mostCommon),
-                                               StartPosition::of)),
-                             summarizeNumbers(extractMergeData(inputs.getMatchEntries(),
-                                                               CrescendoAnalyzer::autoNoteCount,
-                                                               Analyzer::average)),
-                             summarizeNumbers(extractMergeData(inputs.getMatchEntries(),
-                                                               CrescendoAnalyzer::teleopCyclesPerMinute,
-                                                               Analyzer::average)),
-                             average(extractMergeData(inputs.getMatchEntries(),
-                                                      CrescendoAnalyzer::teleopScoreAccuracy,
-                                                      Analyzer::average)),
-                             sumCounts(extractMergeData(inputs.getMatchEntries(),
-                                                        CrescendoAnalyzer::teleopScoreLocations,
-                                                        Analyzer::averageCounts)),
-                             sumCounts(extractMergeData(inputs.getMatchEntries(),
-                                                        CrescendoAnalyzer::teleopPickupLocations,
-                                                        Analyzer::averageCounts)),
-                             countDistinct(map(extractMergeData(inputs.getMatchEntries(),
-                                                                "/auto/start_pos",
-                                                                DataEntry::getInteger,
-                                                                Analyzer::mostCommon),
-                                               FinalStatus::of)),
-                             average(map(extractMergeData(inputs.getMatchEntries(), "/endgame/trap",
-                                                          DataEntry::getBoolean,
-                                                          Analyzer::mostCommon),
-                                         b -> b ? 1 : 0)));
+    return new CrescendoData(
+        mapSingle(inputs.getRankings(), RankingsCache.Team::getWinLossRecord), Map.of(
+            "Melody Bonus", countWhere(map(inputs.getScoreBreakdowns(), b -> b.breakdown()
+                                                                              .melodyBonusAchieved()),
+                b -> b),
+            "Ensemble Bonus", countWhere(map(inputs.getScoreBreakdowns(), b -> b.breakdown()
+                                                                                .ensembleBonusAchieved()),
+                b -> b),
+            "Coopertition Bonus", countWhere(map(inputs.getScoreBreakdowns(), b -> b.breakdown()
+                                                                                    .coopertitionBonusAchieved()),
+                b -> b)),
+        inputs.getOpr(),
+        average(extractMergeData(inputs.getDriveTeamEntries(), "/communication",
+            DataEntry::getInteger, Analyzer::average)),
+        average(extractMergeData(inputs.getDriveTeamEntries(), "/strategy", DataEntry::getInteger,
+            Analyzer::average)),
+        average(extractMergeData(inputs.getDriveTeamEntries(), "/adaptability",
+            DataEntry::getInteger, Analyzer::average)),
+        average(extractMergeData(inputs.getDriveTeamEntries(), "/professionalism",
+            DataEntry::getInteger, Analyzer::average)),
+        mostCommon(
+            map(extractData(inputs.getPitEntries(), "/specs/drivetrain", DataEntry::getInteger),
+                DrivetrainType::of)),
+        mostCommon(extractData(inputs.getPitEntries(), "/specs/weight", DataEntry::getInteger)),
+        mostCommon(extractData(inputs.getPitEntries(), "/specs/size", DataEntry::getInteger)),
+        average(extractMergeData(inputs.getMatchEntries(), "/general/speed", DataEntry::getInteger,
+            Analyzer::average)),
+        average(extractMergeData(inputs.getMatchEntries(), "/general/defense",
+            DataEntry::getInteger, Analyzer::average)),
+        counts(map(extractMergeData(inputs.getMatchEntries(), "/auto/start_pos",
+            DataEntry::getInteger, Analyzer::mostCommon), StartPosition::of)),
+        summarizeNumbers(extractMergeData(inputs.getMatchEntries(),
+            CrescendoAnalyzer::autoNoteCount, Analyzer::average)),
+        summarizeNumbers(extractMergeData(inputs.getMatchEntries(),
+            CrescendoAnalyzer::teleopCyclesPerMinute, Analyzer::average)),
+        average(extractMergeData(inputs.getMatchEntries(), CrescendoAnalyzer::teleopScoreAccuracy,
+            Analyzer::average)),
+        sumCounts(extractMergeData(inputs.getMatchEntries(),
+            CrescendoAnalyzer::teleopScoreLocations, Analyzer::averageCounts)),
+        sumCounts(extractMergeData(inputs.getMatchEntries(),
+            CrescendoAnalyzer::teleopPickupLocations, Analyzer::averageCounts)),
+        counts(map(extractMergeData(inputs.getMatchEntries(), "/auto/start_pos",
+            DataEntry::getInteger, Analyzer::mostCommon), FinalStatus::of)),
+        average(map(extractMergeData(inputs.getMatchEntries(), "/endgame/trap",
+            DataEntry::getBoolean, Analyzer::mostCommon), b -> b ? 1 : 0)));
   }
 
   @Override
   protected List<StatisticsPage> generateStatistics(CrescendoData data) {
-    return List.of(new StatisticsPage("Summary",
-                                      List.of(new WltStatistic(data.wlt()),
-                                              new RankingPointsStatistic(data.rankingPoints()),
-                                              new OprStatistic(data.opr()), driveTeamRadar(data))),
-                   new StatisticsPage("Specs",
-                                      List.of(new StringStatistic("Drivetrain", data.drivetrain()),
-                                              new StringStatistic("Weight", data.weight(), " lbs"),
-                                              new StringStatistic("Size", data.size(), " in"),
-                                              new StringStatistic("Speed", data.speed(), " / 5"))),
-                   new StatisticsPage("Auto",
-                                      List.of(new PieChartStatistic("Start Position",
-                                                                    data.autoStartPositions()),
-                                              new NumberStatistic("Note Count", data.autoNotes()))),
-                   new StatisticsPage("Teleop",
-                                      List.of(new StringStatistic("Defense", data.defense(),
-                                                                  " / 5"),
-                                              new NumberStatistic("Cycles per Minute",
-                                                                  data.teleopCyclesPerMinute()),
-                                              new BooleanStatistic("Score Accuracy",
-                                                                   data.teleopScoreAccuracy()),
-                                              new PieChartStatistic("Score Locations",
-                                                                    data.teleopScoreCounts()),
-                                              new PieChartStatistic("Pickup Locations",
-                                                                    data.teleopPickupCounts()))),
-                   new StatisticsPage("Endgame",
-                                      List.of(new PieChartStatistic("Final Status",
-                                                                    data.endgameStatusCounts()),
-                                              new BooleanStatistic("Trap Rate", data.trapRate()))));
+    return List.of(
+        new StatisticsPage("Summary",
+            List.of(new WltStatistic(data.wlt()), new RankingPointsStatistic(data.rankingPoints()),
+                new OprStatistic(data.opr()), driveTeamRadar(data))),
+        new StatisticsPage("Specs",
+            List.of(new StringStatistic("Drivetrain", data.drivetrain()),
+                new StringStatistic("Weight", data.weight(), " lbs"),
+                new StringStatistic("Size", data.size(), " in"),
+                new StringStatistic("Speed", data.speed(), " / 5"))),
+        new StatisticsPage("Auto",
+            List.of(new PieChartStatistic("Start Position", data.autoStartPositions()),
+                new NumberStatistic("Note Count", data.autoNotes()))),
+        new StatisticsPage("Teleop",
+            List.of(new StringStatistic("Defense", data.defense(), " / 5"),
+                new NumberStatistic("Cycles per Minute", data.teleopCyclesPerMinute()),
+                new BooleanStatistic("Score Accuracy", data.teleopScoreAccuracy()),
+                new PieChartStatistic("Score Locations", data.teleopScoreCounts()),
+                new PieChartStatistic("Pickup Locations", data.teleopPickupCounts()))),
+        new StatisticsPage("Endgame",
+            List.of(new PieChartStatistic("Final Status", data.endgameStatusCounts()),
+                new BooleanStatistic("Trap Rate", data.trapRate()))));
   }
 
   private static RadarStatistic driveTeamRadar(CrescendoData data) {
     return new RadarStatistic("Drive Team", 5,
-                              nullableMap(List.of(nullableMapEntry("Communication",
-                                                                   data.driveTeamCommunication()),
-                                                  nullableMapEntry("Strategy",
-                                                                   data.driveTeamStrategy()),
-                                                  nullableMapEntry("Adaptability",
-                                                                   data.driveTeamAdaptability()),
-                                                  nullableMapEntry("Professionalism",
-                                                                   data.driveTeamProfessionalism()))));
+        nullableMap(List.of(nullableMapEntry("Communication", data.driveTeamCommunication()),
+            nullableMapEntry("Strategy", data.driveTeamStrategy()),
+            nullableMapEntry("Adaptability", data.driveTeamAdaptability()),
+            nullableMapEntry("Professionalism", data.driveTeamProfessionalism()))));
   }
 
   private static Integer autoNoteCount(DataEntry match) {
@@ -160,10 +127,12 @@ public final class CrescendoAnalyzer extends Analyzer<Crescendo2024, CrescendoDa
     int scoreCount = 0;
     for (Integer action : actions) {
       switch (action) {
-        case 0, 1:
+        case 0,
+             1:
           scoreCount++;
           break;
-        case 2, 3:
+        case 2,
+             3:
           break;
         default:
           return null;
@@ -213,11 +182,11 @@ public final class CrescendoAnalyzer extends Analyzer<Crescendo2024, CrescendoDa
 
   private static Map<ScoreLocation, Integer> teleopScoreLocations(DataEntry match) {
     return Map.of(ScoreLocation.SPEAKER, match.getInteger("/teleop/score_speaker"),
-                  ScoreLocation.AMP, match.getInteger("/teleop/score_amp"));
+        ScoreLocation.AMP, match.getInteger("/teleop/score_amp"));
   }
 
   private static Map<PickupLocation, Integer> teleopPickupLocations(DataEntry match) {
     return Map.of(PickupLocation.GROUND, match.getInteger("/teleop/pickup_ground"),
-                  PickupLocation.SOURCE, match.getInteger("/teleop/pickup_source"));
+        PickupLocation.SOURCE, match.getInteger("/teleop/pickup_source"));
   }
 }

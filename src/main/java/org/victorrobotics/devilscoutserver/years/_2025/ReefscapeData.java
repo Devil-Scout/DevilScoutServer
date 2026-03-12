@@ -24,8 +24,6 @@ public record ReefscapeData(WinLossRecord wlt,
                             DrivetrainType drivetrain,
                             Integer weight,
                             Integer size,
-                            // Double speed,
-                            // Double defense,
                             // year specific
                             // auto
                             Map<StartPosition, Integer> autoStartPositions,

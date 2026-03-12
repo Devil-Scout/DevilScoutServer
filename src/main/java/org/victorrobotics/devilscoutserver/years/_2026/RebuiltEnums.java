@@ -28,15 +28,15 @@ public final class RebuiltEnums {
     }
   }
 
-  public enum TraversePaths {
+  public enum TraversePath {
     TRENCH("Under the Trench"),
     BUMP("Over the Bump");
 
-    static final TraversePaths[] VALUES = values();
+    static final TraversePath[] VALUES = values();
 
     final String value;
 
-    TraversePaths(String value) {
+    TraversePath(String value) {
       this.value = value;
     }
 
@@ -45,7 +45,7 @@ public final class RebuiltEnums {
       return value;
     }
 
-    static TraversePaths of(Integer index) {
+    static TraversePath of(Integer index) {
       return index == null ? null : VALUES[index];
     }
   }

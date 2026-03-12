@@ -17,8 +17,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -204,6 +206,22 @@ public abstract class Analyzer<B extends ScoreBreakdown, D extends Record> {
                   .toList();
   }
 
+  protected static Double rate(Iterable<Boolean> data) {
+    int count = 0;
+    int total = 0;
+    for (Boolean b : data) {
+      if (b == null) {
+        continue;
+      }
+
+      total++;
+      if (b) {
+        count++;
+      }
+    }
+    return (total == 0) ? 0 : ((double) count / total);
+  }
+
   protected static Double average(Iterable<? extends Number> data) {
     int count = 0;
     double sum = 0;
@@ -228,10 +246,6 @@ public abstract class Analyzer<B extends ScoreBreakdown, D extends Record> {
       }
     }
     return mostCommon;
-  }
-
-  public static void main(String[] args) {
-    System.out.println(mostCommon(List.<Integer>of(0, 2)));
   }
 
   protected static NumberSummary summarizeNumbers(Iterable<? extends Number> data) {
@@ -267,7 +281,7 @@ public abstract class Analyzer<B extends ScoreBreakdown, D extends Record> {
     return new NumberSummary(count, min, max, mean, stddev);
   }
 
-  protected static <T extends Comparable<T>> Map<T, Integer> countDistinct(Iterable<T> data) {
+  protected static <T extends Comparable<T>> Map<T, Integer> counts(Iterable<T> data) {
     Map<T, Integer> map = new TreeMap<>(); // for sorted keys
     for (T item : data) {
       if (item != null) {
@@ -282,13 +296,33 @@ public abstract class Analyzer<B extends ScoreBreakdown, D extends Record> {
   }
 
   protected static <I, T> Collection<T> map(Iterable<I> data, Function<I, T> mapper) {
-    Collection<T> enums = new ArrayList<>();
+    Collection<T> result = new ArrayList<>();
     for (I key : data) {
       if (key != null) {
-        enums.add(mapper.apply(key));
+        result.add(mapper.apply(key));
       }
     }
-    return enums;
+    return result;
+  }
+
+  protected static <I, T> Set<T> mapSet(Set<I> data, Function<I, T> mapper) {
+    Set<T> result = new LinkedHashSet<>();
+    for (I key : data) {
+      if (key != null) {
+        result.add(mapper.apply(key));
+      }
+    }
+    return result;
+  }
+
+  protected static <T> Set<T> setUnion(Iterable<? extends Collection<T>> data) {
+    Set<T> result = new LinkedHashSet<>();
+    for (Collection<T> item : data) {
+      if (item != null) {
+        result.addAll(item);
+      }
+    }
+    return result;
   }
 
   protected static <T> Collection<T> union(Iterable<? extends Collection<T>> data) {
@@ -301,7 +335,7 @@ public abstract class Analyzer<B extends ScoreBreakdown, D extends Record> {
     return result;
   }
 
-  protected static <T> int count(Collection<T> data, Predicate<T> condition) {
+  protected static <T> int countWhere(Collection<T> data, Predicate<T> condition) {
     return (int) data.stream().filter(condition).count();
   }
 

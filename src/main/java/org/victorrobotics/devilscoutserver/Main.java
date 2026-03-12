@@ -19,6 +19,7 @@ import org.victorrobotics.devilscoutserver.years._2024.CrescendoAnalyzer;
 import org.victorrobotics.devilscoutserver.years._2024.CrescendoQuestions;
 import org.victorrobotics.devilscoutserver.years._2025.ReefscapeAnalyzer;
 import org.victorrobotics.devilscoutserver.years._2025.ReefscapeQuestions;
+import org.victorrobotics.devilscoutserver.years._2026.RebuiltAnalyzer;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltQuestions;
 
 import java.sql.SQLException;
@@ -59,17 +60,15 @@ public class Main {
 
     OprsCache oprsCache = new OprsCache(analysisCache);
     RankingsCache rankingsCache = new RankingsCache(analysisCache);
-    Controller.setMatchScheduleCache(new MatchScheduleCache(oprsCache, rankingsCache,
-                                                            analysisCache));
+    Controller.setMatchScheduleCache(
+        new MatchScheduleCache(oprsCache, rankingsCache, analysisCache));
     Controller.setTeamListCache(new TeamListCache(oprsCache, rankingsCache, analysisCache));
-    analyzers.put(2024,
-                  new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
-                                        Controller.driveTeamEntryDB(),
-                                        Controller.matchScheduleCache(), oprsCache, rankingsCache));
-    analyzers.put(2025,
-                  new ReefscapeAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
-                                        Controller.driveTeamEntryDB(),
-                                        Controller.matchScheduleCache(), oprsCache, rankingsCache));
+    analyzers.put(2024, new CrescendoAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
+        Controller.driveTeamEntryDB(), Controller.matchScheduleCache(), oprsCache, rankingsCache));
+    analyzers.put(2025, new ReefscapeAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
+        Controller.driveTeamEntryDB(), Controller.matchScheduleCache(), oprsCache, rankingsCache));
+    analyzers.put(2026, new RebuiltAnalyzer(Controller.matchEntryDB(), Controller.pitEntryDB(),
+        Controller.driveTeamEntryDB(), Controller.matchScheduleCache(), oprsCache, rankingsCache));
 
     LOGGER.info("Caches ready");
 

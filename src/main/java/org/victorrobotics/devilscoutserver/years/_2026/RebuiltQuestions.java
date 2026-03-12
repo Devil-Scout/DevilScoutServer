@@ -20,7 +20,7 @@ import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.ShooterAbili
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.ShootingAccuracy;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.StartPosition;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.TowerRung;
-import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.TraversePaths;
+import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.TraversePath;
 
 import java.util.List;
 
@@ -33,28 +33,33 @@ public class RebuiltQuestions extends Questions {
             new BooleanQuestion("Preloaded?", "preload")),
         new Page("Auto", "auto",
             new MultipleChoiceQuestion("Actions", "actions", AutoAction.values())),
-        new Page("Teleop", "teleop",
-            new CounterQuestion("Cycles (intake midfield, score)", "cycles"),
-            new BooleanQuestion("Ferried from midfield", "ferried"),
+        new Page("Teleop", "teleop", new CounterQuestion("Shooting Cycles", "shoot_cycles"),
+            new CounterQuestion("Ferrying Cycles", "ferry_cycles"),
+            new MultipleChoiceQuestion("Traverse Locations", "traverse", TraversePath.values()),
+            new MultipleChoiceQuestion("Intake Locations", "intake_locs", FuelPickup.values()),
             new BooleanQuestion("Played defense", "defense")),
         new Page("Endgame", "endgame",
             new SingleChoiceQuestion("Tower Climb", "climb", ClimbStatus.values())),
-        new Page("Summary", "summary", new RangeQuestion("Speed", "speed", 1, 5, 1),
-            new RangeQuestion("Defense", "defense", 1, 5, 1),
+        new Page("Opinions", "opinions", new RangeQuestion("Speed", "speed", 1, 5, 1),
+            new SingleChoiceQuestion("Shooting Accuracy", "shoot_accuracy", ShootingAccuracy.values()),
+            new SingleChoiceQuestion("Shooting Rate", "shoot_rate", FuelRate.values()),
+            new SingleChoiceQuestion("Intake Rate", "intake_rate", FuelRate.values()),
+            new RangeQuestion("Defense", "defense", 1, 5, 1)),
+        new Page("Mishaps", "mishaps", 
             new BooleanQuestion("Fell over?", "fall"),
             new BooleanQuestion("Damaged other robots?", "damage"),
             new MultipleChoiceQuestion("Fouls?", "fouls", FoulType.values()),
-            new MultipleChoiceQuestion("Disabled during match?", "disabled", DisabledReason.values())));
+            new MultipleChoiceQuestion("Disabled during match?", "disabled",
+                DisabledReason.values())));
   }
 
   @Override
   protected List<Page> pitQuestions() {
     return List.of(
-        new Page("Specs", "specs",
-            new SingleChoiceQuestion("Drivetrain", "drivetrain", DrivetrainType.values()),
-            new NumberQuestion("Chassis size (in)", "size", 0, 60, 28),
+        new Page("Chassis", "chassis", new NumberQuestion("Chassis size (in)", "size", 0, 60, 28),
             new NumberQuestion("Weight (lbs, no battery/bumpers)", "weight", 0, 150, 100),
-            new MultipleChoiceQuestion("Traversal Method(s)", "traverse", TraversePaths.values())),
+            new SingleChoiceQuestion("Drivetrain", "drivetrain", DrivetrainType.values()),
+            new MultipleChoiceQuestion("Traversal Method(s)", "traverse", TraversePath.values())),
         new Page("Shooter", "shooter",
             new MultipleChoiceQuestion("Abilities", "abilities", ShooterAbility.values()),
             new SingleChoiceQuestion("Shooting Rate", "rate", FuelRate.values()),
