@@ -109,34 +109,26 @@ public class ReefscapeAnalyzer extends Analyzer<UnknownScoreBreakdown, Reefscape
   @Override
   protected List<StatisticsPage> generateStatistics(ReefscapeData data) {
     return List.of(
-        new StatisticsPage("Summary",
-            List.of(new WltStatistic(data.wlt()), new RankingPointsStatistic(data.rankingPoints()),
-                new OprStatistic(data.opr()), driveTeamRadar(data))),
-        new StatisticsPage("Specs",
-            List.of(new StringStatistic("Drivetrain", data.drivetrain()),
-                new StringStatistic("Weight", data.weight(), " lbs"),
-                new StringStatistic("Size", data.size(), " in")
-            // new StringStatistic("Speed", data.speed(), "
-            // / 5")
-            )),
+        new StatisticsPage("Summary", new WltStatistic(data.wlt()),
+            new RankingPointsStatistic(data.rankingPoints()), new OprStatistic(data.opr()),
+            driveTeamRadar(data)),
+        new StatisticsPage("Specs", new StringStatistic("Drivetrain", data.drivetrain()),
+            new StringStatistic("Weight", data.weight(), " lbs"),
+            new StringStatistic("Size", data.size(), " in")),
         new StatisticsPage("Auto",
-            List.of(new PieChartStatistic("Start Position", data.autoStartPositions()),
-                new StringStatistic("Expected Score", data.autoPitAnticipatedScore()),
-                new PieChartStatistic("Actions", data.autoScoring()))),
-        new StatisticsPage("Teleop", List.of(
-            // new
-            // StringStatistic("Defense",
-            // data.defense(), " / 5"),
+            new PieChartStatistic("Start Position", data.autoStartPositions()),
+            new StringStatistic("Expected Score", data.autoPitAnticipatedScore()),
+            new PieChartStatistic("Actions", data.autoScoring())),
+        new StatisticsPage("Teleop",
             new PieChartStatistic("Coral Scored", data.teleopCoralScores()),
             new PieChartStatistic("Algae Scored", data.teleopAlgaeScores()),
-            new PieChartStatistic("Ground Pickups", data.groundPickups()))),
+            new PieChartStatistic("Ground Pickups", data.groundPickups())),
         new StatisticsPage("Endgame",
-            List.of(new PieChartStatistic("Final Status", data.endgameStatusCounts()))),
-        new StatisticsPage("General",
-            List.of(new StringStatistic("Fall Rate", data.fallRate(), "%"),
-                new StringStatistic("Damage Rate", data.damageRate(), "%"),
-                new PieChartStatistic("Fouls", data.fouls()),
-                new PieChartStatistic("Disables", data.disables()))));
+            new PieChartStatistic("Final Status", data.endgameStatusCounts())),
+        new StatisticsPage("General", new StringStatistic("Fall Rate", data.fallRate(), "%"),
+            new StringStatistic("Damage Rate", data.damageRate(), "%"),
+            new PieChartStatistic("Fouls", data.fouls()),
+            new PieChartStatistic("Disables", data.disables())));
   }
 
   private static RadarStatistic driveTeamRadar(ReefscapeData data) {

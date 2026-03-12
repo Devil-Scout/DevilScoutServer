@@ -27,10 +27,10 @@ public record RebuiltData(TbaData tbaData,
                         WinLossRecord wlt,
                         TeamOpr opr) {}
 
-  public record DriveTeamScoutingData(Double driveTeamCommunication,
-                                      Double driveTeamStrategy,
-                                      Double driveTeamAdaptability,
-                                      Double driveTeamProfessionalism) {}
+  public record DriveTeamScoutingData(Double communication,
+                                      Double strategy,
+                                      Double adaptability,
+                                      Double professionalism) {}
 
   public record PitScoutingData(// Chassis
                                 DrivetrainType drivetrain,

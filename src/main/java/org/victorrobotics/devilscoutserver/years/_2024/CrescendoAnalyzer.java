@@ -92,26 +92,24 @@ public final class CrescendoAnalyzer extends Analyzer<Crescendo2024, CrescendoDa
   @Override
   protected List<StatisticsPage> generateStatistics(CrescendoData data) {
     return List.of(
-        new StatisticsPage("Summary",
-            List.of(new WltStatistic(data.wlt()), new RankingPointsStatistic(data.rankingPoints()),
-                new OprStatistic(data.opr()), driveTeamRadar(data))),
-        new StatisticsPage("Specs",
-            List.of(new StringStatistic("Drivetrain", data.drivetrain()),
-                new StringStatistic("Weight", data.weight(), " lbs"),
-                new StringStatistic("Size", data.size(), " in"),
-                new StringStatistic("Speed", data.speed(), " / 5"))),
+        new StatisticsPage("Summary", new WltStatistic(data.wlt()),
+            new RankingPointsStatistic(data.rankingPoints()), new OprStatistic(data.opr()),
+            driveTeamRadar(data)),
+        new StatisticsPage("Specs", new StringStatistic("Drivetrain", data.drivetrain()),
+            new StringStatistic("Weight", data.weight(), " lbs"),
+            new StringStatistic("Size", data.size(), " in"),
+            new StringStatistic("Speed", data.speed(), " / 5")),
         new StatisticsPage("Auto",
-            List.of(new PieChartStatistic("Start Position", data.autoStartPositions()),
-                new NumberStatistic("Note Count", data.autoNotes()))),
-        new StatisticsPage("Teleop",
-            List.of(new StringStatistic("Defense", data.defense(), " / 5"),
-                new NumberStatistic("Cycles per Minute", data.teleopCyclesPerMinute()),
-                new BooleanStatistic("Score Accuracy", data.teleopScoreAccuracy()),
-                new PieChartStatistic("Score Locations", data.teleopScoreCounts()),
-                new PieChartStatistic("Pickup Locations", data.teleopPickupCounts()))),
+            new PieChartStatistic("Start Position", data.autoStartPositions()),
+            new NumberStatistic("Note Count", data.autoNotes())),
+        new StatisticsPage("Teleop", new StringStatistic("Defense", data.defense(), " / 5"),
+            new NumberStatistic("Cycles per Minute", data.teleopCyclesPerMinute()),
+            new BooleanStatistic("Score Accuracy", data.teleopScoreAccuracy()),
+            new PieChartStatistic("Score Locations", data.teleopScoreCounts()),
+            new PieChartStatistic("Pickup Locations", data.teleopPickupCounts())),
         new StatisticsPage("Endgame",
-            List.of(new PieChartStatistic("Final Status", data.endgameStatusCounts()),
-                new BooleanStatistic("Trap Rate", data.trapRate()))));
+            new PieChartStatistic("Final Status", data.endgameStatusCounts()),
+            new BooleanStatistic("Trap Rate", data.trapRate())));
   }
 
   private static RadarStatistic driveTeamRadar(CrescendoData data) {

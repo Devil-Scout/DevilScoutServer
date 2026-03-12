@@ -2,7 +2,14 @@ package org.victorrobotics.devilscoutserver.years._2026;
 
 import org.victorrobotics.bluealliance.ScoreBreakdown.UnknownScoreBreakdown;
 import org.victorrobotics.devilscoutserver.analysis.Analyzer;
+import org.victorrobotics.devilscoutserver.analysis.statistics.BooleanStatistic;
+import org.victorrobotics.devilscoutserver.analysis.statistics.NumberStatistic;
+import org.victorrobotics.devilscoutserver.analysis.statistics.OprStatistic;
+import org.victorrobotics.devilscoutserver.analysis.statistics.PieChartStatistic;
+import org.victorrobotics.devilscoutserver.analysis.statistics.RadarStatistic;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
+import org.victorrobotics.devilscoutserver.analysis.statistics.StringStatistic;
+import org.victorrobotics.devilscoutserver.analysis.statistics.WltStatistic;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
@@ -29,8 +36,8 @@ import java.util.List;
 
 public class RebuiltAnalyzer extends Analyzer<UnknownScoreBreakdown, RebuiltData> {
   public RebuiltAnalyzer(EntryDatabase matchEntryDB, EntryDatabase pitEntryDB,
-                            EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
-                            OprsCache teamOprsCache, RankingsCache rankingsCache) {
+                         EntryDatabase driveTeamEntryDB, MatchScheduleCache matchScheduleCache,
+                         OprsCache teamOprsCache, RankingsCache rankingsCache) {
     super(matchEntryDB, pitEntryDB, driveTeamEntryDB, matchScheduleCache, teamOprsCache,
         rankingsCache);
   }
@@ -137,12 +144,99 @@ public class RebuiltAnalyzer extends Analyzer<UnknownScoreBreakdown, RebuiltData
     );
 
     // @formatter:on
-    
+
     return new RebuiltData(tbaData, driveTeamData, pitData, matchData);
   }
 
   @Override
   protected List<StatisticsPage> generateStatistics(RebuiltData data) {
-    throw new UnsupportedOperationException();
+    return List.of(new StatisticsPage("Summary", new StringStatistic("Rank", data.tbaData()
+                                                                                 .rank()),
+        new WltStatistic(data.tbaData()
+                             .wlt()),
+        new OprStatistic(data.tbaData()
+                             .opr()),
+        driveTeamRadar(data)),
+        new StatisticsPage("Chassis", new StringStatistic("Weight", data.pitData()
+                                                                        .robotWeight(),
+            " lbs"),
+            new StringStatistic("Length", data.pitData()
+                                              .robotLength(),
+                " in"),
+            new StringStatistic("Hopper Capacity", data.pitData()
+                                                       .hopperCapacity(),
+                " fuel")),
+        new StatisticsPage("Driving", new StringStatistic("Drivetrain Type", data.pitData()
+                                                                                 .drivetrain()),
+            new StringStatistic("Speed Rating", data.matchData()
+                                                    .avgSpeedRating(),
+                " / 5"),
+            new StringStatistic("Defense Rating", data.matchData()
+                                                      .avgSpeedRating(),
+                " / 5"),
+            new BooleanStatistic("Defense Rate", data.matchData()
+                                                     .defenseRate()),
+            new StringStatistic("Traversing (claimed)", data.pitData()
+                                                            .traversePaths()),
+            new PieChartStatistic("Traversing (actual)", data.matchData()
+                                                             .traversals())),
+        new StatisticsPage("Shooter", new StringStatistic("Abilities (claimed)", data.pitData()
+                                                                                     .shooterAbilities()),
+            new NumberStatistic("Shooting Cycles", data.matchData()
+                                                       .teleopCycles()),
+            new NumberStatistic("Ferrying Cycles", data.matchData()
+                                                       .teleopCycles()),
+            new StringStatistic("Shot Rate (claimed)", data.pitData()
+                                                           .shootingRate()),
+            new PieChartStatistic("Shot Rate (actual)", data.matchData()
+                                                            .shootingRates()),
+            new StringStatistic("Accuracy (claimed)", data.pitData()
+                                                          .shootingAccuracy()),
+            new PieChartStatistic("Accuracy (actual)", data.matchData()
+                                                           .shootingAccuracies())),
+        new StatisticsPage("Intake", new StringStatistic("Pickups (claimed)", data.pitData()
+                                                                                  .intakeLocations()),
+            new PieChartStatistic("Pickups (actual)", data.matchData()
+                                                          .intakeRates()),
+            new StringStatistic("Pickup Rate (claimed)", data.pitData()
+                                                             .intakeRate()),
+            new PieChartStatistic("Pickup Rate (actual)", data.matchData()
+                                                              .intakeRates())),
+        new StatisticsPage("Climber", new StringStatistic("Tower Rungs (claimed)", data.pitData()
+                                                                                       .climberRungs()),
+            new StringStatistic("Climb Time (claimed)", data.pitData()
+                                                            .climberTime()),
+            new PieChartStatistic("Endgame Rungs (actual)", data.matchData()
+                                                                .climbResults())),
+        new StatisticsPage("Auto", new StringStatistic("Auto Actions (claimed)", data.pitData()
+                                                                                     .autoActions()),
+            new PieChartStatistic("Auto Actions (actual)", data.matchData()
+                                                               .autoActions()),
+            new StringStatistic("Starting Positions (claimed)", data.pitData()
+                                                                    .startPositions()),
+            new PieChartStatistic("Starting Positions (actual)", data.matchData()
+                                                                     .startPositions()),
+            new BooleanStatistic("Preload Rate", data.matchData()
+                                                     .preloadRate())),
+        new StatisticsPage("Miscellaneous", new BooleanStatistic("Fall Rate", data.matchData()
+                                                                                  .fallRate()),
+            new BooleanStatistic("Damage Rate", data.matchData()
+                                                    .damageRate()),
+            new PieChartStatistic("Fouls", data.matchData()
+                                               .fouls()),
+            new PieChartStatistic("Disables", data.matchData()
+                                                  .disables())));
+  }
+
+  private static RadarStatistic driveTeamRadar(RebuiltData data) {
+    return new RadarStatistic("Drive Team", 5,
+        nullableMap(List.of(nullableMapEntry("Communication", data.driveTeamData()
+                                                                  .communication()),
+            nullableMapEntry("Strategy", data.driveTeamData()
+                                             .strategy()),
+            nullableMapEntry("Adaptability", data.driveTeamData()
+                                                 .adaptability()),
+            nullableMapEntry("Professionalism", data.driveTeamData()
+                                                    .professionalism()))));
   }
 }

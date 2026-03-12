@@ -1,5 +1,8 @@
 package org.victorrobotics.devilscoutserver.analysis.statistics;
 
+import java.util.Collection;
+import java.util.stream.Collectors;
+
 public class StringStatistic extends Statistic {
   public final String value;
 
@@ -14,6 +17,20 @@ public class StringStatistic extends Statistic {
 
   public StringStatistic(String name, Number number, String suffix) {
     this(name, number == null ? null : (formatNumber(number) + suffix));
+  }
+
+  public StringStatistic(String name, Collection<?> items) {
+    this(name, items == null ? null : formatCollection(items));
+  }
+
+  private static String formatCollection(Collection<?> items) {
+    if (items.isEmpty()) {
+      return "None";
+    }
+
+    return items.stream()
+                .map(Object::toString)
+                .collect(Collectors.joining(", "));
   }
 
   private static String formatNumber(Number number) {
