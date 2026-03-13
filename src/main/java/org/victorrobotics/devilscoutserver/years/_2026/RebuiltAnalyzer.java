@@ -55,6 +55,7 @@ public class RebuiltAnalyzer extends Analyzer<UnknownScoreBreakdown, RebuiltData
     final var rankings = inputs.getRankings();
     TbaData tbaData = new TbaData(
       mapSingle(rankings, RankingsCache.Team::getRank),
+      inputs.getTeamsAtEvent(),
       mapSingle(rankings, RankingsCache.Team::getWinLossRecord),
       inputs.getOpr()
     );
@@ -151,7 +152,10 @@ public class RebuiltAnalyzer extends Analyzer<UnknownScoreBreakdown, RebuiltData
   @Override
   protected List<StatisticsPage> generateStatistics(RebuiltData data) {
     return List.of(new StatisticsPage("Summary", new StringStatistic("Rank", data.tbaData()
-                                                                                 .rank()),
+                                                                                 .rank(),
+        " / "
+            + data.tbaData()
+                  .teamCount()),
         new WltStatistic(data.tbaData()
                              .wlt()),
         new OprStatistic(data.tbaData()

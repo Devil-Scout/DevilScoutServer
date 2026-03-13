@@ -1,9 +1,11 @@
 package org.victorrobotics.devilscoutserver.analysis;
 
+import org.victorrobotics.bluealliance.Event.Rankings;
 import org.victorrobotics.bluealliance.Match.Alliance;
 import org.victorrobotics.bluealliance.ScoreBreakdown;
 import org.victorrobotics.devilscoutserver.analysis.data.NumberSummary;
 import org.victorrobotics.devilscoutserver.analysis.statistics.StatisticsPage;
+import org.victorrobotics.devilscoutserver.cache.Cache.Value;
 import org.victorrobotics.devilscoutserver.database.DataEntry;
 import org.victorrobotics.devilscoutserver.database.EntryDatabase;
 import org.victorrobotics.devilscoutserver.tba.MatchScheduleCache;
@@ -69,6 +71,8 @@ public abstract class Analyzer<B extends ScoreBreakdown, D extends Record> {
     private final TeamOpr            opr;
     private final RankingsCache.Team rankings;
 
+    private final Integer teamsAtEvent;
+
     Data(String eventKey, int team) {
       scoreBreakdowns = new LinkedHashMap<>();
       MatchSchedule schedule = matchScheduleCache.get(eventKey)
@@ -110,6 +114,11 @@ public abstract class Analyzer<B extends ScoreBreakdown, D extends Record> {
       rankings = rankingsCache.get(eventKey)
                               .value()
                               .get(team);
+
+      teamsAtEvent = rankingsCache.get(eventKey)
+                               .value()
+                               .values()
+                               .size();
     }
 
     @SuppressWarnings("unchecked") // breakdowns always from current year
@@ -119,7 +128,7 @@ public abstract class Analyzer<B extends ScoreBreakdown, D extends Record> {
         for (int i = 0; i < redAlliance.length; i++) {
           if (redAlliance[i] == team) {
             return new TeamScoreBreakdown<>(match, (B) match.getRedBreakdown(), Alliance.Color.RED,
-                                            i);
+                i);
           }
         }
       }
@@ -129,7 +138,7 @@ public abstract class Analyzer<B extends ScoreBreakdown, D extends Record> {
         for (int i = 0; i < blueAlliance.length; i++) {
           if (blueAlliance[i] == team) {
             return new TeamScoreBreakdown<>(match, (B) match.getBlueBreakdown(),
-                                            Alliance.Color.BLUE, i);
+                Alliance.Color.BLUE, i);
           }
         }
       }
@@ -168,6 +177,10 @@ public abstract class Analyzer<B extends ScoreBreakdown, D extends Record> {
     public RankingsCache.Team getRankings() {
       return rankings;
     }
+
+    public Integer getTeamsAtEvent() {
+      return teamsAtEvent;
+    }
   }
 
   @SuppressWarnings("java:S1105") // braces (false positive)
@@ -188,18 +201,16 @@ public abstract class Analyzer<B extends ScoreBreakdown, D extends Record> {
                   .toList();
   }
 
-  protected static <I, T>
-      Collection<T>
-      extractMergeData(Collection<? extends Collection<DataEntry>> entries, String path,
-                       BiFunction<DataEntry, String, I> extractor,
-                       Function<Collection<I>, T> reducer) {
+  protected static <I, T> Collection<T> extractMergeData(Collection<? extends Collection<DataEntry>> entries,
+                                                         String path,
+                                                         BiFunction<DataEntry, String, I> extractor,
+                                                         Function<Collection<I>, T> reducer) {
     return extractMergeData(entries, e -> extractor.apply(e, path), reducer);
   }
 
-  protected static <I, T>
-      Collection<T>
-      extractMergeData(Collection<? extends Collection<DataEntry>> entries,
-                       Function<DataEntry, I> extractor, Function<Collection<I>, T> reducer) {
+  protected static <I, T> Collection<T> extractMergeData(Collection<? extends Collection<DataEntry>> entries,
+                                                         Function<DataEntry, I> extractor,
+                                                         Function<Collection<I>, T> reducer) {
     return entries.stream()
                   .map(e -> extractData(e, extractor))
                   .map(reducer)
@@ -336,7 +347,9 @@ public abstract class Analyzer<B extends ScoreBreakdown, D extends Record> {
   }
 
   protected static <T> int countWhere(Collection<T> data, Predicate<T> condition) {
-    return (int) data.stream().filter(condition).count();
+    return (int) data.stream()
+                     .filter(condition)
+                     .count();
   }
 
   protected static <T> Map<T, Integer> averageCounts(Collection<Map<T, Integer>> allCounts) {
@@ -350,8 +363,8 @@ public abstract class Analyzer<B extends ScoreBreakdown, D extends Record> {
     Map<T, Integer> counts = new LinkedHashMap<>();
     for (Map<T, Integer> c : allCounts) {
       for (Map.Entry<T, Integer> entry : c.entrySet()) {
-        counts.compute(entry.getKey(), (key, count) -> count == null ? entry.getValue()
-            : (count + entry.getValue()));
+        counts.compute(entry.getKey(),
+            (key, count) -> count == null ? entry.getValue() : (count + entry.getValue()));
       }
     }
     return counts;

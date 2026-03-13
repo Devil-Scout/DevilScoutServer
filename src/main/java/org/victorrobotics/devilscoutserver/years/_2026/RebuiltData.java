@@ -24,6 +24,7 @@ public record RebuiltData(TbaData tbaData,
                           PitScoutingData pitData,
                           MatchScoutingData matchData) {
   public record TbaData(Integer rank,
+                        Integer teamCount,
                         WinLossRecord wlt,
                         TeamOpr opr) {}
 
