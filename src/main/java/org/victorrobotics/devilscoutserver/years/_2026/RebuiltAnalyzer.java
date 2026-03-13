@@ -197,7 +197,7 @@ public class RebuiltAnalyzer extends Analyzer<UnknownScoreBreakdown, RebuiltData
         new StatisticsPage("Intake", new StringStatistic("Pickups (claimed)", data.pitData()
                                                                                   .intakeLocations()),
             new PieChartStatistic("Pickups (actual)", data.matchData()
-                                                          .intakeRates()),
+                                                          .pickups()),
             new StringStatistic("Pickup Rate (claimed)", data.pitData()
                                                              .intakeRate()),
             new PieChartStatistic("Pickup Rate (actual)", data.matchData()
