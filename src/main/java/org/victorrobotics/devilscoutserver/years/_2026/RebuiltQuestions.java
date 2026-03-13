@@ -41,11 +41,12 @@ public class RebuiltQuestions extends Questions {
         new Page("Endgame", "endgame",
             new SingleChoiceQuestion("Tower Climb", "climb", ClimbStatus.values())),
         new Page("Opinions", "opinions", new RangeQuestion("Speed", "speed", 1, 5, 1),
+        new RangeQuestion("Defense", "defense", 1, 5, 1),
             new SingleChoiceQuestion("Shooting Accuracy", "shoot_accuracy", ShootingAccuracy.values()),
             new SingleChoiceQuestion("Shooting Rate", "shoot_rate", FuelRate.values()),
-            new SingleChoiceQuestion("Intake Rate", "intake_rate", FuelRate.values()),
-            new RangeQuestion("Defense", "defense", 1, 5, 1)),
-        new Page("Mishaps", "mishaps", 
+            new SingleChoiceQuestion("Intake Rate", "intake_rate", FuelRate.values())
+            ),
+        new Page("Mishaps", "mishaps",
             new BooleanQuestion("Fell over?", "fall"),
             new BooleanQuestion("Damaged other robots?", "damage"),
             new MultipleChoiceQuestion("Fouls?", "fouls", FoulType.values()),
@@ -53,35 +54,41 @@ public class RebuiltQuestions extends Questions {
                 DisabledReason.values())));
   }
 
-  @Override
-  protected List<Page> pitQuestions() {
-    return List.of(
-        new Page("Chassis", "chassis", new NumberQuestion("Chassis size (in)", "size", 0, 60, 28),
-            new NumberQuestion("Weight (lbs, no battery/bumpers)", "weight", 0, 150, 100),
-            new SingleChoiceQuestion("Drivetrain", "drivetrain", DrivetrainType.values()),
-            new MultipleChoiceQuestion("Traversal Method(s)", "traverse", TraversePath.values())),
-        new Page("Shooter", "shooter",
-            new MultipleChoiceQuestion("Abilities", "abilities", ShooterAbility.values()),
-            new SingleChoiceQuestion("Shooting Rate", "rate", FuelRate.values()),
-            new SingleChoiceQuestion("Accuracy", "accuracy", ShootingAccuracy.values())),
-        new Page("Intake", "intake",
-            new MultipleChoiceQuestion("Intake Locations", "locations", FuelPickup.values()),
-            new SingleChoiceQuestion("Intake Rate", "rate", FuelRate.values()),
-            new NumberQuestion("Hopper Capacity", "capacity", 0, 100, 30)),
-        new Page("Climber", "climber",
-            new MultipleChoiceQuestion("Tower Rungs", "levels", TowerRung.values()),
-            new NumberQuestion("Climb Time (seconds)", "time", 0, 30, 5)),
-        new Page("Auto", "auto",
-            new MultipleChoiceQuestion("Start Positions", "start_pos", StartPosition.values()),
-            new MultipleChoiceQuestion("Possible Actions", "actions", AutoAction.values()),
-            new NumberQuestion("Typical Score", "score", 0, 100, 0)));
-  }
+    @Override
+    protected List<Page> pitQuestions() {
+        return List.of(new Page("Chassis", "chassis",
+                new NumberQuestion("Chassis size (in)", "size", 0, 60, 28),
+                new NumberQuestion("Weight (lbs, no battery/bumpers)", "weight", 0, 150, 100),
+                new SingleChoiceQuestion("Drivetrain", "drivetrain", DrivetrainType.values()),
+                new MultipleChoiceQuestion("Traversal Method(s)", "traverse",
+                        TraversePath.values())),
+                new Page("Shooter", "shooter",
+                        new MultipleChoiceQuestion("Abilities", "abilities",
+                                ShooterAbility.values()),
+                        new SingleChoiceQuestion("Shooting Rate", "rate", FuelRate.values()),
+                        new SingleChoiceQuestion("Accuracy", "accuracy",
+                                ShootingAccuracy.values())),
+                new Page("Intake", "intake",
+                        new MultipleChoiceQuestion("Intake Locations", "locations",
+                                FuelPickup.values()),
+                        new SingleChoiceQuestion("Intake Rate", "rate", FuelRate.values()),
+                        new NumberQuestion("Hopper Capacity", "capacity", 0, 100, 30)),
+                new Page("Climber", "climber",
+                        new MultipleChoiceQuestion("Tower Rungs", "levels", TowerRung.values()),
+                        new NumberQuestion("Climb Time (seconds)", "time", 0, 30, 5)),
+                new Page("Auto", "auto",
+                        new MultipleChoiceQuestion("Start Positions", "start_pos",
+                                StartPosition.values()),
+                        new MultipleChoiceQuestion("Possible Actions", "actions",
+                                AutoAction.values()),
+                        new NumberQuestion("Typical Score", "score", 0, 100, 0)));
+    }
 
-  @Override
-  protected List<Question> driveTeamQuestions() {
-    return List.of(new RangeQuestion("Communication", "communication", 1, 5, 1),
-        new RangeQuestion("Planning/Strategy", "strategy", 1, 5, 1),
-        new RangeQuestion("Adaptability", "adaptability", 1, 5, 1),
-        new RangeQuestion("Gracious Professionalism", "professionalism", 1, 5, 1));
-  }
+    @Override
+    protected List<Question> driveTeamQuestions() {
+        return List.of(new RangeQuestion("Communication", "communication", 1, 5, 1),
+                new RangeQuestion("Planning/Strategy", "strategy", 1, 5, 1),
+                new RangeQuestion("Adaptability", "adaptability", 1, 5, 1),
+                new RangeQuestion("Gracious Professionalism", "professionalism", 1, 5, 1));
+    }
 }
