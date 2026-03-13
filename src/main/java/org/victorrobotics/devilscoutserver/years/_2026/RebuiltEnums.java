@@ -104,7 +104,8 @@ public final class RebuiltEnums {
     SLOW("Slow (1-3/sec)"),
     MEDIUM("Medium (4-6/sec)"),
     FAST("Fast (7-9/sec)"),
-    RAPID("Rapid (10+/sec)");
+    RAPID("Rapid (10+/sec)"),
+    NONE("None");
 
     static final FuelRate[] VALUES = values();
 
@@ -130,7 +131,8 @@ public final class RebuiltEnums {
     GOOD("Good (60+%)"),
     GREAT("Great (80+%)"),
     AWESOME("Awesome (90+%)"),
-    PERFECT("Perfect (100%)");
+    PERFECT("Perfect (100%)"),
+    NONE("None");
 
     static final ShootingAccuracy[] VALUES = values();
 
