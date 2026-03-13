@@ -43,19 +43,16 @@ public final class SessionController extends Controller {
   public static void login(Context ctx) throws SQLException {
     LoginRequest request = jsonDecode(ctx, LoginRequest.class);
     int teamNum = request.team();
-    String username = request.username()
-                             .trim();
-
-    byte[] salt = userDB().getSalt(teamNum, username);
+    byte[] salt = userDB().getSalt(teamNum, request.username());
     if (salt == null) {
-      throw userNotFound(teamNum, username);
+      throw userNotFound(teamNum, request.username());
     }
 
     byte[] nonce = new byte[16];
     SECURE_RANDOM.nextBytes(nonce);
     System.arraycopy(request.clientNonce(), 0, nonce, 0, 8);
 
-    String nonceId = username + "@" + teamNum + ":" + base64Encode(nonce);
+    String nonceId = request.username() + "@" + teamNum + ":" + base64Encode(nonce);
     NONCES.add(nonceId);
 
     ctx.json(new LoginChallenge(salt, nonce));
@@ -78,13 +75,11 @@ public final class SessionController extends Controller {
   public static void auth(Context ctx)
       throws NoSuchAlgorithmException, InvalidKeyException, SQLException {
     AuthRequest request = jsonDecode(ctx, AuthRequest.class);
-    String username = request.username()
-                             .trim();
     int teamNum = request.team();
 
-    User user = userDB().getUser(teamNum, username);
+    User user = userDB().getUser(teamNum, request.username());
     if (user == null) {
-      throw userNotFound(teamNum, username);
+      throw userNotFound(teamNum, request.username());
     }
 
     Team team = teamDB().getTeam(teamNum);
@@ -92,21 +87,21 @@ public final class SessionController extends Controller {
       throw teamNotFound(teamNum);
     }
 
-    String nonceId = username + "@" + teamNum + ":" + base64Encode(request.nonce());
+    String nonceId = request.username() + "@" + teamNum + ":" + base64Encode(request.nonce());
     if (!NONCES.contains(nonceId)) {
-      throw incorrectCredentials(teamNum, username);
+      throw incorrectCredentials(teamNum, request.username());
     }
 
     MessageDigest hashFunction = MessageDigest.getInstance(HASH_ALGORITHM);
     Mac hmacFunction = Mac.getInstance(MAC_ALGORITHM);
     hmacFunction.init(new SecretKeySpec(user.storedKey(), MAC_ALGORITHM));
 
-    byte[] userAndNonce = combine(teamNum + username, request.nonce());
+    byte[] userAndNonce = combine(teamNum + request.username(), request.nonce());
     byte[] clientSignature = hmacFunction.doFinal(userAndNonce);
     byte[] clientKey = xor(request.clientProof(), clientSignature);
     byte[] storedKey = hashFunction.digest(clientKey);
     if (!MessageDigest.isEqual(user.storedKey(), storedKey)) {
-      throw incorrectCredentials(teamNum, username);
+      throw incorrectCredentials(teamNum, request.username());
     }
 
     hmacFunction.init(new SecretKeySpec(user.serverKey(), MAC_ALGORITHM));
@@ -166,7 +161,12 @@ public final class SessionController extends Controller {
 
   public record LoginRequest(@JsonProperty(required = true) int team,
                              @JsonProperty(required = true) String username,
-                             @JsonProperty(required = true) byte[] clientNonce) {}
+                             @JsonProperty(required = true) byte[] clientNonce) {
+    @Override
+    public String username() {
+      return username.trim();
+    }
+  }
 
   public record LoginChallenge(byte[] salt,
                                byte[] nonce) {}
@@ -174,7 +174,12 @@ public final class SessionController extends Controller {
   public record AuthRequest(@JsonProperty(required = true) String username,
                             @JsonProperty(required = true) int team,
                             @JsonProperty(required = true) byte[] nonce,
-                            @JsonProperty(required = true) byte[] clientProof) {}
+                            @JsonProperty(required = true) byte[] clientProof) {
+    @Override
+    public String username() {
+      return username.trim();
+    }
+  }
 
   public record AuthResponse(User user,
                              Team team,
