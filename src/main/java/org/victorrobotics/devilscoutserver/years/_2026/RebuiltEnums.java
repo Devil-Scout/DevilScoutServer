@@ -223,8 +223,33 @@ public final class RebuiltEnums {
     }
   }
 
+  public enum ShooterType {
+    TURRET("Turret"),
+    FIXED("Fixed"),
+    DRUM("Drum");
+
+    static final ShooterType[] VALUES = values();
+
+    final String value;
+
+    ShooterType(String value) {
+      this.value = value;
+    }
+
+    @Override
+    public String toString() {
+      return value;
+    }
+
+    static ShooterType of(Integer index) {
+      return index == null ? null : VALUES[index];
+    }
+  }
+
   public enum DrivetrainType {
-    SWERVE("Swerve"),
+    SWERVE_SDS("Swerve (SDS)"),
+    SWERVE_WCP("Swerve (WCP)"),
+    SWERVE_REV("Swerve (Rev)"),
     TANK("Tank"),
     MECANUM("Mecanum"),
     OTHER("Other");

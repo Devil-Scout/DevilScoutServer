@@ -27,6 +27,7 @@ import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.FoulType;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.FuelPickup;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.FuelRate;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.ShooterAbility;
+import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.ShooterType;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.ShootingAccuracy;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.StartPosition;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.TowerRung;
@@ -76,6 +77,7 @@ public class RebuiltAnalyzer extends Analyzer<UnknownScoreBreakdown, RebuiltData
       mostCommon(extractData(pitEntries, "/chassis/size", DataEntry::getInteger)),
       mapSet(setUnion(extractData(pitEntries, "/chassis/traverse", DataEntry::getIntegers)), TraversePath::of),
       // Shooter
+      mostCommon(map(extractData(pitEntries, "/shooter/type", DataEntry::getInteger), ShooterType::of)),
       mapSet(setUnion(extractData(pitEntries, "/shooter/abilities", DataEntry::getIntegers)), ShooterAbility::of),
       mostCommon(map(extractData(pitEntries, "/shooter/rate", DataEntry::getInteger), FuelRate::of)),
       mostCommon(map(extractData(pitEntries, "/shooter/accuracy", DataEntry::getInteger), ShootingAccuracy::of)),
@@ -89,7 +91,10 @@ public class RebuiltAnalyzer extends Analyzer<UnknownScoreBreakdown, RebuiltData
       // Auto
       mapSet(setUnion(extractData(pitEntries, "/auto/start_pos", DataEntry::getIntegers)), StartPosition::of),
       mapSet(setUnion(extractData(pitEntries, "/auto/actions", DataEntry::getIntegers)), AutoAction::of),
-      mostCommon(extractData(pitEntries, "/auto/score", DataEntry::getInteger))
+      mostCommon(extractData(pitEntries, "/auto/score", DataEntry::getInteger)),
+      // Drive Team
+      mostCommon(map(extractData(pitEntries, "/drive_team/human_player", DataEntry::getInteger), ShootingAccuracy::of)),
+      mostCommon(extractData(pitEntries, "/drive_team/practice_time", DataEntry::getInteger))
     );
 
     final var matchEntries = inputs.getMatchEntries();
@@ -98,7 +103,6 @@ public class RebuiltAnalyzer extends Analyzer<UnknownScoreBreakdown, RebuiltData
       counts(map(
         extractMergeData(matchEntries, "/prematch/start_pos", DataEntry::getInteger, Analyzer::mostCommon),
         StartPosition::of)),
-      rate(extractMergeData(matchEntries, "/prematch/preload", DataEntry::getBoolean, Analyzer::mostCommon)),
       // Auto
       counts(map(union(
         extractMergeData(matchEntries, "/auto/actions", DataEntry::getIntegers, Analyzer::setUnion)
@@ -116,6 +120,7 @@ public class RebuiltAnalyzer extends Analyzer<UnknownScoreBreakdown, RebuiltData
       counts(map(union(
         extractMergeData(matchEntries, "/teleop/intake_locs", DataEntry::getIntegers, Analyzer::setUnion)
       ), FuelPickup::of)),
+      rate(extractMergeData(matchEntries, "/teleop/steal", DataEntry::getBoolean, Analyzer::mostCommon)),
       rate(extractMergeData(matchEntries, "/teleop/defense", DataEntry::getBoolean, Analyzer::mostCommon)),
       // Endgame
       counts(map(
@@ -160,6 +165,8 @@ public class RebuiltAnalyzer extends Analyzer<UnknownScoreBreakdown, RebuiltData
                              .wlt()),
         new OprStatistic(data.tbaData()
                              .opr()),
+	new StringStatistic("Driver Practice Hours (claimed)", data.pitData().driverPracticeHours()),
+	new StringStatistic("Human Player Accuracy (claimed)", data.pitData().humanPlayerAccuracy()),
         driveTeamRadar(data)),
         new StatisticsPage("Chassis", new StringStatistic("Weight", data.pitData()
                                                                         .robotWeight(),
@@ -184,12 +191,15 @@ public class RebuiltAnalyzer extends Analyzer<UnknownScoreBreakdown, RebuiltData
                                                             .traversePaths()),
             new PieChartStatistic("Traversing (actual)", data.matchData()
                                                              .traversals())),
-        new StatisticsPage("Shooter", new StringStatistic("Abilities (claimed)", data.pitData()
-                                                                                     .shooterAbilities()),
+        new StatisticsPage("Shooter",
+	    new StringStatistic("Shooter Type", data.pitData().shooterType()),
+	    new StringStatistic("Abilities (claimed)", data.pitData().shooterAbilities()),
             new NumberStatistic("Shooting Cycles", data.matchData()
                                                        .teleopCycles()),
             new NumberStatistic("Ferrying Cycles", data.matchData()
                                                        .teleopCycles()),
+            new BooleanStatistic("Steal Rate", data.matchData()
+                                                   .stealRate()),
             new StringStatistic("Shot Rate (claimed)", data.pitData()
                                                            .shootingRate()),
             new PieChartStatistic("Shot Rate (actual)", data.matchData()
@@ -220,9 +230,7 @@ public class RebuiltAnalyzer extends Analyzer<UnknownScoreBreakdown, RebuiltData
             new StringStatistic("Starting Positions (claimed)", data.pitData()
                                                                     .startPositions()),
             new PieChartStatistic("Starting Positions (actual)", data.matchData()
-                                                                     .startPositions()),
-            new BooleanStatistic("Preload Rate", data.matchData()
-                                                     .preloadRate())),
+                                                                     .startPositions())),
         new StatisticsPage("Miscellaneous", new BooleanStatistic("Fall Rate", data.matchData()
                                                                                   .fallRate()),
             new BooleanStatistic("Damage Rate", data.matchData()

@@ -11,6 +11,7 @@ import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.FoulType;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.FuelPickup;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.FuelRate;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.ShooterAbility;
+import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.ShooterType;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.ShootingAccuracy;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.StartPosition;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.TowerRung;
@@ -39,6 +40,7 @@ public record RebuiltData(TbaData tbaData,
                                 Integer robotLength,
                                 Set<TraversePath> traversePaths,
                                 // Shooter
+				ShooterType shooterType,
                                 Set<ShooterAbility> shooterAbilities,
                                 FuelRate shootingRate,
                                 ShootingAccuracy shootingAccuracy,
@@ -52,11 +54,13 @@ public record RebuiltData(TbaData tbaData,
                                 // Auto
                                 Set<StartPosition> startPositions,
                                 Set<AutoAction> autoActions,
-                                Integer typicalScore) {}
+                                Integer typicalScore,
+				// Drive Team
+				ShootingAccuracy humanPlayerAccuracy,
+				Integer driverPracticeHours) {}
 
   public record MatchScoutingData(// Pre-Match
                                   Map<StartPosition, Integer> startPositions,
-                                  Double preloadRate,
                                   // Auto
                                   Map<AutoAction, Integer> autoActions,
                                   // Teleop
@@ -64,6 +68,7 @@ public record RebuiltData(TbaData tbaData,
                                   NumberSummary ferryCycles,
                                   Map<TraversePath, Integer> traversals,
                                   Map<FuelPickup, Integer> pickups,
+                                  Double stealRate,
                                   Double defenseRate,
                                   // Endgame
                                   Map<ClimbStatus, Integer> climbResults,

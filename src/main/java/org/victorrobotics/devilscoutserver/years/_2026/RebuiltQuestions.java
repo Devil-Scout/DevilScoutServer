@@ -17,6 +17,7 @@ import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.FoulType;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.FuelPickup;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.FuelRate;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.ShooterAbility;
+import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.ShooterType;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.ShootingAccuracy;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.StartPosition;
 import org.victorrobotics.devilscoutserver.years._2026.RebuiltEnums.TowerRung;
@@ -29,14 +30,14 @@ public class RebuiltQuestions extends Questions {
   protected List<Page> matchQuestions() {
     return List.of(
         new Page("Pre-Match", "prematch",
-            new SingleChoiceQuestion("Robot Position", "start_pos", StartPosition.values()),
-            new BooleanQuestion("Preloaded?", "preload")),
+            new SingleChoiceQuestion("Robot Position", "start_pos", StartPosition.values())),
         new Page("Auto", "auto",
             new MultipleChoiceQuestion("Actions", "actions", AutoAction.values())),
         new Page("Teleop", "teleop", new CounterQuestion("Shooting Cycles", "shoot_cycles"),
             new CounterQuestion("Ferrying Cycles", "ferry_cycles"),
             new MultipleChoiceQuestion("Traverse Locations", "traverse", TraversePath.values()),
             new MultipleChoiceQuestion("Intake Locations", "intake_locs", FuelPickup.values()),
+	    new BooleanQuestion("Stole from opposing alliance", "steal"),
             new BooleanQuestion("Played defense", "defense")),
         new Page("Endgame", "endgame",
             new SingleChoiceQuestion("Tower Climb", "climb", ClimbStatus.values())),
@@ -63,6 +64,7 @@ public class RebuiltQuestions extends Questions {
                 new MultipleChoiceQuestion("Traversal Method(s)", "traverse",
                         TraversePath.values())),
                 new Page("Shooter", "shooter",
+			new SingleChoiceQuestion("Type", "type", ShooterType.values()),
                         new MultipleChoiceQuestion("Abilities", "abilities",
                                 ShooterAbility.values()),
                         new SingleChoiceQuestion("Shooting Rate", "rate", FuelRate.values()),
@@ -75,13 +77,16 @@ public class RebuiltQuestions extends Questions {
                         new NumberQuestion("Hopper Capacity", "capacity", 0, 100, 30)),
                 new Page("Climber", "climber",
                         new MultipleChoiceQuestion("Tower Rungs", "levels", TowerRung.values()),
-                        new NumberQuestion("Climb Time (seconds)", "time", 0, 30, 5)),
+                        new NumberQuestion("Climb Time (seconds)", "time", 0, 30, 0)),
                 new Page("Auto", "auto",
                         new MultipleChoiceQuestion("Start Positions", "start_pos",
                                 StartPosition.values()),
                         new MultipleChoiceQuestion("Possible Actions", "actions",
                                 AutoAction.values()),
-                        new NumberQuestion("Typical Score", "score", 0, 100, 0)));
+                        new NumberQuestion("Typical Score", "score", 0, 100, 0)),
+		new Page("Drive Team", "drive_team",
+			new SingleChoiceQuestion("Human Player Accuracy", "human_player", ShootingAccuracy.values()),
+			new NumberQuestion("Driver Practice Hours", "practice_time", 0, 168, 0)));
     }
 
     @Override
