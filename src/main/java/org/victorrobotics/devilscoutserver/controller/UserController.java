@@ -57,9 +57,9 @@ public final class UserController extends Controller {
     }
 
     UserRegistration registration = jsonDecode(ctx, UserRegistration.class);
-    String username = registration.username().trim();
-    if (userDB().getUser(teamNum, username) != null) {
-      throw userConflict(teamNum, username);
+    User duplicate = userDB().getUser(teamNum, registration.username());
+    if (duplicate != null) {
+      throw userConflict(teamNum, duplicate.username());
     }
 
     byte[][] auth = computeAuthentication(registration.password());
@@ -67,7 +67,7 @@ public final class UserController extends Controller {
     byte[] storedKey = auth[1];
     byte[] serverKey = auth[2];
 
-    User user = userDB().registerUser(teamNum, username, registration.fullName(),
+    User user = userDB().registerUser(teamNum, registration.username(), registration.fullName(),
                                       registration.admin(), salt, storedKey, serverKey);
     ctx.json(user);
     ctx.status(HttpStatus.CREATED);
@@ -176,8 +176,12 @@ public final class UserController extends Controller {
       session.verifyAdmin();
     }
 
-    if (edits.username() != null && userDB().getUser(user.team(), edits.username()) != null) {
-      throw userConflict(user.team(), edits.username());
+    if (edits.username() != null && !edits.username()
+                                          .equals(user.username())) {
+      User duplicate = userDB().getUser(user.team(), edits.username());
+      if (duplicate != null) {
+        throw userConflict(user.team(), duplicate.username());
+      }
     }
 
     byte[][] authInfo = null;
@@ -258,10 +262,20 @@ public final class UserController extends Controller {
   record UserRegistration(@JsonProperty(required = true) String username,
                           @JsonProperty(required = true) String fullName,
                           @JsonProperty(required = true) boolean admin,
-                          @JsonProperty(required = true) String password) {}
+                          @JsonProperty(required = true) String password) {
+    @Override
+    public String username() {
+      return username.trim();
+    }
+  }
 
   record UserEdits(String username,
                    String fullName,
                    Boolean admin,
-                   String password) {}
+                   String password) {
+    @Override
+    public String username() {
+      return username.trim();
+    }
+  }
 }
